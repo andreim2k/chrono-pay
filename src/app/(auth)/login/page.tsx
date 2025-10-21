@@ -94,8 +94,8 @@ export default function LoginPage() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Sign In</CardTitle>
-        <CardDescription>Use your Google account to sign in.</CardDescription>
+        <CardTitle>Sign In to ChronoPay</CardTitle>
+        <CardDescription>Welcome! ChronoPay is your streamlined solution for timesheets and invoicing. Sign in to manage your clients, projects, and billing with ease.</CardDescription>
       </CardHeader>
       <CardContent>
         <Button 
