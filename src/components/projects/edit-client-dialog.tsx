@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { Calendar } from '../ui/calendar';
 import { CalendarIcon } from 'lucide-react';
+import { useEffect } from 'react';
 
 
 const currencies = ['EUR', 'USD', 'GBP', 'RON'];
@@ -71,6 +72,21 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
       maxExchangeRateDate: client.maxExchangeRateDate ? parseISO(client.maxExchangeRateDate) : undefined,
     },
   });
+
+  useEffect(() => {
+    form.reset({
+      name: client.name,
+      address: client.address,
+      vat: client.vat,
+      iban: client.iban,
+      currency: client.currency || 'EUR',
+      language: client.language || 'English',
+      invoiceNumberPrefix: client.invoiceNumberPrefix || '',
+      hasVat: client.hasVat || false,
+      maxExchangeRate: client.maxExchangeRate || undefined,
+      maxExchangeRateDate: client.maxExchangeRateDate ? parseISO(client.maxExchangeRateDate) : undefined,
+    });
+  }, [client, form]);
 
   const onSubmit = (data: ClientFormValues) => {
     if (!firestore) return;
