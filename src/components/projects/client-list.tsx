@@ -60,6 +60,18 @@ export function ClientList({ clients }: ClientListProps) {
     setIsEditOpen(true);
   }
   
+  const getInitials = (name: string) => {
+    if (!name) return '';
+    const words = name.split(' ').filter(Boolean);
+    if (words.length > 1) {
+      return (words[0][0] + words[1][0]).toUpperCase();
+    }
+    if (words.length === 1 && words[0].length > 1) {
+      return words[0].substring(0, 2).toUpperCase();
+    }
+    return name.charAt(0).toUpperCase();
+  };
+
   return (
     <>
       <div className="space-y-4">
@@ -74,7 +86,7 @@ export function ClientList({ clients }: ClientListProps) {
                 <div className='flex items-start gap-4'>
                   <Avatar>
                     <AvatarImage src={client.logoUrl} data-ai-hint="logo" />
-                    <AvatarFallback>{client.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>{getInitials(client.name)}</AvatarFallback>
                   </Avatar>
                   <div>
                     <CardTitle className="text-lg">{client.name}</CardTitle>
