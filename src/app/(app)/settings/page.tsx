@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,7 +10,7 @@ import { ProjectList } from '@/components/projects/project-list';
 import { ClientList } from '@/components/projects/client-list';
 import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
-import type { Client, Project } from '@/lib/types';
+import type { Client, Project, Invoice } from '@/lib/types';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,6 +18,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
 import { EditClientDialog } from '@/components/projects/edit-client-dialog';
+import { DataManagement } from '@/components/data/data-management';
 
 const companySchema = z.object({
     name: z.string().min(1, 'Company name is required'),
@@ -49,6 +51,12 @@ export default function SettingsPage() {
         [firestore]
     );
     const { data: projects } = useCollection<Project>(projectsQuery);
+
+    const invoicesQuery = useMemoFirebase(
+      () => (firestore ? collection(firestore, 'invoices') : null),
+      [firestore]
+    );
+    const { data: invoices } = useCollection<Invoice>(invoicesQuery);
 
     const myCompany = clients ? clients.find(c => c.id === 'my-company-details') : null;
 
@@ -123,10 +131,11 @@ export default function SettingsPage() {
           </p>
         </div>
         <Tabs defaultValue="company" className="w-full">
-          <TabsList className="grid w-full max-w-lg grid-cols-3">
+          <TabsList className="grid w-full max-w-lg grid-cols-4">
             <TabsTrigger value="company">My Company</TabsTrigger>
             <TabsTrigger value="clients">Clients</TabsTrigger>
             <TabsTrigger value="projects">Projects</TabsTrigger>
+            <TabsTrigger value="data">Data</TabsTrigger>
           </TabsList>
           <TabsContent value="company">
               <Form {...form}>
@@ -239,6 +248,15 @@ export default function SettingsPage() {
           </TabsContent>
           <TabsContent value="projects">
             <ProjectList projects={projects || []} />
+          </TabsContent>
+           <TabsContent value="data">
+             <DataManagement
+                data={{
+                    clients: clients || [],
+                    projects: projects || [],
+                    invoices: invoices || [],
+                }}
+             />
           </TabsContent>
         </Tabs>
       </div>

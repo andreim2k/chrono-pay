@@ -8,6 +8,8 @@ import { InvoiceList } from '@/components/invoices/invoice-list';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { Invoice } from '@/lib/types';
 import { collection } from 'firebase/firestore';
+import { DataExport } from '@/components/data/data-export';
+import { DataImport } from '@/components/data/data-import';
 
 
 export default function InvoicesPage() {
@@ -27,11 +29,15 @@ export default function InvoicesPage() {
             Manage your invoices and billing.
           </p>
         </div>
-        <Button asChild>
-          <Link href="/invoices/create">
-            <PlusCircle className="mr-2 h-4 w-4" /> Create New Invoice
-          </Link>
-        </Button>
+        <div className='flex items-center gap-2'>
+          <DataExport data={{invoices: invoices || []}} fileName='invoices_export.json' />
+          <DataImport allowedCollections={['invoices']} />
+          <Button asChild>
+            <Link href="/invoices/create">
+              <PlusCircle className="mr-2 h-4 w-4" /> Create New Invoice
+            </Link>
+          </Button>
+        </div>
       </div>
       <InvoiceList invoices={invoices || []} />
     </div>
