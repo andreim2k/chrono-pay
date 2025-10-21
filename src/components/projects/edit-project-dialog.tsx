@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -140,8 +141,8 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
                          <SelectValue>
                             <div className="flex items-center gap-2">
                                 <div className="h-5 w-8 rounded-sm border flex overflow-hidden">
-                                    <div className="w-1/3" style={{ backgroundColor: themeStyles[field.value].accent.replace('border-','').replace('-600','-500').replace('-800','-500').replace('-400','-300').replace('-700','-500') }} />
-                                    <div className="w-2/3" style={{ backgroundColor: themeStyles[field.value].tableHeaderBg.replace('bg-', '') }} />
+                                    <div className="w-1/3" style={{ backgroundColor: themeStyles[field.value].accentColor }} />
+                                    <div className="w-2/3" style={{ backgroundColor: themeStyles[field.value].tableHeaderBgColor }} />
                                 </div>
                                 {field.value}
                             </div>
@@ -153,8 +154,8 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
                         <SelectItem key={theme} value={theme}>
                           <div className="flex items-center gap-3">
                              <div className="h-5 w-8 rounded-sm border flex overflow-hidden">
-                                <div className="w-1/3" style={{ backgroundColor: themeStyles[theme].accent.replace('border-','').replace('-600','-500').replace('-800','-500').replace('-400','-300').replace('-700','-500') }} />
-                                <div className="w-2/3" style={{ backgroundColor: themeStyles[theme].tableHeaderBg.replace('bg-', '') }} />
+                                <div className="w-1/3" style={{ backgroundColor: themeStyles[theme].accentColor }} />
+                                <div className="w-2/3" style={{ backgroundColor: themeStyles[theme].tableHeaderBgColor }} />
                             </div>
                             {theme}
                           </div>

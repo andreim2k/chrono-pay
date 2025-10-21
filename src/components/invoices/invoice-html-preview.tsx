@@ -78,18 +78,19 @@ function getDayWithOrdinal(date: Date, lang: 'en' | 'ro'): string {
     }
 }
 
-export const themeStyles: { [key in InvoiceTheme]: { accent: string, headerText: string, tableHeaderBg: string, tableHeaderText: string, totalBg: string, totalText: string } } = {
-  'Classic': { accent: 'border-blue-600', headerText: 'text-blue-600', tableHeaderBg: 'bg-blue-600', tableHeaderText: 'text-white', totalBg: 'bg-blue-600', totalText: 'text-white' },
-  'Modern': { accent: 'border-gray-800', headerText: 'text-gray-800', tableHeaderBg: 'bg-gray-800', tableHeaderText: 'text-white', totalBg: 'bg-gray-800', totalText: 'text-white' },
-  'Sunset': { accent: 'border-orange-500', headerText: 'text-orange-500', tableHeaderBg: 'bg-orange-500', tableHeaderText: 'text-white', totalBg: 'bg-orange-500', totalText: 'text-white' },
-  'Ocean': { accent: 'border-teal-500', headerText: 'text-teal-500', tableHeaderBg: 'bg-teal-500', tableHeaderText: 'text-white', totalBg: 'bg-teal-500', totalText: 'text-white' },
-  'Monochrome': { accent: 'border-black', headerText: 'text-black', tableHeaderBg: 'bg-black', tableHeaderText: 'text-white', totalBg: 'bg-black', totalText: 'text-white' },
-  'Minty': { accent: 'border-green-400', headerText: 'text-green-500', tableHeaderBg: 'bg-green-400', tableHeaderText: 'text-gray-900', totalBg: 'bg-green-400', totalText: 'text-gray-900' },
-  'Velvet': { accent: 'border-purple-600', headerText: 'text-purple-600', tableHeaderBg: 'bg-purple-600', tableHeaderText: 'text-white', totalBg: 'bg-purple-600', totalText: 'text-white' },
-  'Corporate Blue': { accent: 'border-indigo-700', headerText: 'text-indigo-700', tableHeaderBg: 'bg-indigo-700', tableHeaderText: 'text-white', totalBg: 'bg-indigo-700', totalText: 'text-white' },
-  'Earthy Tones': { accent: 'border-amber-800', headerText: 'text-amber-800', tableHeaderBg: 'bg-amber-800', tableHeaderText: 'text-white', totalBg: 'bg-amber-800', totalText: 'text-white' },
-  'Creative': { accent: 'border-pink-500', headerText: 'text-pink-500', tableHeaderBg: 'bg-pink-500', tableHeaderText: 'text-white', totalBg: 'bg-pink-500', totalText: 'text-white' },
+export const themeStyles: { [key in InvoiceTheme]: { accentClass: string, headerTextClass: string, tableHeaderBgClass: string, tableHeaderTextClass: string, totalBgClass: string, totalTextClass: string, accentColor: string, tableHeaderBgColor: string } } = {
+  'Classic': { accentClass: 'border-blue-600', headerTextClass: 'text-blue-600', tableHeaderBgClass: 'bg-blue-600', tableHeaderTextClass: 'text-white', totalBgClass: 'bg-blue-600', totalTextClass: 'text-white', accentColor: '#2563EB', tableHeaderBgColor: '#3B82F6' },
+  'Modern': { accentClass: 'border-gray-800', headerTextClass: 'text-gray-800', tableHeaderBgClass: 'bg-gray-800', tableHeaderTextClass: 'text-white', totalBgClass: 'bg-gray-800', totalTextClass: 'text-white', accentColor: '#1F2937', tableHeaderBgColor: '#4B5563' },
+  'Sunset': { accentClass: 'border-orange-500', headerTextClass: 'text-orange-500', tableHeaderBgClass: 'bg-orange-500', tableHeaderTextClass: 'text-white', totalBgClass: 'bg-orange-500', totalTextClass: 'text-white', accentColor: '#F97316', tableHeaderBgColor: '#FB923C' },
+  'Ocean': { accentClass: 'border-teal-500', headerTextClass: 'text-teal-500', tableHeaderBgClass: 'bg-teal-500', tableHeaderTextClass: 'text-white', totalBgClass: 'bg-teal-500', totalTextClass: 'text-white', accentColor: '#14B8A6', tableHeaderBgColor: '#2DD4BF' },
+  'Monochrome': { accentClass: 'border-black', headerTextClass: 'text-black', tableHeaderBgClass: 'bg-black', tableHeaderTextClass: 'text-white', totalBgClass: 'bg-black', totalTextClass: 'text-white', accentColor: '#000000', tableHeaderBgColor: '#404040' },
+  'Minty': { accentClass: 'border-green-400', headerTextClass: 'text-green-500', tableHeaderBgClass: 'bg-green-400', tableHeaderTextClass: 'text-gray-900', totalBgClass: 'bg-green-400', totalTextClass: 'text-gray-900', accentColor: '#4ADE80', tableHeaderBgColor: '#A7F3D0' },
+  'Velvet': { accentClass: 'border-purple-600', headerTextClass: 'text-purple-600', tableHeaderBgClass: 'bg-purple-600', tableHeaderTextClass: 'text-white', totalBgClass: 'bg-purple-600', totalTextClass: 'text-white', accentColor: '#9333EA', tableHeaderBgColor: '#A855F7' },
+  'Corporate Blue': { accentClass: 'border-indigo-700', headerTextClass: 'text-indigo-700', tableHeaderBgClass: 'bg-indigo-700', tableHeaderTextClass: 'text-white', totalBgClass: 'bg-indigo-700', totalTextClass: 'text-white', accentColor: '#4338CA', tableHeaderBgColor: '#6366F1' },
+  'Earthy Tones': { accentClass: 'border-amber-800', headerTextClass: 'text-amber-800', tableHeaderBgClass: 'bg-amber-800', tableHeaderTextClass: 'text-white', totalBgClass: 'bg-amber-800', totalTextClass: 'text-white', accentColor: '#92400E', tableHeaderBgColor: '#B45309' },
+  'Creative': { accentClass: 'border-pink-500', headerTextClass: 'text-pink-500', tableHeaderBgClass: 'bg-pink-500', tableHeaderTextClass: 'text-white', totalBgClass: 'bg-pink-500', totalTextClass: 'text-white', accentColor: '#EC4899', tableHeaderBgColor: '#F472B6' },
 };
+
 
 export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
   const {
@@ -146,7 +147,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
     <div className="bg-white text-gray-900 font-sans" style={{ width: '794px', minHeight: '1123px', display: 'flex', flexDirection: 'column', padding: '60px' }}>
       <main className="flex-grow">
         {/* Header with colored accent bar */}
-        <div className={cn('border-b-4 pb-6 mb-8', styles.accent)}>
+        <div className={cn('border-b-4 pb-6 mb-8', styles.accentClass)}>
           <header className="flex justify-between items-start">
               <div className="flex flex-col">
                 <h1 className="text-4xl font-bold text-gray-900 mb-1" style={{ letterSpacing: '-0.02em' }}>{companyName}</h1>
@@ -156,7 +157,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                 </div>
               </div>
               <div className="text-right">
-                  <h2 className={cn('text-5xl font-bold uppercase', styles.headerText)} style={{ letterSpacing: '0.05em' }}>{t.invoice}</h2>
+                  <h2 className={cn('text-5xl font-bold uppercase', styles.headerTextClass)} style={{ letterSpacing: '0.05em' }}>{t.invoice}</h2>
                   <p className="mt-2 text-lg font-semibold text-gray-700">#{invoiceNumber}</p>
               </div>
           </header>
@@ -164,16 +165,16 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
 
         {/* Client Info and Dates - Side by Side Cards */}
         <div className="grid grid-cols-2 gap-6 mb-10">
-          <div className={cn('bg-gray-50 p-6 rounded-lg border-l-4', styles.accent)}>
-            <p className={cn('text-xs font-bold uppercase tracking-wider mb-3', styles.headerText)}>{t.billedTo}</p>
+          <div className={cn('bg-gray-50 p-6 rounded-lg border-l-4', styles.accentClass)}>
+            <p className={cn('text-xs font-bold uppercase tracking-wider mb-3', styles.headerTextClass)}>{t.billedTo}</p>
             <p className="text-lg font-bold text-gray-900 mb-1">{clientName}</p>
             <p className="text-sm text-gray-600 leading-relaxed">{clientAddress}</p>
             {clientVat && <p className="text-sm text-gray-600 mt-1">{t.vatId}: {clientVat}</p>}
             {invoice.projectName && <p className="text-sm text-gray-600 mt-2">Project: <span className="font-medium">{invoice.projectName}</span></p>}
           </div>
-          <div className={cn('bg-gray-50 p-6 rounded-lg border-l-4', styles.accent)}>
+          <div className={cn('bg-gray-50 p-6 rounded-lg border-l-4', styles.accentClass)}>
               <div className="mb-4">
-                <p className={cn('text-xs font-bold uppercase tracking-wider mb-2', styles.headerText)}>{t.invoiceDate}</p>
+                <p className={cn('text-xs font-bold uppercase tracking-wider mb-2', styles.headerTextClass)}>{t.invoiceDate}</p>
                 <p className="text-base text-gray-800 font-medium">{formatDateWithOrdinal(date)}</p>
               </div>
               {companyBankName && (
@@ -191,7 +192,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
         <div className="mt-8 mb-8">
             <table className="w-full">
                 <thead>
-                    <tr className={cn(styles.tableHeaderBg, styles.tableHeaderText)}>
+                    <tr className={cn(styles.tableHeaderBgClass, styles.tableHeaderTextClass)}>
                         <th className="py-4 px-4 text-left font-semibold uppercase text-xs tracking-wider">{t.description}</th>
                         <th className="py-4 px-4 text-center w-24 font-semibold uppercase text-xs tracking-wider">{t.quantity}</th>
                         <th className="py-4 px-4 text-center w-32 font-semibold uppercase text-xs tracking-wider">{t.rate}</th>
@@ -232,9 +233,9 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                           <div className="border-t border-gray-300 my-3"></div>
                       </>
                     )}
-                  <div className={cn("flex justify-between items-center py-2 -mx-6 -mb-6 px-6 pb-6 pt-4 rounded-b-lg", styles.totalBg)}>
-                      <p className={cn("text-base font-bold uppercase tracking-wide", styles.totalText)}>{t.total}</p>
-                      <p className={cn("text-2xl font-bold", styles.totalText)}>{currencySymbol}{total.toFixed(2)}</p>
+                  <div className={cn("flex justify-between items-center py-2 -mx-6 -mb-6 px-6 pb-6 pt-4 rounded-b-lg", styles.totalBgClass)}>
+                      <p className={cn("text-base font-bold uppercase tracking-wide", styles.totalTextClass)}>{t.total}</p>
+                      <p className={cn("text-2xl font-bold", styles.totalTextClass)}>{currencySymbol}{total.toFixed(2)}</p>
                   </div>
                    {totalRon && currency !== 'RON' && (
                     <div className="flex justify-between items-center pt-4 px-2">
@@ -262,5 +263,3 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
     </div>
   );
 }
-
-    

@@ -490,8 +490,8 @@ export default function CreateInvoicePage() {
                                     <SelectValue>
                                         <div className="flex items-center gap-2">
                                             <div className="h-5 w-8 rounded-sm border flex overflow-hidden">
-                                                <div className="w-1/3" style={{ backgroundColor: themeStyles[invoiceTheme].accent.replace('border-','').replace('-600','-500').replace('-800','-500').replace('-400','-300').replace('-700','-500') }} />
-                                                <div className="w-2/3" style={{ backgroundColor: themeStyles[invoiceTheme].tableHeaderBg.replace('bg-', '') }} />
+                                                <div className="w-1/3" style={{ backgroundColor: themeStyles[invoiceTheme].accentColor }} />
+                                                <div className="w-2/3" style={{ backgroundColor: themeStyles[invoiceTheme].tableHeaderBgColor }} />
                                             </div>
                                             {invoiceTheme}
                                         </div>
@@ -502,8 +502,8 @@ export default function CreateInvoicePage() {
                                         <SelectItem key={theme} value={theme}>
                                             <div className="flex items-center gap-3">
                                                 <div className="h-5 w-8 rounded-sm border flex overflow-hidden">
-                                                    <div className="w-1/3" style={{ backgroundColor: themeStyles[theme].accent.replace('border-','').replace('-600','-500').replace('-800','-500').replace('-400','-300').replace('-700','-500') }} />
-                                                    <div className="w-2/3" style={{ backgroundColor: themeStyles[theme].tableHeaderBg.replace('bg-', '') }} />
+                                                      <div className="w-1/3" style={{ backgroundColor: themeStyles[theme].accentColor }} />
+                                                      <div className="w-2/3" style={{ backgroundColor: themeStyles[theme].tableHeaderBgColor }} />
                                                 </div>
                                                 {theme}
                                             </div>
