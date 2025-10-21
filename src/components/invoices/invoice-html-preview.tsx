@@ -78,7 +78,7 @@ function getDayWithOrdinal(date: Date, lang: 'en' | 'ro'): string {
     }
 }
 
-const themeStyles: { [key in InvoiceTheme]: { accent: string, headerText: string, tableHeaderBg: string, tableHeaderText: string, totalBg: string, totalText: string } } = {
+export const themeStyles: { [key in InvoiceTheme]: { accent: string, headerText: string, tableHeaderBg: string, tableHeaderText: string, totalBg: string, totalText: string } } = {
   'Classic': { accent: 'border-blue-600', headerText: 'text-blue-600', tableHeaderBg: 'bg-blue-600', tableHeaderText: 'text-white', totalBg: 'bg-blue-600', totalText: 'text-white' },
   'Modern': { accent: 'border-gray-800', headerText: 'text-gray-800', tableHeaderBg: 'bg-gray-800', tableHeaderText: 'text-white', totalBg: 'bg-gray-800', totalText: 'text-white' },
   'Sunset': { accent: 'border-orange-500', headerText: 'text-orange-500', tableHeaderBg: 'bg-orange-500', tableHeaderText: 'text-white', totalBg: 'bg-orange-500', totalText: 'text-white' },
@@ -262,3 +262,5 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
     </div>
   );
 }
+
+    

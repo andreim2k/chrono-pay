@@ -17,7 +17,7 @@ import type { Client, Invoice, Project, InvoiceTheme } from '@/lib/types';
 import { getExchangeRate } from '@/ai/flows/get-exchange-rate';
 import { useCollection, useFirestore, addDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
-import { InvoiceHtmlPreview } from '@/components/invoices/invoice-html-preview';
+import { InvoiceHtmlPreview, themeStyles } from '@/components/invoices/invoice-html-preview';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 const currencies = ['EUR', 'USD', 'GBP', 'RON'];
@@ -493,7 +493,10 @@ export default function CreateInvoicePage() {
                                 <SelectContent>
                                     {invoiceThemes.map(theme => (
                                         <SelectItem key={theme} value={theme}>
-                                            {theme}
+                                            <div className="flex items-center gap-2">
+                                                <div className="h-4 w-4 rounded-full border" style={{ backgroundColor: themeStyles[theme].tableHeaderBg.replace('bg-', '') }}/>
+                                                {theme}
+                                            </div>
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -584,3 +587,5 @@ export default function CreateInvoicePage() {
     </>
   );
 }
+
+    

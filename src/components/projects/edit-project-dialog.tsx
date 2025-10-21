@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, setDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import type { Client, Project, InvoiceTheme } from '@/lib/types';
+import { themeStyles } from '../invoices/invoice-html-preview';
 
 const invoiceThemes: InvoiceTheme[] = ['Classic', 'Modern', 'Sunset', 'Ocean', 'Monochrome', 'Minty', 'Velvet', 'Corporate Blue', 'Earthy Tones', 'Creative'];
 
@@ -143,7 +144,10 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
                     <SelectContent>
                       {invoiceThemes.map(theme => (
                         <SelectItem key={theme} value={theme}>
-                          {theme}
+                          <div className="flex items-center gap-2">
+                            <div className="h-4 w-4 rounded-full border" style={{ backgroundColor: themeStyles[theme].tableHeaderBg.replace('bg-', '') }}/>
+                            {theme}
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -164,3 +168,5 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
     </Dialog>
   );
 }
+
+    
