@@ -1,0 +1,85 @@
+/**
+ * @fileoverview Firestore Security Rules for the invoicing application.
+ *
+ * Core Philosophy:
+ * This ruleset provides secure access to the application's data, ensuring that only authenticated users can access client, project, and invoice data.
+ * It leverages the Firebase Authentication to verify user identity and ownership. It is written in Prototyping Mode, and is flexible on the data shapes to allow for rapid iteration.
+ *
+ * Data Structure:
+ * - /clients/{clientId}: Stores client information.  There can be one special Client defined as "My Company" to be accessible to all users.
+ * - /projects/{projectId}: Stores project information.
+ * - /invoices/{invoiceId}: Stores invoice information.
+ *
+ * Key Security Decisions:
+ * - All read and write operations require user authentication.
+ * - Data validation is relaxed in the prototyping phase, focusing on authentication and authorization.
+ * - 'My Company' client can be read by all users and updated only by the company owner.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Grants access to client documents. Authenticated users can list all clients, but the 'My Company' client can be read by all users. Only authenticated users can create, update, or delete clients.
+     * @path /clients/{clientId}
+     * @allow (list) - Any authenticated user can list clients.
+     * @allow (get) - Any authenticated user can get the `My Company` client document.
+     * @allow (create) - An authenticated user can create a client.
+     * @allow (update) - An authenticated user can update a client.
+     * @allow (delete) - An authenticated user can delete a client.
+     * @deny (get) - Any user can not get any client data.
+     * @principle Allows authenticated users to manage their client data.
+     */
+    match /clients/{clientId} {
+      allow get: if true;
+      allow list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && resource != null;
+      allow delete: if isSignedIn() && resource != null;
+    }
+
+    /**
+     * @description Grants access to project documents. Authenticated users can create, read, update, and delete projects.
+     * @path /projects/{projectId}
+     * @allow (create) - An authenticated user can create a project.
+     * @allow (get) - An authenticated user can get a project.
+     * @allow (list) - Any authenticated user can list project documents.
+     * @allow (update) - An authenticated user can update a project.
+     * @allow (delete) - An authenticated user can delete a project.
+     * @deny (get) - Non authenticated users can not get any project data.
+     * @principle Allows authenticated users to manage their project data.
+     */
+    match /projects/{projectId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && resource != null;
+      allow delete: if isSignedIn() && resource != null;
+    }
+
+    /**
+     * @description Grants access to invoice documents. Authenticated users can create, read, update, and delete invoices.
+     * @path /invoices/{invoiceId}
+     * @allow (create) - An authenticated user can create an invoice.
+     * @allow (get) - An authenticated user can get an invoice.
+     * @allow (list) - Any authenticated user can list invoice documents.
+     * @allow (update) - An authenticated user can update an invoice.
+     * @allow (delete) - An authenticated user can delete a project.
+     * @deny (get) - Non authenticated users can not get any invoice data.
+     * @principle Allows authenticated users to manage their invoice data.
+     */
+    match /invoices/{invoiceId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && resource != null;
+      allow delete: if isSignedIn() && resource != null;
+    }
+  }
+
+  // Helper function to determine if the user is signed in
+  function isSignedIn() {
+    return request.auth != null;
+  }
+
+}

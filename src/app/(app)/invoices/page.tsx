@@ -1,0 +1,39 @@
+
+'use client';
+
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { PlusCircle } from 'lucide-react';
+import { InvoiceList } from '@/components/invoices/invoice-list';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { Invoice } from '@/lib/types';
+import { collection } from 'firebase/firestore';
+
+
+export default function InvoicesPage() {
+  const firestore = useFirestore();
+  const invoicesQuery = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'invoices') : null),
+    [firestore]
+  );
+  const { data: invoices } = useCollection<Invoice>(invoicesQuery);
+  
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Invoices</h1>
+          <p className="text-muted-foreground">
+            Manage your invoices and billing.
+          </p>
+        </div>
+        <Button asChild>
+          <Link href="/invoices/create">
+            <PlusCircle className="mr-2 h-4 w-4" /> Create New Invoice
+          </Link>
+        </Button>
+      </div>
+      <InvoiceList invoices={invoices || []} />
+    </div>
+  );
+}

@@ -1,0 +1,276 @@
+
+{
+    "entities": {
+        "User": {
+            "title": "User",
+            "type": "object",
+            "description": "Represents a user within the ChronoPay application.",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "The unique identifier for the user, matches Firebase Auth UID."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "The name of the user."
+                },
+                "email": {
+                    "type": "string",
+                    "description": "The email address of the user.",
+                    "format": "email"
+                },
+                "avatarUrl": {
+                    "type": "string",
+                    "description": "URL of the user's avatar image."
+                },
+                "role": {
+                    "type": "string",
+                    "description": "The role of the user.",
+                    "enum": [
+                        "Admin",
+                        "Member"
+                    ]
+                }
+            },
+            "required": [
+                "id",
+                "name",
+                "email",
+                "role"
+            ]
+        },
+        "Client": {
+            "title": "Client",
+            "type": "object",
+            "description": "Represents a client company or 'My Company' details.",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "address": {
+                    "type": "string"
+                },
+                "vat": {
+                    "type": "string"
+                },
+                "iban": {
+                    "type": "string"
+                },
+                "logoUrl": {
+                    "type": "string"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "language": {
+                    "type": "string",
+                    "enum": ["English", "Romanian"],
+                    "description": "The language for the invoice."
+                },
+                "bankName": {
+                    "type": "string"
+                },
+                "swift": {
+                    "type": "string"
+                },
+                "invoiceNumberPrefix": {
+                    "type": "string"
+                },
+                "hasVat": {
+                    "type": "boolean",
+                    "description": "Indicates if VAT should be applied for this client."
+                },
+                "maxExchangeRate": {
+                    "type": "number",
+                    "description": "Maximum exchange rate cap in RON."
+                },
+                "maxExchangeRateDate": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Date the max exchange rate was set."
+                },
+                "vatRate": {
+                    "type": "number",
+                    "description": "The VAT rate to be applied, specific to 'My Company'."
+                }
+            },
+            "required": [
+                "name",
+                "address",
+                "vat",
+                "iban"
+            ]
+        },
+        "Project": {
+            "title": "Project",
+            "type": "object",
+            "description": "Represents a project for a client.",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "clientId": {
+                    "type": "string"
+                },
+                "clientName": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "name",
+                "clientId",
+                "clientName"
+            ]
+        },
+        "Invoice": {
+            "title": "Invoice",
+            "type": "object",
+            "description": "Represents an invoice.",
+            "properties": {
+                "invoiceNumber": {
+                    "type": "string"
+                },
+                "companyName": {
+                    "type": "string"
+                },
+                "companyAddress": {
+                    "type": "string"
+                },
+                "companyVat": {
+                    "type": "string"
+                },
+                "companyBankName": {
+                    "type": "string"
+                },
+                "companyIban": {
+                    "type": "string"
+                },
+                "companySwift": {
+                    "type": "string"
+                },
+                "clientName": {
+                    "type": "string"
+                },
+                "clientAddress": {
+                    "type": "string"
+                },
+                "clientVat": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "language": {
+                    "type": "string",
+                    "enum": ["English", "Romanian"],
+                    "description": "The language for the invoice."
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "description": {
+                                "type": "string"
+                            },
+                            "quantity": {
+                                "type": "number"
+                            },
+                            "unit": {
+                                "type": "string"
+                            },
+                            "rate": {
+                                "type": "number"
+                            },
+                            "amount": {
+                                "type": "number"
+                            }
+                        },
+                        "required": [
+                            "description",
+                            "quantity",
+                            "unit",
+                            "rate",
+                            "amount"
+                        ]
+                    }
+                },
+                "subtotal": {
+                    "type": "number"
+                },
+                "vatAmount": {
+                    "type": "number"
+                },
+                "vatRate": {
+                    "type": "number",
+                    "description": "The VAT rate applied to the invoice."
+                },
+                "total": {
+                    "type": "number"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "Created",
+                        "Sent",
+                        "Paid"
+                    ]
+                },
+                "totalRon": {
+                    "type": "number"
+                },
+                "exchangeRate": {
+                    "type": "number"
+                },
+                 "usedMaxExchangeRate": {
+                    "type": "boolean",
+                    "description": "Indicates if the client's max exchange rate was used."
+                }
+            },
+            "required": [
+                "invoiceNumber",
+                "clientName",
+                "date",
+                "currency",
+                "items",
+                "total",
+                "status"
+            ]
+        }
+    },
+    "auth": {
+        "providers": [
+            "google"
+        ]
+    },
+    "firestore": {
+        "/users/{userId}": {
+            "schema": {
+                "$ref": "#/entities/User"
+            },
+            "description": "Stores user profiles."
+        },
+        "/users/{userId}/clients/{clientId}": {
+            "schema": {
+                "$ref": "#/entities/Client"
+            },
+            "description": "Stores client information, including a special document for 'My Company' details for a specific user."
+        },
+        "/users/{userId}/projects/{projectId}": {
+            "schema": {
+                "$ref": "#/entities/Project"
+            },
+            "description": "Stores project information for a specific user."
+        },
+        "/users/{userId}/invoices/{invoiceId}": {
+            "schema": {
+                "$ref": "#/entities/Invoice"
+            },
+            "description": "Stores invoice information for a specific user."
+        }
+    }
+}
