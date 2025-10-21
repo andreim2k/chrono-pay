@@ -17,6 +17,7 @@ export type Client = {
 d.ts
   language?: 'English' | 'Romanian';
   vatRate?: number;
+  order?: number;
 };
 
 export type Project = {

@@ -20,13 +20,14 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useFirestore, addDocumentNonBlocking } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { useFirestore, addDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query } from 'firebase/firestore';
 import { Switch } from '../ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Calendar } from '../ui/calendar';
+import type { Client } from '@/lib/types';
 
 const currencies = ['EUR', 'USD', 'GBP', 'RON'];
 const languages = ['English', 'Romanian'];
@@ -51,6 +52,12 @@ export function AddClientDialog() {
   const { toast } = useToast();
   const firestore = useFirestore();
 
+  const clientsQuery = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'clients')) : null),
+    [firestore]
+  );
+  const { data: clients } = useCollection<Client>(clientsQuery);
+
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
@@ -72,6 +79,7 @@ export function AddClientDialog() {
     const dataToSave: any = {
       ...data,
       logoUrl: `https://picsum.photos/seed/${data.name}/40/40`,
+      order: clients?.length || 0,
     };
 
     if (data.maxExchangeRateDate) {
