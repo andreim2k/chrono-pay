@@ -1,7 +1,6 @@
 
 'use client';
 
-import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -9,7 +8,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,12 +48,11 @@ type ClientFormValues = z.infer<typeof clientSchema>;
 
 interface EditClientDialogProps {
     client: Client;
-    children: React.ReactNode;
-    onOpenChange?: (isOpen: boolean) => void;
+    isOpen: boolean;
+    onOpenChange: (isOpen: boolean) => void;
 }
 
-export function EditClientDialog({ client, children, onOpenChange }: EditClientDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDialogProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
 
@@ -74,13 +71,6 @@ export function EditClientDialog({ client, children, onOpenChange }: EditClientD
       maxExchangeRateDate: client.maxExchangeRateDate ? parseISO(client.maxExchangeRateDate) : undefined,
     },
   });
-
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
-    if (onOpenChange) {
-      onOpenChange(open);
-    }
-  }
 
   const onSubmit = (data: ClientFormValues) => {
     if (!firestore) return;
@@ -101,14 +91,11 @@ export function EditClientDialog({ client, children, onOpenChange }: EditClientD
       title: 'Client Updated',
       description: `${data.name} has been updated.`,
     });
-    handleOpenChange(false);
+    onOpenChange(false);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Edit Client</DialogTitle>
@@ -319,7 +306,7 @@ export function EditClientDialog({ client, children, onOpenChange }: EditClientD
                 )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
               <Button type="submit">Save Changes</Button>

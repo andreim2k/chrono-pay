@@ -31,8 +31,10 @@ interface ClientListProps {
 
 export function ClientList({ clients }: ClientListProps) {
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
+  const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState<string | false>(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+
   const firestore = useFirestore();
   const { toast } = useToast();
 
@@ -52,11 +54,12 @@ export function ClientList({ clients }: ClientListProps) {
     setClientToDelete(client);
     setIsAlertOpen(true);
   }
-  
-  const handleDropdownOpenChange = (isOpen: boolean, clientId: string) => {
-    setIsMenuOpen(isOpen ? clientId : false);
-  };
 
+  const openEditDialog = (client: Client) => {
+    setClientToEdit(client);
+    setIsEditOpen(true);
+  }
+  
   return (
     <>
       <div className="space-y-4">
@@ -77,16 +80,16 @@ export function ClientList({ clients }: ClientListProps) {
                     <CardTitle className="text-lg">{client.name}</CardTitle>
                   </div>
                 </div>
-                <DropdownMenu open={isMenuOpen === client.id} onOpenChange={(open) => handleDropdownOpenChange(open, client.id)}>
+                <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon">
                       <MoreVertical className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    <EditClientDialog client={client} onOpenChange={(dialogOpen) => !dialogOpen && handleDropdownOpenChange(false, client.id)}>
-                      <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Edit</DropdownMenuItem>
-                    </EditClientDialog>
+                    <DropdownMenuItem onSelect={() => openEditDialog(client)}>
+                      Edit
+                    </DropdownMenuItem>
                     <DropdownMenuItem 
                       className="text-destructive focus:text-destructive" 
                       onSelect={() => openDeleteDialog(client)}
@@ -107,6 +110,13 @@ export function ClientList({ clients }: ClientListProps) {
           ))}
         </div>
       </div>
+      {clientToEdit && (
+        <EditClientDialog 
+          client={clientToEdit} 
+          isOpen={isEditOpen} 
+          onOpenChange={setIsEditOpen} 
+        />
+      )}
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

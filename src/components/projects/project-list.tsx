@@ -18,7 +18,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useFirestore, deleteDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -31,7 +30,10 @@ interface ProjectListProps {
 
 export function ProjectList({ projects }: ProjectListProps) {
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
-  const [isMenuOpen, setIsMenuOpen] = useState<string | false>(false);
+  const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+
   const firestore = useFirestore();
   const { toast } = useToast();
   
@@ -44,13 +46,21 @@ export function ProjectList({ projects }: ProjectListProps) {
       description: `${projectToDelete.name} has been deleted.`,
     });
     setProjectToDelete(null);
+    setIsAlertOpen(false);
+  };
+  
+  const openDeleteDialog = (project: Project) => {
+    setProjectToDelete(project);
+    setIsAlertOpen(true);
   };
 
-  const handleDropdownOpenChange = (isOpen: boolean, projectId: string) => {
-    setIsMenuOpen(isOpen ? projectId : false);
+  const openEditDialog = (project: Project) => {
+    setProjectToEdit(project);
+    setIsEditOpen(true);
   };
   
   return (
+    <>
     <Card>
       <CardHeader>
         <div className="flex justify-between items-start">
@@ -62,7 +72,6 @@ export function ProjectList({ projects }: ProjectListProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <AlertDialog>
           <Table>
             <TableHeader>
               <TableRow>
@@ -77,20 +86,20 @@ export function ProjectList({ projects }: ProjectListProps) {
                   <TableCell className="font-medium">{project.name}</TableCell>
                   <TableCell>{project.clientName}</TableCell>
                   <TableCell className="text-right">
-                    <DropdownMenu open={isMenuOpen === project.id} onOpenChange={(open) => handleDropdownOpenChange(open, project.id)}>
+                    <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon">
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
-                        <EditProjectDialog project={project} onOpenChange={(dialogOpen) => !dialogOpen && handleDropdownOpenChange(false, project.id)}>
-                           <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Edit</DropdownMenuItem>
-                        </EditProjectDialog>
+                        <DropdownMenuItem onSelect={() => openEditDialog(project)}>
+                           Edit
+                        </DropdownMenuItem>
                         <DropdownMenuItem>View Tasks</DropdownMenuItem>
-                        <AlertDialogTrigger asChild>
-                          <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={(e) => { e.preventDefault(); setProjectToDelete(project); }}>Delete</DropdownMenuItem>
-                        </AlertDialogTrigger>
+                        <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => openDeleteDialog(project)}>
+                          Delete
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -98,21 +107,30 @@ export function ProjectList({ projects }: ProjectListProps) {
               ))}
             </TableBody>
           </Table>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete the project
-                and all associated data.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </CardContent>
     </Card>
+    {projectToEdit && (
+        <EditProjectDialog
+            project={projectToEdit}
+            isOpen={isEditOpen}
+            onOpenChange={setIsEditOpen}
+        />
+    )}
+     <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+        <AlertDialogContent>
+        <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+            This action cannot be undone. This will permanently delete the project
+            and all associated data.
+            </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+        </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

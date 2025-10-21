@@ -1,7 +1,6 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -9,7 +8,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +21,7 @@ import { useCollection, useFirestore, setDocumentNonBlocking, useMemoFirebase } 
 import { collection, doc } from 'firebase/firestore';
 import type { Client, Project, InvoiceTheme } from '@/lib/types';
 import { themeStyles } from '../invoices/invoice-html-preview';
+import { useMemo } from 'react';
 
 const invoiceThemes: InvoiceTheme[] = [
   'Classic', 'Modern', 'Sunset', 'Ocean', 'Monochrome', 'Minty', 'Velvet',
@@ -43,12 +42,11 @@ type ProjectFormValues = z.infer<typeof projectSchema>;
 
 interface EditProjectDialogProps {
     project: Project;
-    children: React.ReactNode;
-    onOpenChange?: (isOpen: boolean) => void;
+    isOpen: boolean;
+    onOpenChange: (isOpen: boolean) => void;
 }
 
-export function EditProjectDialog({ project, children, onOpenChange }: EditProjectDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProjectDialogProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
 
@@ -69,13 +67,6 @@ export function EditProjectDialog({ project, children, onOpenChange }: EditProje
     },
   });
 
-  const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
-    if (onOpenChange) {
-      onOpenChange(open);
-    }
-  };
-
   const onSubmit = (data: ProjectFormValues) => {
     if (!firestore) return;
     const client = clients?.find(c => c.id === data.clientId);
@@ -90,14 +81,11 @@ export function EditProjectDialog({ project, children, onOpenChange }: EditProje
       title: 'Project Updated',
       description: `${data.name} has been updated.`,
     });
-    handleOpenChange(false);
+    onOpenChange(false);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Project</DialogTitle>
@@ -183,7 +171,7 @@ export function EditProjectDialog({ project, children, onOpenChange }: EditProje
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
               <Button type="submit">Save Changes</Button>
