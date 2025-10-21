@@ -4,10 +4,9 @@
 import { useState } from 'react';
 import type { Project } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Button } from '../ui/button';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreVertical } from 'lucide-react';
 import { AddProjectDialog } from './add-project-dialog';
 import {
   AlertDialog,
@@ -23,6 +22,7 @@ import { useFirestore, deleteDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { EditProjectDialog } from './edit-project-dialog';
+import { Avatar, AvatarFallback } from '../ui/avatar';
 
 interface ProjectListProps {
   projects: Project[];
@@ -59,62 +59,68 @@ export function ProjectList({ projects }: ProjectListProps) {
     setIsEditOpen(true);
   };
   
+  const getInitials = (name: string) => {
+    if (!name) return '';
+    const words = name.split(' ').filter(Boolean);
+    if (words.length > 1) {
+      return (words[0][0] + words[1][0]).toUpperCase();
+    }
+    if (words.length === 1 && words[0].length > 1) {
+      return words[0].substring(0, 2).toUpperCase();
+    }
+    return name.charAt(0).toUpperCase();
+  };
+
+
   return (
     <>
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle>All Projects</CardTitle>
-            <CardDescription>A list of all your current projects.</CardDescription>
-          </div>
+      <div className="space-y-4">
+        <div className="flex justify-end">
           <AddProjectDialog />
         </div>
-      </CardHeader>
-      <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Project Name</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {projects.map((project) => (
-                <TableRow key={project.id}>
-                  <TableCell className="font-medium">{project.name}</TableCell>
-                  <TableCell>{project.clientName}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem onSelect={() => openEditDialog(project)}>
-                           Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => openDeleteDialog(project)}>
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-      </CardContent>
-    </Card>
-    {projectToEdit && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {projects.map((project) => (
+                <Card key={project.id}>
+                    <CardHeader className="flex flex-row items-start justify-between">
+                        <div className='flex items-start gap-4'>
+                            <Avatar>
+                                <AvatarFallback>{getInitials(project.name)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <CardTitle className="text-lg">{project.name}</CardTitle>
+                                <CardDescription>{project.clientName}</CardDescription>
+                            </div>
+                        </div>
+                        <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuItem onSelect={() => openEditDialog(project)}>
+                            Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                            className="text-destructive focus:text-destructive" 
+                            onSelect={() => openDeleteDialog(project)}
+                            >
+                            Delete
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                        </DropdownMenu>
+                    </CardHeader>
+                </Card>
+            ))}
+        </div>
+      </div>
+      {projectToEdit && (
         <EditProjectDialog
             project={projectToEdit}
             isOpen={isEditOpen}
             onOpenChange={setIsEditOpen}
         />
-    )}
+      )}
      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
         <AlertDialogHeader>
