@@ -14,7 +14,6 @@ export type Client = {
   hasVat?: boolean;
   maxExchangeRate?: number;
   maxExchangeRateDate?: string;
-d.ts
   language?: 'English' | 'Romanian';
   vatRate?: number;
   order?: number;
@@ -27,14 +26,6 @@ export type Project = {
   clientName: string;
   invoiceTheme?: InvoiceTheme;
   order?: number;
-};
-
-export type User = {
-  id: string;
-  name: string;
-  email: string;
-  avatarUrl: string;
-  role: 'Admin' | 'Member';
 };
 
 export type Invoice = {

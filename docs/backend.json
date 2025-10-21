@@ -54,6 +54,10 @@
                 "vatRate": {
                     "type": "number",
                     "description": "The VAT rate to be applied, specific to 'My Company'."
+                },
+                "order": {
+                    "type": "number",
+                    "description": "The display order of the client."
                 }
             },
             "required": [
