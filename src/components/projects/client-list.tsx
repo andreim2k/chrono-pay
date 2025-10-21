@@ -1,9 +1,10 @@
+
 'use client';
 
 import { useState } from 'react';
 import type { Client } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Avatar, AvatarFallback } from '../ui/avatar';
 import { MoreVertical } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Button } from '../ui/button';
@@ -66,7 +67,6 @@ export function ClientList({ clients, onEditClient }: ClientListProps) {
               <CardHeader className="flex flex-row items-start justify-between">
                 <div className='flex items-start gap-4'>
                   <Avatar>
-                    <AvatarImage src={client.logoUrl} data-ai-hint="logo" />
                     <AvatarFallback>{getInitials(client.name)}</AvatarFallback>
                   </Avatar>
                   <div>
