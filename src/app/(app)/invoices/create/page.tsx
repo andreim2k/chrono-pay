@@ -13,7 +13,7 @@ import { Download, Save, Loader2, RefreshCw, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import type { Client, Invoice, Project } from '@/lib/types';
+import type { Client, Invoice, Project, InvoiceTheme } from '@/lib/types';
 import { getExchangeRate } from '@/ai/flows/get-exchange-rate';
 import { useCollection, useFirestore, addDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
@@ -21,6 +21,7 @@ import { InvoiceHtmlPreview } from '@/components/invoices/invoice-html-preview';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 const currencies = ['EUR', 'USD', 'GBP', 'RON'];
+const invoiceThemes: InvoiceTheme[] = ['Classic', 'Modern', 'Sunset', 'Ocean', 'Monochrome', 'Minty', 'Velvet', 'Corporate Blue', 'Earthy Tones', 'Creative'];
 
 const months = Array.from({ length: 12 }, (_, i) => ({
   value: i,
@@ -66,6 +67,7 @@ export default function CreateInvoicePage() {
   const [invoicedYear, setInvoicedYear] = useState<number>(lastMonth.getFullYear());
   const [previewImage, setPreviewImage] = useState<string>('');
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [invoiceTheme, setInvoiceTheme] = useState<InvoiceTheme>('Classic');
   
   const previewRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -122,6 +124,12 @@ export default function CreateInvoicePage() {
   const selectedProject = useMemo(() => {
     return projectsForClient?.find(p => p.id === selectedProjectId) || null;
   }, [selectedProjectId, projectsForClient]);
+
+  useEffect(() => {
+    if (selectedProject) {
+        setInvoiceTheme(selectedProject.invoiceTheme || 'Classic');
+    }
+  }, [selectedProject]);
 
   const myCompany = useMemo(() => {
     return clients?.find(c => c.id === 'my-company-details') || null;
@@ -252,8 +260,9 @@ export default function CreateInvoicePage() {
       exchangeRateDate,
       usedMaxExchangeRate: usedMaxRate,
       vatRate: selectedClient.hasVat ? myCompany.vatRate : undefined,
+      theme: invoiceTheme,
     };
-  }, [selectedClient, selectedProject, dailyRate, invoices, daysWorked, currency, exchangeRate, exchangeRateDate, myCompany, invoicedMonth, invoicedYear, invoiceCreationDate, usedMaxRate]);
+  }, [selectedClient, selectedProject, dailyRate, invoices, daysWorked, currency, exchangeRate, exchangeRateDate, myCompany, invoicedMonth, invoicedYear, invoiceCreationDate, usedMaxRate, invoiceTheme]);
   
   const generatePreview = useCallback(async () => {
     if (!invoiceData || !previewRef.current) {
@@ -422,7 +431,7 @@ export default function CreateInvoicePage() {
                             </Select>
                        </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                       <div className="space-y-2">
                         <Label htmlFor="days-worked" className="mb-2 block">Days Worked</Label>
                         <Input
@@ -473,6 +482,23 @@ export default function CreateInvoicePage() {
                             </Button>
                         </div>
                     </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2 md:col-span-1">
+                             <Label htmlFor="theme-select" className="mb-2 block">Invoice Theme</Label>
+                            <Select value={invoiceTheme} onValueChange={(value) => setInvoiceTheme(value as InvoiceTheme)}>
+                                <SelectTrigger id="theme-select">
+                                    <SelectValue placeholder="Select a theme" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {invoiceThemes.map(theme => (
+                                        <SelectItem key={theme} value={theme}>
+                                            {theme}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
                     {invoiceData && (
                         <div className="p-3 bg-muted/50 rounded-lg text-sm space-y-2">

@@ -22,11 +22,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, addDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { collection } from 'firebase/firestore';
-import type { Client } from '@/lib/types';
+import type { Client, InvoiceTheme } from '@/lib/types';
+
+const invoiceThemes: InvoiceTheme[] = ['Classic', 'Modern', 'Sunset', 'Ocean', 'Monochrome', 'Minty', 'Velvet', 'Corporate Blue', 'Earthy Tones', 'Creative'];
 
 const projectSchema = z.object({
   name: z.string().min(1, 'Project name is required'),
   clientId: z.string().min(1, 'Please select a client'),
+  invoiceTheme: z.string().min(1, 'Please select a theme') as z.ZodType<InvoiceTheme>,
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -49,6 +52,7 @@ export function AddProjectDialog() {
     defaultValues: {
       name: '',
       clientId: '',
+      invoiceTheme: 'Classic',
     },
   });
 
@@ -115,6 +119,30 @@ export function AddProjectDialog() {
                       {availableClients.map(client => (
                         <SelectItem key={client.id} value={client.id}>
                           {client.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="invoiceTheme"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Default Invoice Theme</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a theme" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {invoiceThemes.map(theme => (
+                        <SelectItem key={theme} value={theme}>
+                          {theme}
                         </SelectItem>
                       ))}
                     </SelectContent>

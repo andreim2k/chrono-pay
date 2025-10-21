@@ -2,9 +2,10 @@
 'use client';
 
 import React from 'react';
-import type { Invoice } from '@/lib/types';
+import type { Invoice, InvoiceTheme } from '@/lib/types';
 import { format, getDate } from 'date-fns';
 import { ro } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 
 interface InvoiceHtmlPreviewProps {
@@ -77,13 +78,28 @@ function getDayWithOrdinal(date: Date, lang: 'en' | 'ro'): string {
     }
 }
 
+const themeStyles: { [key in InvoiceTheme]: { accent: string, headerText: string, tableHeaderBg: string, tableHeaderText: string, totalBg: string, totalText: string } } = {
+  'Classic': { accent: 'border-blue-600', headerText: 'text-blue-600', tableHeaderBg: 'bg-blue-600', tableHeaderText: 'text-white', totalBg: 'bg-blue-600', totalText: 'text-white' },
+  'Modern': { accent: 'border-gray-800', headerText: 'text-gray-800', tableHeaderBg: 'bg-gray-800', tableHeaderText: 'text-white', totalBg: 'bg-gray-800', totalText: 'text-white' },
+  'Sunset': { accent: 'border-orange-500', headerText: 'text-orange-500', tableHeaderBg: 'bg-orange-500', tableHeaderText: 'text-white', totalBg: 'bg-orange-500', totalText: 'text-white' },
+  'Ocean': { accent: 'border-teal-500', headerText: 'text-teal-500', tableHeaderBg: 'bg-teal-500', tableHeaderText: 'text-white', totalBg: 'bg-teal-500', totalText: 'text-white' },
+  'Monochrome': { accent: 'border-black', headerText: 'text-black', tableHeaderBg: 'bg-black', tableHeaderText: 'text-white', totalBg: 'bg-black', totalText: 'text-white' },
+  'Minty': { accent: 'border-green-400', headerText: 'text-green-500', tableHeaderBg: 'bg-green-400', tableHeaderText: 'text-gray-900', totalBg: 'bg-green-400', totalText: 'text-gray-900' },
+  'Velvet': { accent: 'border-purple-600', headerText: 'text-purple-600', tableHeaderBg: 'bg-purple-600', tableHeaderText: 'text-white', totalBg: 'bg-purple-600', totalText: 'text-white' },
+  'Corporate Blue': { accent: 'border-indigo-700', headerText: 'text-indigo-700', tableHeaderBg: 'bg-indigo-700', tableHeaderText: 'text-white', totalBg: 'bg-indigo-700', totalText: 'text-white' },
+  'Earthy Tones': { accent: 'border-amber-800', headerText: 'text-amber-800', tableHeaderBg: 'bg-amber-800', tableHeaderText: 'text-white', totalBg: 'bg-amber-800', totalText: 'text-white' },
+  'Creative': { accent: 'border-pink-500', headerText: 'text-pink-500', tableHeaderBg: 'bg-pink-500', tableHeaderText: 'text-white', totalBg: 'bg-pink-500', totalText: 'text-white' },
+};
 
 export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
   const {
     companyName, companyAddress, companyVat, invoiceNumber, clientName,
     clientAddress, clientVat, date, items, currency, subtotal, vatAmount, total,
-    companyBankName, companyIban, companySwift, language, vatRate, totalRon
+    companyBankName, companyIban, companySwift, language, vatRate, totalRon,
+    theme = 'Classic'
   } = invoice;
+
+  const styles = themeStyles[theme];
   
   const lang = language === 'Romanian' ? 'ro' : 'en';
   const t = translations[lang];
@@ -130,7 +146,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
     <div className="bg-white text-gray-900 font-sans" style={{ width: '794px', minHeight: '1123px', display: 'flex', flexDirection: 'column', padding: '60px' }}>
       <main className="flex-grow">
         {/* Header with colored accent bar */}
-        <div className="border-b-4 border-blue-600 pb-6 mb-8">
+        <div className={cn('border-b-4 pb-6 mb-8', styles.accent)}>
           <header className="flex justify-between items-start">
               <div className="flex flex-col">
                 <h1 className="text-4xl font-bold text-gray-900 mb-1" style={{ letterSpacing: '-0.02em' }}>{companyName}</h1>
@@ -140,7 +156,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                 </div>
               </div>
               <div className="text-right">
-                  <h2 className="text-5xl font-bold text-blue-600 uppercase" style={{ letterSpacing: '0.05em' }}>{t.invoice}</h2>
+                  <h2 className={cn('text-5xl font-bold uppercase', styles.headerText)} style={{ letterSpacing: '0.05em' }}>{t.invoice}</h2>
                   <p className="mt-2 text-lg font-semibold text-gray-700">#{invoiceNumber}</p>
               </div>
           </header>
@@ -148,16 +164,16 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
 
         {/* Client Info and Dates - Side by Side Cards */}
         <div className="grid grid-cols-2 gap-6 mb-10">
-          <div className="bg-gray-50 p-6 rounded-lg border-l-4 border-blue-600">
-            <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">{t.billedTo}</p>
+          <div className={cn('bg-gray-50 p-6 rounded-lg border-l-4', styles.accent)}>
+            <p className={cn('text-xs font-bold uppercase tracking-wider mb-3', styles.headerText)}>{t.billedTo}</p>
             <p className="text-lg font-bold text-gray-900 mb-1">{clientName}</p>
             <p className="text-sm text-gray-600 leading-relaxed">{clientAddress}</p>
             {clientVat && <p className="text-sm text-gray-600 mt-1">{t.vatId}: {clientVat}</p>}
             {invoice.projectName && <p className="text-sm text-gray-600 mt-2">Project: <span className="font-medium">{invoice.projectName}</span></p>}
           </div>
-          <div className="bg-gray-50 p-6 rounded-lg border-l-4 border-blue-600">
+          <div className={cn('bg-gray-50 p-6 rounded-lg border-l-4', styles.accent)}>
               <div className="mb-4">
-                <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">{t.invoiceDate}</p>
+                <p className={cn('text-xs font-bold uppercase tracking-wider mb-2', styles.headerText)}>{t.invoiceDate}</p>
                 <p className="text-base text-gray-800 font-medium">{formatDateWithOrdinal(date)}</p>
               </div>
               {companyBankName && (
@@ -175,7 +191,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
         <div className="mt-8 mb-8">
             <table className="w-full">
                 <thead>
-                    <tr className="bg-blue-600 text-white">
+                    <tr className={cn(styles.tableHeaderBg, styles.tableHeaderText)}>
                         <th className="py-4 px-4 text-left font-semibold uppercase text-xs tracking-wider">{t.description}</th>
                         <th className="py-4 px-4 text-center w-24 font-semibold uppercase text-xs tracking-wider">{t.quantity}</th>
                         <th className="py-4 px-4 text-center w-32 font-semibold uppercase text-xs tracking-wider">{t.rate}</th>
@@ -216,9 +232,9 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                           <div className="border-t border-gray-300 my-3"></div>
                       </>
                     )}
-                  <div className="flex justify-between items-center py-2 bg-blue-600 -mx-6 -mb-6 px-6 pb-6 pt-4 rounded-b-lg">
-                      <p className="text-base font-bold text-white uppercase tracking-wide">{t.total}</p>
-                      <p className="text-2xl font-bold text-white">{currencySymbol}{total.toFixed(2)}</p>
+                  <div className={cn("flex justify-between items-center py-2 -mx-6 -mb-6 px-6 pb-6 pt-4 rounded-b-lg", styles.totalBg)}>
+                      <p className={cn("text-base font-bold uppercase tracking-wide", styles.totalText)}>{t.total}</p>
+                      <p className={cn("text-2xl font-bold", styles.totalText)}>{currencySymbol}{total.toFixed(2)}</p>
                   </div>
                    {totalRon && currency !== 'RON' && (
                     <div className="flex justify-between items-center pt-4 px-2">

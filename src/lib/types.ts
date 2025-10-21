@@ -14,6 +14,7 @@ export type Client = {
   hasVat?: boolean;
   maxExchangeRate?: number;
   maxExchangeRateDate?: string;
+d.ts
   language?: 'English' | 'Romanian';
   vatRate?: number;
 };
@@ -23,6 +24,7 @@ export type Project = {
   name: string;
   clientId: string;
   clientName: string;
+  invoiceTheme?: InvoiceTheme;
 };
 
 export type User = {
@@ -66,6 +68,7 @@ export type Invoice = {
   exchangeRate?: number;
   exchangeRateDate?: string;
   usedMaxExchangeRate?: boolean;
+  theme?: InvoiceTheme;
 };
 
 export type InvoiceTheme = 'Classic' | 'Modern' | 'Sunset' | 'Ocean' | 'Monochrome' | 'Minty' | 'Velvet' | 'Corporate Blue' | 'Earthy Tones' | 'Creative';
