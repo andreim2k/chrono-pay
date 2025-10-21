@@ -13,10 +13,10 @@ import { Download, Save, Loader2, RefreshCw, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import type { Client, Invoice } from '@/lib/types';
+import type { Client, Invoice, Project } from '@/lib/types';
 import { getExchangeRate } from '@/ai/flows/get-exchange-rate';
 import { useCollection, useFirestore, addDocumentNonBlocking, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import { InvoiceHtmlPreview } from '@/components/invoices/invoice-html-preview';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
@@ -52,6 +52,7 @@ const formatDateWithOrdinal = (dateString: string | undefined) => {
 
 export default function CreateInvoicePage() {
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [dailyRate, setDailyRate] = useState<number | ''>(500);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isFetchingRate, setIsFetchingRate] = useState(false);
@@ -85,6 +86,16 @@ export default function CreateInvoicePage() {
   );
   const { data: invoices } = useCollection<Invoice>(invoicesQuery);
 
+  const projectsForClientQuery = useMemoFirebase(
+    () => {
+        if (!firestore || !selectedClientId) return null;
+        return query(collection(firestore, 'projects'), where('clientId', '==', selectedClientId))
+    },
+    [firestore, selectedClientId]
+  );
+  const { data: projectsForClient } = useCollection<Project>(projectsForClientQuery);
+
+
   const handleDownloadPdf = async () => {
     if (!previewRef.current || !invoiceData) return;
 
@@ -107,6 +118,10 @@ export default function CreateInvoicePage() {
   const selectedClient = useMemo(() => {
     return clients?.find(c => c.id === selectedClientId) || null;
   }, [selectedClientId, clients]);
+
+  const selectedProject = useMemo(() => {
+    return projectsForClient?.find(p => p.id === selectedProjectId) || null;
+  }, [selectedProjectId, projectsForClient]);
 
   const myCompany = useMemo(() => {
     return clients?.find(c => c.id === 'my-company-details') || null;
@@ -156,6 +171,10 @@ export default function CreateInvoicePage() {
   }, [toast]);
 
   useEffect(() => {
+    setSelectedProjectId(null); // Reset project when client changes
+  }, [selectedClientId])
+
+  useEffect(() => {
     if (selectedClient) {
       setCurrency(selectedClient.currency || 'EUR');
       
@@ -190,7 +209,7 @@ export default function CreateInvoicePage() {
   };
 
   const invoiceData: Omit<Invoice, 'id'> | null = useMemo(() => {
-    if (!selectedClient || !daysWorked || !dailyRate || !myCompany || !invoices) return null;
+    if (!selectedClient || !selectedProject || !daysWorked || !dailyRate || !myCompany || !invoices) return null;
 
     const subtotal = daysWorked * dailyRate;
     const vatAmount = selectedClient.hasVat ? subtotal * (myCompany?.vatRate || 0) : 0;
@@ -210,12 +229,14 @@ export default function CreateInvoicePage() {
       clientName: selectedClient.name,
       clientAddress: selectedClient.address,
       clientVat: selectedClient.vat,
+      projectId: selectedProject.id,
+      projectName: selectedProject.name,
       date: format(invoiceCreationDate, 'yyyy-MM-dd'),
       currency,
       language: selectedClient.language || 'English',
       items: [
         {
-          description: `Consultancy services for ${format(servicePeriod, 'MMMM yyyy')}`,
+          description: `${selectedProject.name}: Consultancy services for ${format(servicePeriod, 'MMMM yyyy')}`,
           quantity: daysWorked,
           unit: 'days',
           rate: dailyRate,
@@ -232,7 +253,7 @@ export default function CreateInvoicePage() {
       usedMaxExchangeRate: usedMaxRate,
       vatRate: selectedClient.hasVat ? myCompany.vatRate : undefined,
     };
-  }, [selectedClient, dailyRate, invoices, daysWorked, currency, exchangeRate, exchangeRateDate, myCompany, invoicedMonth, invoicedYear, invoiceCreationDate, usedMaxRate]);
+  }, [selectedClient, selectedProject, dailyRate, invoices, daysWorked, currency, exchangeRate, exchangeRateDate, myCompany, invoicedMonth, invoicedYear, invoiceCreationDate, usedMaxRate]);
   
   const generatePreview = useCallback(async () => {
     if (!invoiceData || !previewRef.current) {
@@ -322,13 +343,13 @@ export default function CreateInvoicePage() {
             <Card>
               <CardHeader>
                 <CardTitle>Invoice Details</CardTitle>
-                <CardDescription>Select a client and enter the billable days.</CardDescription>
+                <CardDescription>Select a client and project, then enter the billable days.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="client-select" className="mb-2 block">Client</Label>
-                        <Select onValueChange={setSelectedClientId}>
+                        <Select onValueChange={setSelectedClientId} value={selectedClientId || ''}>
                             <SelectTrigger id="client-select">
                             <SelectValue placeholder="Select a client" />
                             </SelectTrigger>
@@ -343,49 +364,64 @@ export default function CreateInvoicePage() {
                     </div>
 
                     {selectedClientId && (
-                         <div className="grid grid-cols-2 gap-4">
-                           <div className="space-y-2">
-                                <Label htmlFor="invoice-month" className="mb-2 block">Service Month</Label>
-                                <Select
-                                  value={String(invoicedMonth)}
-                                  onValueChange={(value) => setInvoicedMonth(Number(value))}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select month" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {months.map(month => (
-                                            <SelectItem key={month.value} value={String(month.value)}>
-                                                {month.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                           </div>
-                           <div className="space-y-2">
-                                <Label htmlFor="invoice-year" className="mb-2 block">Service Year</Label>
-                                <Select
-                                  value={String(invoicedYear)}
-                                  onValueChange={(value) => setInvoicedYear(Number(value))}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select year" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {years.map(year => (
-                                            <SelectItem key={year} value={String(year)}>
-                                                {year}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                           </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="project-select" className="mb-2 block">Project</Label>
+                            <Select onValueChange={setSelectedProjectId} value={selectedProjectId || ''} >
+                                <SelectTrigger id="project-select">
+                                    <SelectValue placeholder="Select a project" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {projectsForClient?.map(project => (
+                                        <SelectItem key={project.id} value={project.id}>
+                                            {project.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     )}
-                 </div>
+                </div>
 
-                {selectedClientId && (
+                {selectedClientId && selectedProjectId && (
                   <>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       <div className="space-y-2">
+                            <Label htmlFor="invoice-month" className="mb-2 block">Service Month</Label>
+                            <Select
+                              value={String(invoicedMonth)}
+                              onValueChange={(value) => setInvoicedMonth(Number(value))}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select month" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {months.map(month => (
+                                        <SelectItem key={month.value} value={String(month.value)}>
+                                            {month.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                       </div>
+                       <div className="space-y-2">
+                            <Label htmlFor="invoice-year" className="mb-2 block">Service Year</Label>
+                            <Select
+                              value={String(invoicedYear)}
+                              onValueChange={(value) => setInvoicedYear(Number(value))}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select year" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {years.map(year => (
+                                        <SelectItem key={year} value={String(year)}>
+                                            {year}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                       </div>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="days-worked" className="mb-2 block">Days Worked</Label>

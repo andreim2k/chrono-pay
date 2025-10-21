@@ -111,69 +111,87 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
     return `${dayWithOrdinal} of ${format(adjustedDate, monthYearFormat, locale)}`;
   }
 
+  const translateDescription = (description: string) => {
+    if (lang === 'en') return description;
+
+    // Example: "ProjectX: Consultancy services for MMMM yyyy"
+    const parts = description.split(': Consultancy services for ');
+    if (parts.length === 2) {
+      const projectName = parts[0];
+      const datePart = parts[1];
+      const servicePeriod = format(new Date(datePart), 'LLLL yyyy', { locale: ro });
+      return `${projectName}: ${t.consultancyServices(servicePeriod)}`;
+    }
+    return description; // fallback
+  }
+
 
   return (
-    <div className="bg-white text-gray-900 p-12 font-mono" style={{ width: '800px', minHeight: '1131px', display: 'flex', flexDirection: 'column' }}>
+    <div className="bg-white text-gray-900 font-sans" style={{ width: '794px', minHeight: '1123px', display: 'flex', flexDirection: 'column', padding: '60px' }}>
       <main className="flex-grow">
-        {/* Header */}
-        <header className="flex justify-between items-start pb-8">
-            <div className="flex flex-col">
-              <h1 className="text-3xl font-bold tracking-wider text-gray-900" style={{ letterSpacing: '0.1em' }}>{companyName}</h1>
-              <div className="text-sm text-gray-600 mt-4 space-y-2">
-                  <p><span className="font-bold text-sm">{t.address}:</span> {companyAddress}</p>
-                  {companyVat && <p><span className="font-bold text-sm">{lang === 'ro' ? 'CUI' : 'VAT'}:</span> {companyVat}</p>}
-                  
-                  <div className="pt-2">
-                    {companyBankName && <p className="text-sm"><span className="font-bold text-sm">{t.bank}:</span> {companyBankName}</p>}
-                    {companyIban && <p className="text-sm"><span className="font-bold text-sm">{t.iban}:</span> {companyIban}</p>}
-                    {companySwift && <p className="text-sm"><span className="font-bold text-sm">{t.swift}:</span> {companySwift}</p>}
-                  </div>
+        {/* Header with colored accent bar */}
+        <div className="border-b-4 border-blue-600 pb-6 mb-8">
+          <header className="flex justify-between items-start">
+              <div className="flex flex-col">
+                <h1 className="text-4xl font-bold text-gray-900 mb-1" style={{ letterSpacing: '-0.02em' }}>{companyName}</h1>
+                <div className="text-sm text-gray-600 mt-4 space-y-1 leading-relaxed">
+                    <p className="text-gray-700">{companyAddress}</p>
+                    {companyVat && <p className="text-gray-700">{lang === 'ro' ? 'CUI' : 'VAT'}: {companyVat}</p>}
+                </div>
               </div>
-            </div>
-            <div className="text-right">
-                <h2 className="text-4xl font-bold text-black uppercase tracking-widest">{t.invoice}</h2>
-                <p className="mt-1 text-sm text-black"># {invoiceNumber}</p>
-            </div>
-        </header>
+              <div className="text-right">
+                  <h2 className="text-5xl font-bold text-blue-600 uppercase" style={{ letterSpacing: '0.05em' }}>{t.invoice}</h2>
+                  <p className="mt-2 text-lg font-semibold text-gray-700">#{invoiceNumber}</p>
+              </div>
+          </header>
+        </div>
 
-        {/* Client Info and Dates */}
-        <div className="grid grid-cols-2 gap-8 mt-16 mb-16">
-          <div>
-            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide">{t.billedTo}</p>
-            <p className="text-lg font-bold text-gray-800 mt-2">{clientName}</p>
-            <p className="text-sm text-gray-600">{clientAddress}</p>
-            {clientVat && <p className="text-sm text-gray-600">{t.vatId}: {clientVat}</p>}
+        {/* Client Info and Dates - Side by Side Cards */}
+        <div className="grid grid-cols-2 gap-6 mb-10">
+          <div className="bg-gray-50 p-6 rounded-lg border-l-4 border-blue-600">
+            <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-3">{t.billedTo}</p>
+            <p className="text-lg font-bold text-gray-900 mb-1">{clientName}</p>
+            <p className="text-sm text-gray-600 leading-relaxed">{clientAddress}</p>
+            {clientVat && <p className="text-sm text-gray-600 mt-1">{t.vatId}: {clientVat}</p>}
+            {invoice.projectName && <p className="text-sm text-gray-600 mt-2">Project: <span className="font-medium">{invoice.projectName}</span></p>}
           </div>
-          <div className="text-right">
-              <div>
-                <p className="text-sm font-semibold text-gray-500 uppercase tracking-wide">{t.invoiceDate}</p>
-                <p className="text-lg text-gray-800 mt-2">{formatDateWithOrdinal(date)}</p>
+          <div className="bg-gray-50 p-6 rounded-lg border-l-4 border-blue-600">
+              <div className="mb-4">
+                <p className="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">{t.invoiceDate}</p>
+                <p className="text-base text-gray-800 font-medium">{formatDateWithOrdinal(date)}</p>
               </div>
+              {companyBankName && (
+                <div className="pt-3 border-t border-gray-200 space-y-1">
+                  <p className="text-xs text-gray-500 uppercase tracking-wider mb-2">{t.bank}</p>
+                  <p className="text-xs text-gray-700 font-medium">{companyBankName}</p>
+                  {companyIban && <p className="text-xs text-gray-600"><span className="font-semibold">{t.iban}:</span> {companyIban}</p>}
+                  {companySwift && <p className="text-xs text-gray-600"><span className="font-semibold">{t.swift}:</span> {companySwift}</p>}
+                </div>
+              )}
           </div>
         </div>
 
-        {/* Items Table */}
-        <div className="mt-10">
-            <table className="w-full text-left">
-                <thead className='bg-gray-50'>
-                    <tr>
-                        <th className="py-3 px-4 text-left font-semibold text-gray-600 uppercase text-xs">{t.description}</th>
-                        <th className="py-3 px-4 text-center w-32 font-semibold text-gray-600 uppercase text-xs">{t.quantity}</th>
-                        <th className="py-3 px-4 text-center w-32 font-semibold text-gray-600 uppercase text-xs">{t.rate}</th>
-                        <th className="py-3 px-4 text-right w-40 font-semibold text-gray-600 uppercase text-xs">{t.amount}</th>
+        {/* Items Table - Professional Design */}
+        <div className="mt-8 mb-8">
+            <table className="w-full">
+                <thead>
+                    <tr className="bg-blue-600 text-white">
+                        <th className="py-4 px-4 text-left font-semibold uppercase text-xs tracking-wider">{t.description}</th>
+                        <th className="py-4 px-4 text-center w-24 font-semibold uppercase text-xs tracking-wider">{t.quantity}</th>
+                        <th className="py-4 px-4 text-center w-32 font-semibold uppercase text-xs tracking-wider">{t.rate}</th>
+                        <th className="py-4 px-4 text-right w-32 font-semibold uppercase text-xs tracking-wider">{t.amount}</th>
                     </tr>
                 </thead>
-                <tbody className="text-gray-800 text-sm bg-gray-50/20">
+                <tbody>
                     {items.map((item, index) => {
-                        const servicePeriod = format(new Date(item.description.split(' for ')[1]), lang === 'ro' ? 'LLLL yyyy' : 'MMMM yyyy', lang === 'ro' ? { locale: ro } : {});
-                        const translatedDescription = t.consultancyServices(servicePeriod);
+                        const translatedDescription = translateDescription(item.description);
 
                         return (
-                            <tr key={index} className="border-b border-gray-200">
-                                <td className="py-4 px-4 text-left whitespace-nowrap">{translatedDescription}</td>
-                                <td className="py-4 px-4 text-center">{item.quantity.toFixed(2)} {t.unit[item.unit as keyof typeof t.unit] || item.unit}</td>
-                                <td className="py-4 px-4 text-center">{currencySymbol}{item.rate.toFixed(2)}</td>
-                                <td className="py-4 px-4 text-right">{currencySymbol}{item.amount.toFixed(2)}</td>
+                            <tr key={index} className={`border-b border-gray-200 ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
+                                <td className="py-4 px-4 text-sm text-gray-800">{translatedDescription}</td>
+                                <td className="py-4 px-4 text-center text-sm text-gray-700">{item.quantity.toFixed(2)} {t.unit[item.unit as keyof typeof t.unit] || item.unit}</td>
+                                <td className="py-4 px-4 text-center text-sm text-gray-700">{currencySymbol}{item.rate.toFixed(2)}</td>
+                                <td className="py-4 px-4 text-right text-sm font-semibold text-gray-900">{currencySymbol}{item.amount.toFixed(2)}</td>
                             </tr>
                         )
                     })}
@@ -181,49 +199,50 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
             </table>
         </div>
 
-        {/* Total */}
-        <div className="flex justify-end mt-8">
-            <div className="w-full max-w-sm space-y-2 py-4">
-                 {hasVat && (
-                    <>
-                        <div className="flex justify-between items-center text-md">
-                            <p className='text-gray-600'>{t.subtotal}</p>
-                            <p>{currencySymbol}{subtotal.toFixed(2)}</p>
-                        </div>
-                        <div className="flex justify-between items-center text-md">
-                            <p className='text-gray-600'>{t.vat} ({((vatRate || 0) * 100).toFixed(0)}%)</p>
-                            <p>{currencySymbol}{(vatAmount || 0).toFixed(2)}</p>
-                        </div>
-                    </>
-                  )}
-                <div className={`flex justify-between items-center text-2xl font-bold text-gray-900 ${hasVat ? 'border-t-2 border-gray-300 pt-2 mt-2' : ''}`}>
-                    <p>{t.total}</p>
-                    <p>{currencySymbol}{total.toFixed(2)}</p>
-                </div>
-                 {totalRon && currency !== 'RON' && (
-                  <div className="flex justify-between items-center text-md font-medium text-gray-600 border-t border-dashed pt-2 mt-2">
-                    <p>{t.totalRon}</p>
-                    <p>RON {totalRon.toFixed(2)}</p>
+        {/* Total Section - Enhanced Design */}
+        <div className="flex justify-end mt-10">
+            <div className="w-80">
+                <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                  {hasVat && (
+                      <>
+                          <div className="flex justify-between items-center py-2">
+                              <p className='text-sm font-medium text-gray-600'>{t.subtotal}</p>
+                              <p className="text-base font-semibold text-gray-800">{currencySymbol}{subtotal.toFixed(2)}</p>
+                          </div>
+                          <div className="flex justify-between items-center py-2">
+                              <p className='text-sm font-medium text-gray-600'>{t.vat} ({((vatRate || 0) * 100).toFixed(0)}%)</p>
+                              <p className="text-base font-semibold text-gray-800">{currencySymbol}{(vatAmount || 0).toFixed(2)}</p>
+                          </div>
+                          <div className="border-t border-gray-300 my-3"></div>
+                      </>
+                    )}
+                  <div className="flex justify-between items-center py-2 bg-blue-600 -mx-6 -mb-6 px-6 pb-6 pt-4 rounded-b-lg">
+                      <p className="text-base font-bold text-white uppercase tracking-wide">{t.total}</p>
+                      <p className="text-2xl font-bold text-white">{currencySymbol}{total.toFixed(2)}</p>
                   </div>
-                )}
+                   {totalRon && currency !== 'RON' && (
+                    <div className="flex justify-between items-center pt-4 px-2">
+                      <p className="text-sm font-medium text-gray-600">{t.totalRon}</p>
+                      <p className="text-base font-semibold text-gray-800">RON {totalRon.toFixed(2)}</p>
+                    </div>
+                  )}
+                </div>
             </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="mt-auto pt-4 text-center text-xs text-gray-400 border-t border-gray-300">
+      <footer className="mt-auto pt-8 text-center text-xs text-gray-500 border-t border-gray-200">
         {invoice.exchangeRate && invoice.totalRon && invoice.currency !== 'RON' && invoice.exchangeRateDate ? (
-            <p>
+            <p className="leading-relaxed">
               {invoice.usedMaxExchangeRate
                 ? t.footerMaxRate(formatDateWithOrdinal(invoice.exchangeRateDate), invoice.currency, invoice.exchangeRate)
                 : t.footerExchange(formatDateWithOrdinal(invoice.exchangeRateDate), invoice.currency, invoice.exchangeRate)}
             </p>
         ) : (
-          <p>{t.footerThanks}</p>
+          <p className="font-medium text-gray-600">{t.footerThanks}</p>
         )}
       </footer>
     </div>
   );
 }
-
-    

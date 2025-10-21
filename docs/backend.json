@@ -119,6 +119,14 @@
                 "clientVat": {
                     "type": "string"
                 },
+                "projectId": {
+                    "type": "string",
+                    "description": "The ID of the associated project."
+                },
+                "projectName": {
+                    "type": "string",
+                    "description": "The name of the associated project."
+                },
                 "date": {
                     "type": "string",
                     "format": "date"
@@ -196,6 +204,8 @@
             "required": [
                 "invoiceNumber",
                 "clientName",
+                "projectId",
+                "projectName",
                 "date",
                 "currency",
                 "items",

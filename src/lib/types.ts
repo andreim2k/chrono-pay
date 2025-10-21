@@ -45,6 +45,8 @@ export type Invoice = {
   clientName: string;
   clientAddress: string;
   clientVat: string;
+  projectId: string;
+  projectName: string;
   date: string;
   currency: string;
   language?: 'English' | 'Romanian';
@@ -67,4 +69,3 @@ export type Invoice = {
 };
 
 export type InvoiceTheme = 'Classic' | 'Modern' | 'Sunset' | 'Ocean' | 'Monochrome' | 'Minty' | 'Velvet' | 'Corporate Blue' | 'Earthy Tones' | 'Creative';
-
