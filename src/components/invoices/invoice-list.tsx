@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -12,8 +12,7 @@ import type { Invoice } from '@/lib/types';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import { useMemo } from 'react';
+import { doc, writeBatch } from 'firebase/firestore';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { InvoiceHtmlPreview } from './invoice-html-preview';
@@ -28,6 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 
 
 interface InvoiceListProps {
@@ -50,10 +50,17 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
   const [previewImage, setPreviewImage] = useState<string>('');
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
 
   const previewRef = useRef<HTMLDivElement>(null);
 
   const showVatColumn = useMemo(() => invoices.some(invoice => invoice.vatAmount && invoice.vatAmount > 0), [invoices]);
+  const selectedRowCount = useMemo(() => Object.values(selectedRows).filter(Boolean).length, [selectedRows]);
+
+  useEffect(() => {
+    // Clear selection when invoices change
+    setSelectedRows({});
+  }, [invoices]);
 
   const getBadgeVariant = (status: Invoice['status']) => {
     switch (status) {
@@ -157,6 +164,45 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
     setInvoiceToDelete(null);
     setIsAlertOpen(false);
   };
+  
+  const handleSelectAll = (checked: boolean) => {
+    const newSelectedRows: Record<string, boolean> = {};
+    if (checked) {
+      invoices.forEach(inv => newSelectedRows[inv.id] = true);
+    }
+    setSelectedRows(newSelectedRows);
+  };
+
+  const handleRowSelect = (invoiceId: string, checked: boolean) => {
+    setSelectedRows(prev => ({ ...prev, [invoiceId]: checked }));
+  };
+
+  const handleDeleteSelected = async () => {
+    if (!firestore || selectedRowCount === 0) return;
+    
+    const batch = writeBatch(firestore);
+    const idsToDelete = Object.keys(selectedRows).filter(id => selectedRows[id]);
+    
+    idsToDelete.forEach(id => {
+        const invoiceRef = doc(firestore, 'invoices', id);
+        batch.delete(invoiceRef);
+    });
+
+    try {
+        await batch.commit();
+        toast({
+            title: 'Invoices Deleted',
+            description: `${idsToDelete.length} invoices have been successfully deleted.`,
+        });
+        setSelectedRows({});
+    } catch (error) {
+        toast({
+            variant: 'destructive',
+            title: 'Error Deleting Invoices',
+            description: 'Could not delete the selected invoices. Please try again.',
+        });
+    }
+  };
 
 
   return (
@@ -167,14 +213,45 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>All Invoices</CardTitle>
-          <CardDescription>A list of all your past and present invoices.</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+                <CardTitle>All Invoices</CardTitle>
+                <CardDescription>A list of all your past and present invoices.</CardDescription>
+            </div>
+            {selectedRowCount > 0 && (
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete Selected ({selectedRowCount})
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will permanently delete {selectedRowCount} selected invoice(s). This action cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteSelected}>Delete Invoices</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
+                 <TableHead className="w-[50px]">
+                    <Checkbox
+                        checked={selectedRowCount > 0 && selectedRowCount === invoices.length}
+                        onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
+                        aria-label="Select all"
+                    />
+                </TableHead>
                 <TableHead>Invoice #</TableHead>
                 <TableHead>Client</TableHead>
                 <TableHead>Date</TableHead>
@@ -187,7 +264,14 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
             </TableHeader>
             <TableBody>
               {invoices.map((invoice) => (
-                <TableRow key={invoice.id}>
+                <TableRow key={invoice.id} data-state={selectedRows[invoice.id] && "selected"}>
+                  <TableCell>
+                     <Checkbox
+                        checked={selectedRows[invoice.id] || false}
+                        onCheckedChange={(checked) => handleRowSelect(invoice.id, Boolean(checked))}
+                        aria-label={`Select invoice ${invoice.invoiceNumber}`}
+                      />
+                  </TableCell>
                   <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
                   <TableCell>{invoice.clientName}</TableCell>
                   <TableCell>{format(new Date(invoice.date), 'MMM d, yyyy')}</TableCell>
