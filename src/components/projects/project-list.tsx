@@ -69,8 +69,8 @@ export function ProjectList({ projects }: ProjectListProps) {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {projects.map((project) => (
                 <Card key={project.id}>
-                    <CardHeader className="flex flex-row items-start justify-between">
-                        <div className='flex items-start gap-4'>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div className='flex items-center gap-4'>
                             <Avatar>
                                 <AvatarFallback>{getInitials(project.name)}</AvatarFallback>
                             </Avatar>
