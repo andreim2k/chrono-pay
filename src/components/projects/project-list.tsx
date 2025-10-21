@@ -96,7 +96,6 @@ export function ProjectList({ projects }: ProjectListProps) {
                         <DropdownMenuItem onSelect={() => openEditDialog(project)}>
                            Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem>View Tasks</DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => openDeleteDialog(project)}>
                           Delete
                         </DropdownMenuItem>
