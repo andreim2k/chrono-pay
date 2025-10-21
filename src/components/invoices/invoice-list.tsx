@@ -17,7 +17,7 @@ import { useMemo } from 'react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { InvoiceHtmlPreview } from './invoice-html-preview';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,6 +49,7 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [previewImage, setPreviewImage] = useState<string>('');
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
 
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -135,13 +136,14 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
     }
   }, [isPreviewOpen, generatePreview]);
 
-  const handleViewClick = (invoice: Invoice) => {
+  const openViewDialog = (invoice: Invoice) => {
     setInvoiceToView(invoice);
     setIsPreviewOpen(true);
   }
 
-  const handleDeleteClick = (invoice: Invoice) => {
+  const openDeleteDialog = (invoice: Invoice) => {
     setInvoiceToDelete(invoice);
+    setIsAlertOpen(true);
   }
 
   const confirmDelete = () => {
@@ -153,6 +155,7 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
       description: `Invoice ${invoiceToDelete.invoiceNumber} has been deleted.`,
     });
     setInvoiceToDelete(null);
+    setIsAlertOpen(false);
   };
 
 
@@ -206,15 +209,15 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
-                        <DropdownMenuItem onSelect={() => handleViewClick(invoice)}>
+                        <DropdownMenuItem onSelect={() => openViewDialog(invoice)}>
                           <Eye className="mr-2 h-4 w-4" /> View
                         </DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => handleDownloadPdf(invoice)}>
                           <Download className="mr-2 h-4 w-4" /> Download PDF
                         </DropdownMenuItem>
-                        {invoice.status === 'Created' && <DropdownMenuItem onClick={() => handleStatusChange(invoice, 'Sent')}>Mark as Sent</DropdownMenuItem>}
-                        {invoice.status === 'Sent' && <DropdownMenuItem onClick={() => handleStatusChange(invoice, 'Paid')}>Mark as Paid</DropdownMenuItem>}
-                        <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => handleDeleteClick(invoice)}>
+                        {invoice.status === 'Created' && <DropdownMenuItem onSelect={() => handleStatusChange(invoice, 'Sent')}>Mark as Sent</DropdownMenuItem>}
+                        {invoice.status === 'Sent' && <DropdownMenuItem onSelect={() => handleStatusChange(invoice, 'Paid')}>Mark as Paid</DropdownMenuItem>}
+                        <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => openDeleteDialog(invoice)}>
                           <Trash2 className="mr-2 h-4 w-4" /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -261,7 +264,7 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
       </Dialog>
       
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!invoiceToDelete} onOpenChange={(open) => !open && setInvoiceToDelete(null)}>
+      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
@@ -272,7 +275,7 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setInvoiceToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
