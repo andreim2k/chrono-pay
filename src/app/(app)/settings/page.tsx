@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,7 +15,8 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { EditClientDialog } from '@/components/projects/edit-client-dialog';
 
 const companySchema = z.object({
     name: z.string().min(1, 'Company name is required'),
@@ -33,6 +33,10 @@ type CompanyFormValues = z.infer<typeof companySchema>;
 export default function SettingsPage() {
     const firestore = useFirestore();
     const { toast } = useToast();
+    
+    const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
+    const [isEditOpen, setIsEditOpen] = useState(false);
+
 
     const clientsQuery = useMemoFirebase(
         () => (firestore ? collection(firestore, 'clients') : null),
@@ -103,131 +107,153 @@ export default function SettingsPage() {
             description: 'Your company information has been updated.',
         });
     }
+    
+    const onEditClient = (client: Client) => {
+        setClientToEdit(client);
+        setIsEditOpen(true);
+    }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">
-          Manage your account and workspace settings.
-        </p>
+    <>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+          <p className="text-muted-foreground">
+            Manage your account and workspace settings.
+          </p>
+        </div>
+        <Tabs defaultValue="company" className="w-full">
+          <TabsList className="grid w-full max-w-lg grid-cols-3">
+            <TabsTrigger value="company">My Company</TabsTrigger>
+            <TabsTrigger value="clients">Clients</TabsTrigger>
+            <TabsTrigger value="projects">Projects</TabsTrigger>
+          </TabsList>
+          <TabsContent value="company">
+              <Form {...form}>
+                  <form onSubmit={form.handleSubmit(handleSaveCompany)}>
+                      <Card>
+                          <CardHeader>
+                          <CardTitle>My Company</CardTitle>
+                          <CardDescription>
+                              Details of the company that issues invoices. This will appear on all your invoices.
+                          </CardDescription>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <FormField
+                                      control={form.control}
+                                      name="name"
+                                      render={({ field }) => (
+                                          <FormItem>
+                                              <FormLabel>Company Name</FormLabel>
+                                              <FormControl><Input {...field} /></FormControl>
+                                              <FormMessage />
+                                          </FormItem>
+                                      )}
+                                  />
+                                  <FormField
+                                      control={form.control}
+                                      name="vat"
+                                      render={({ field }) => (
+                                          <FormItem>
+                                              <FormLabel>VAT Number</FormLabel>
+                                              <FormControl><Input {...field} /></FormControl>
+                                              <FormMessage />
+                                          </FormItem>
+                                      )}
+                                  />
+                              </div>
+                               <FormField
+                                  control={form.control}
+                                  name="address"
+                                  render={({ field }) => (
+                                      <FormItem>
+                                          <FormLabel>Address</FormLabel>
+                                          <FormControl><Input {...field} /></FormControl>
+                                          <FormMessage />
+                                      </FormItem>
+                                  )}
+                              />
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <FormField
+                                      control={form.control}
+                                      name="bankName"
+                                      render={({ field }) => (
+                                          <FormItem>
+                                              <FormLabel>Bank Name</FormLabel>
+                                              <FormControl><Input {...field} /></FormControl>
+                                              <FormMessage />
+                                          </FormItem>
+                                      )}
+                                  />
+                                  <FormField
+                                      control={form.control}
+                                      name="swift"
+                                      render={({ field }) => (
+                                          <FormItem>
+                                              <FormLabel>SWIFT/BIC</FormLabel>
+                                              <FormControl><Input {...field} /></FormControl>
+                                              <FormMessage />
+                                          </FormItem>
+                                      )}
+                                  />
+                              </div>
+                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <FormField
+                                      control={form.control}
+                                      name="iban"
+                                      render={({ field }) => (
+                                          <FormItem>
+                                              <FormLabel>IBAN</FormLabel>
+                                              <FormControl><Input {...field} /></FormControl>
+                                              <FormMessage />
+                                          </FormItem>
+                                      )}
+                                  />
+                                   <FormField
+                                      control={form.control}
+                                      name="vatRate"
+                                      render={({ field }) => (
+                                          <FormItem>
+                                              <FormLabel>VAT Rate (%)</FormLabel>
+                                              <FormControl><Input type="number" {...field} /></FormControl>
+                                              <FormDescription>Enter the percentage, e.g., 19 for 19%.</FormDescription>
+                                              <FormMessage />
+                                          </FormItem>
+                                      )}
+                                  />
+                              </div>
+                          </CardContent>
+                          <CardFooter>
+                              <Button type="submit">Save Company Details</Button>
+                          </CardFooter>
+                      </Card>
+                  </form>
+              </Form>
+          </TabsContent>
+          <TabsContent value="clients">
+            <ClientList 
+                clients={clients?.filter(c => c.id !== 'my-company-details') || []}
+                onEditClient={onEditClient}
+             />
+          </TabsContent>
+          <TabsContent value="projects">
+            <ProjectList projects={projects || []} />
+          </TabsContent>
+        </Tabs>
       </div>
-      <Tabs defaultValue="company" className="w-full">
-        <TabsList className="grid w-full max-w-lg grid-cols-3">
-          <TabsTrigger value="company">My Company</TabsTrigger>
-          <TabsTrigger value="clients">Clients</TabsTrigger>
-          <TabsTrigger value="projects">Projects</TabsTrigger>
-        </TabsList>
-        <TabsContent value="company">
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleSaveCompany)}>
-                    <Card>
-                        <CardHeader>
-                        <CardTitle>My Company</CardTitle>
-                        <CardDescription>
-                            Details of the company that issues invoices. This will appear on all your invoices.
-                        </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="name"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Company Name</FormLabel>
-                                            <FormControl><Input {...field} /></FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="vat"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>VAT Number</FormLabel>
-                                            <FormControl><Input {...field} /></FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-                             <FormField
-                                control={form.control}
-                                name="address"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Address</FormLabel>
-                                        <FormControl><Input {...field} /></FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="bankName"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Bank Name</FormLabel>
-                                            <FormControl><Input {...field} /></FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="swift"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>SWIFT/BIC</FormLabel>
-                                            <FormControl><Input {...field} /></FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="iban"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>IBAN</FormLabel>
-                                            <FormControl><Input {...field} /></FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                 <FormField
-                                    control={form.control}
-                                    name="vatRate"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>VAT Rate (%)</FormLabel>
-                                            <FormControl><Input type="number" {...field} /></FormControl>
-                                            <FormDescription>Enter the percentage, e.g., 19 for 19%.</FormDescription>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-                        </CardContent>
-                        <CardFooter>
-                            <Button type="submit">Save Company Details</Button>
-                        </CardFooter>
-                    </Card>
-                </form>
-            </Form>
-        </TabsContent>
-        <TabsContent value="clients">
-          <ClientList clients={clients?.filter(c => c.id !== 'my-company-details') || []} />
-        </TabsContent>
-        <TabsContent value="projects">
-          <ProjectList projects={projects || []} />
-        </TabsContent>
-      </Tabs>
-    </div>
+      {clientToEdit && (
+        <EditClientDialog 
+          client={clientToEdit} 
+          isOpen={isEditOpen} 
+          onOpenChange={(open) => {
+            setIsEditOpen(open);
+            if (!open) {
+              setClientToEdit(null);
+            }
+          }}
+        />
+      )}
+    </>
   );
 }

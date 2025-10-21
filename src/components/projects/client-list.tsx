@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -9,7 +8,6 @@ import { MoreVertical } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Button } from '../ui/button';
 import { AddClientDialog } from './add-client-dialog';
-import { EditClientDialog } from './edit-client-dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,13 +26,12 @@ import { getInitials } from '@/lib/utils';
 
 interface ClientListProps {
   clients: Client[];
+  onEditClient: (client: Client) => void;
 }
 
-export function ClientList({ clients }: ClientListProps) {
+export function ClientList({ clients, onEditClient }: ClientListProps) {
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
-  const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
-  const [isEditOpen, setIsEditOpen] = useState(false);
 
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -54,11 +51,6 @@ export function ClientList({ clients }: ClientListProps) {
   const openDeleteDialog = (client: Client) => {
     setClientToDelete(client);
     setIsAlertOpen(true);
-  }
-
-  const openEditDialog = (client: Client) => {
-    setClientToEdit(client);
-    setIsEditOpen(true);
   }
 
   return (
@@ -88,7 +80,7 @@ export function ClientList({ clients }: ClientListProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    <DropdownMenuItem onSelect={() => openEditDialog(client)}>
+                    <DropdownMenuItem onSelect={() => onEditClient(client)}>
                       Edit
                     </DropdownMenuItem>
                     <DropdownMenuItem 
@@ -111,18 +103,6 @@ export function ClientList({ clients }: ClientListProps) {
           ))}
         </div>
       </div>
-      {clientToEdit && (
-        <EditClientDialog 
-          client={clientToEdit} 
-          isOpen={isEditOpen} 
-          onOpenChange={(open) => {
-            setIsEditOpen(open);
-            if (!open) {
-              setClientToEdit(null);
-            }
-          }}
-        />
-      )}
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
