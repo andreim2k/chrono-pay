@@ -32,6 +32,7 @@ interface ClientListProps {
 export function ClientList({ clients }: ClientListProps) {
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState<string | false>(false);
   const firestore = useFirestore();
   const { toast } = useToast();
 
@@ -51,6 +52,10 @@ export function ClientList({ clients }: ClientListProps) {
     setClientToDelete(client);
     setIsAlertOpen(true);
   }
+  
+  const handleDropdownOpenChange = (isOpen: boolean, clientId: string) => {
+    setIsMenuOpen(isOpen ? clientId : false);
+  };
 
   return (
     <>
@@ -72,14 +77,14 @@ export function ClientList({ clients }: ClientListProps) {
                     <CardTitle className="text-lg">{client.name}</CardTitle>
                   </div>
                 </div>
-                <DropdownMenu>
+                <DropdownMenu open={isMenuOpen === client.id} onOpenChange={(open) => handleDropdownOpenChange(open, client.id)}>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon">
                       <MoreVertical className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    <EditClientDialog client={client}>
+                    <EditClientDialog client={client} onOpenChange={(dialogOpen) => !dialogOpen && handleDropdownOpenChange(false, client.id)}>
                       <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Edit</DropdownMenuItem>
                     </EditClientDialog>
                     <DropdownMenuItem 

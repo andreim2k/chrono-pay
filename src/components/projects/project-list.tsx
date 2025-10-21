@@ -31,6 +31,7 @@ interface ProjectListProps {
 
 export function ProjectList({ projects }: ProjectListProps) {
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState<string | false>(false);
   const firestore = useFirestore();
   const { toast } = useToast();
   
@@ -43,6 +44,10 @@ export function ProjectList({ projects }: ProjectListProps) {
       description: `${projectToDelete.name} has been deleted.`,
     });
     setProjectToDelete(null);
+  };
+
+  const handleDropdownOpenChange = (isOpen: boolean, projectId: string) => {
+    setIsMenuOpen(isOpen ? projectId : false);
   };
   
   return (
@@ -72,14 +77,14 @@ export function ProjectList({ projects }: ProjectListProps) {
                   <TableCell className="font-medium">{project.name}</TableCell>
                   <TableCell>{project.clientName}</TableCell>
                   <TableCell className="text-right">
-                    <DropdownMenu>
+                    <DropdownMenu open={isMenuOpen === project.id} onOpenChange={(open) => handleDropdownOpenChange(open, project.id)}>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon">
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
-                        <EditProjectDialog project={project}>
+                        <EditProjectDialog project={project} onOpenChange={(dialogOpen) => !dialogOpen && handleDropdownOpenChange(false, project.id)}>
                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Edit</DropdownMenuItem>
                         </EditProjectDialog>
                         <DropdownMenuItem>View Tasks</DropdownMenuItem>

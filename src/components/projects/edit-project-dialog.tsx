@@ -24,7 +24,14 @@ import { collection, doc } from 'firebase/firestore';
 import type { Client, Project, InvoiceTheme } from '@/lib/types';
 import { themeStyles } from '../invoices/invoice-html-preview';
 
-const invoiceThemes: InvoiceTheme[] = ['Classic', 'Modern', 'Sunset', 'Ocean', 'Monochrome', 'Minty', 'Velvet', 'Corporate Blue', 'Earthy Tones', 'Creative'];
+const invoiceThemes: InvoiceTheme[] = [
+  'Classic', 'Modern', 'Sunset', 'Ocean', 'Monochrome', 'Minty', 'Velvet',
+  'Corporate Blue', 'Earthy Tones', 'Creative', 'Slate Gray', 'Dark Charcoal',
+  'Navy Blue', 'Forest Green', 'Burgundy', 'Teal', 'Coral', 'Lavender',
+  'Golden', 'Steel Blue', 'Light Blue', 'Sky Blue', 'Mint Green', 'Lime',
+  'Peach', 'Rose', 'Lilac', 'Sand', 'Olive', 'Maroon', 'Deep Purple',
+  'Turquoise', 'Charcoal', 'Crimson', 'Sapphire'
+];
 
 const projectSchema = z.object({
   name: z.string().min(1, 'Project name is required'),
@@ -37,9 +44,10 @@ type ProjectFormValues = z.infer<typeof projectSchema>;
 interface EditProjectDialogProps {
     project: Project;
     children: React.ReactNode;
+    onOpenChange?: (isOpen: boolean) => void;
 }
 
-export function EditProjectDialog({ project, children }: EditProjectDialogProps) {
+export function EditProjectDialog({ project, children, onOpenChange }: EditProjectDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -61,6 +69,13 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
     },
   });
 
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (onOpenChange) {
+      onOpenChange(open);
+    }
+  };
+
   const onSubmit = (data: ProjectFormValues) => {
     if (!firestore) return;
     const client = clients?.find(c => c.id === data.clientId);
@@ -75,11 +90,11 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
       title: 'Project Updated',
       description: `${data.name} has been updated.`,
     });
-    setIsOpen(false);
+    handleOpenChange(false);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
@@ -168,7 +183,7 @@ export function EditProjectDialog({ project, children }: EditProjectDialogProps)
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+              <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
                 Cancel
               </Button>
               <Button type="submit">Save Changes</Button>

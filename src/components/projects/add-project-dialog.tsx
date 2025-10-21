@@ -25,7 +25,14 @@ import { collection } from 'firebase/firestore';
 import type { Client, InvoiceTheme } from '@/lib/types';
 import { themeStyles } from '../invoices/invoice-html-preview';
 
-const invoiceThemes: InvoiceTheme[] = ['Classic', 'Modern', 'Sunset', 'Ocean', 'Monochrome', 'Minty', 'Velvet', 'Corporate Blue', 'Earthy Tones', 'Creative'];
+const invoiceThemes: InvoiceTheme[] = [
+  'Classic', 'Modern', 'Sunset', 'Ocean', 'Monochrome', 'Minty', 'Velvet',
+  'Corporate Blue', 'Earthy Tones', 'Creative', 'Slate Gray', 'Dark Charcoal',
+  'Navy Blue', 'Forest Green', 'Burgundy', 'Teal', 'Coral', 'Lavender',
+  'Golden', 'Steel Blue', 'Light Blue', 'Sky Blue', 'Mint Green', 'Lime',
+  'Peach', 'Rose', 'Lilac', 'Sand', 'Olive', 'Maroon', 'Deep Purple',
+  'Turquoise', 'Charcoal', 'Crimson', 'Sapphire'
+];
 
 const projectSchema = z.object({
   name: z.string().min(1, 'Project name is required'),

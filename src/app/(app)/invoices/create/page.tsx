@@ -20,7 +20,14 @@ import { InvoiceHtmlPreview, themeStyles } from '@/components/invoices/invoice-h
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 const currencies = ['EUR', 'USD', 'GBP', 'RON'];
-const invoiceThemes: InvoiceTheme[] = ['Classic', 'Modern', 'Sunset', 'Ocean', 'Monochrome', 'Minty', 'Velvet', 'Corporate Blue', 'Earthy Tones', 'Creative'];
+const invoiceThemes: InvoiceTheme[] = [
+  'Classic', 'Modern', 'Sunset', 'Ocean', 'Monochrome', 'Minty', 'Velvet',
+  'Corporate Blue', 'Earthy Tones', 'Creative', 'Slate Gray', 'Dark Charcoal',
+  'Navy Blue', 'Forest Green', 'Burgundy', 'Teal', 'Coral', 'Lavender',
+  'Golden', 'Steel Blue', 'Light Blue', 'Sky Blue', 'Mint Green', 'Lime',
+  'Peach', 'Rose', 'Lilac', 'Sand', 'Olive', 'Maroon', 'Deep Purple',
+  'Turquoise', 'Charcoal', 'Crimson', 'Sapphire'
+];
 
 const months = Array.from({ length: 12 }, (_, i) => ({
   value: i,
