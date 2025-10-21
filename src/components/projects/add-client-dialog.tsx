@@ -78,6 +78,13 @@ export function AddClientDialog() {
       dataToSave.maxExchangeRateDate = format(data.maxExchangeRateDate, 'yyyy-MM-dd');
     }
     
+    // Remove undefined fields to prevent Firestore errors
+    Object.keys(dataToSave).forEach(key => {
+      if (dataToSave[key] === undefined) {
+        delete dataToSave[key];
+      }
+    });
+
     addDocumentNonBlocking(clientsCollection, dataToSave);
     
     toast({
