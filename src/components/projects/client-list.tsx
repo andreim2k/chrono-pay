@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import type { Client } from '@/lib/types';
-import { Card, CardHeader, CardTitle } from '../ui/card';
+import { Card, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { GripVertical, MoreVertical } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
@@ -76,6 +76,11 @@ function SortableClientItem({ client, onEdit, onDelete }: { client: Client, onEd
             </Avatar>
             <div>
               <CardTitle className="text-lg">{client.name}</CardTitle>
+              <CardDescription>
+                {client.address}
+                <br/>
+                VAT: {client.vat}
+              </CardDescription>
             </div>
           </div>
           <DropdownMenu>
