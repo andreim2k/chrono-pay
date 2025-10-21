@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -95,7 +94,7 @@ export default function LoginPage() {
     <Card className="w-full max-w-sm">
       <CardHeader>
         <CardTitle>Sign In to ChronoPay</CardTitle>
-        <CardDescription>Welcome! ChronoPay is your streamlined solution for timesheets and invoicing. Sign in to manage your clients, projects, and billing with ease.</CardDescription>
+        <CardDescription>Welcome! ChronoPay is your streamlined solution for invoicing. Sign in to manage your clients, projects, and billing with ease.</CardDescription>
       </CardHeader>
       <CardContent>
         <Button 

@@ -7,7 +7,7 @@ import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
   title: 'ChronoPay',
-  description: 'Timesheets and Invoicing made easy',
+  description: 'Invoicing made easy',
 };
 
 export default function RootLayout({

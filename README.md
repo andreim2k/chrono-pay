@@ -1,6 +1,6 @@
 # ChronoPay - Invoicing Application
 
-This is a full-stack invoicing application built with Next.js and Firebase, designed to make timesheet and invoice management simple and efficient.
+This is a full-stack invoicing application built with Next.js and Firebase, designed to make invoice management simple and efficient.
 
 ## Tech Stack
 
