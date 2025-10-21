@@ -115,7 +115,12 @@ export function ClientList({ clients }: ClientListProps) {
         <EditClientDialog 
           client={clientToEdit} 
           isOpen={isEditOpen} 
-          onOpenChange={setIsEditOpen} 
+          onOpenChange={(open) => {
+            setIsEditOpen(open);
+            if (!open) {
+              setClientToEdit(null);
+            }
+          }}
         />
       )}
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>

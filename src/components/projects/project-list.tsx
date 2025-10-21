@@ -106,7 +106,12 @@ export function ProjectList({ projects }: ProjectListProps) {
         <EditProjectDialog
             project={projectToEdit}
             isOpen={isEditOpen}
-            onOpenChange={setIsEditOpen}
+            onOpenChange={(open) => {
+              setIsEditOpen(open);
+              if (!open) {
+                setProjectToEdit(null);
+              }
+            }}
         />
       )}
      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
