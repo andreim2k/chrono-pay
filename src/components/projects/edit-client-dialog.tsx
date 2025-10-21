@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -74,19 +73,21 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
   });
 
   useEffect(() => {
-    form.reset({
-      name: client.name,
-      address: client.address,
-      vat: client.vat,
-      iban: client.iban,
-      currency: client.currency || 'EUR',
-      language: client.language || 'English',
-      invoiceNumberPrefix: client.invoiceNumberPrefix || '',
-      hasVat: client.hasVat || false,
-      maxExchangeRate: client.maxExchangeRate || undefined,
-      maxExchangeRateDate: client.maxExchangeRateDate ? parseISO(client.maxExchangeRateDate) : undefined,
-    });
-  }, [client, form]);
+    if (isOpen) {
+        form.reset({
+            name: client.name,
+            address: client.address,
+            vat: client.vat,
+            iban: client.iban,
+            currency: client.currency || 'EUR',
+            language: client.language || 'English',
+            invoiceNumberPrefix: client.invoiceNumberPrefix || '',
+            hasVat: client.hasVat || false,
+            maxExchangeRate: client.maxExchangeRate || undefined,
+            maxExchangeRateDate: client.maxExchangeRateDate ? parseISO(client.maxExchangeRateDate) : undefined,
+        });
+    }
+  }, [isOpen, client, form]);
 
   const onSubmit = (data: ClientFormValues) => {
     if (!firestore) return;
