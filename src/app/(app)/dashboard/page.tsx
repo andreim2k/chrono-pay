@@ -119,7 +119,7 @@ export default function DashboardPage() {
             description="From paid invoices"
             />
         </div>
-        <div className="md:col-span-1 lg:col-span-2 xl:col-span-3">
+        <div className="md:col-span-1 lg:col-span-1 xl:col-span-3">
              <StatCard
             title="Outstanding VAT"
             value={dashboardStats.outstandingVat}
