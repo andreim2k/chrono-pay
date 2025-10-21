@@ -5,8 +5,18 @@ import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore } from '@/firebase';
-import { writeBatch, collection, doc } from 'firebase/firestore';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { writeBatch, collection, doc, query, getDocs } from 'firebase/firestore';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface DataImportProps {
   allowedCollections?: ('clients' | 'projects' | 'invoices')[];
@@ -14,49 +24,88 @@ interface DataImportProps {
 
 export function DataImport({ allowedCollections = ['clients', 'projects', 'invoices'] }: DataImportProps) {
   const [isImporting, setIsImporting] = useState(false);
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [fileToImport, setFileToImport] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const firestore = useFirestore();
+  
+  const clientsQuery = useMemoFirebase(() => (firestore ? collection(firestore, 'clients') : null), [firestore]);
+  const projectsQuery = useMemoFirebase(() => (firestore ? collection(firestore, 'projects') : null), [firestore]);
+  const invoicesQuery = useMemoFirebase(() => (firestore ? collection(firestore, 'invoices') : null), [firestore]);
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!firestore) {
-      toast({
-        variant: 'destructive',
-        title: 'Import Failed',
-        description: 'Firestore is not available.',
-      });
-      return;
-    }
+  const { data: clients } = useCollection(clientsQuery);
+  const { data: projects } = useCollection(projectsQuery);
+  const { data: invoices } = useCollection(invoicesQuery);
+
+  const dataMap = {
+    clients,
+    projects,
+    invoices
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    setFileToImport(file);
+    setIsAlertOpen(true);
+    
+    // Reset file input so the same file can be selected again
+    if(fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleConfirmImport = async () => {
+    if (!firestore || !fileToImport) {
+      toast({
+        variant: 'destructive',
+        title: 'Import Failed',
+        description: 'Firestore is not available or no file was selected.',
+      });
+      return;
+    }
+    
     setIsImporting(true);
     try {
-      const fileContent = await file.text();
-      const data = JSON.parse(fileContent);
+      const fileContent = await fileToImport.text();
+      const dataToImport = JSON.parse(fileContent);
 
       const batch = writeBatch(firestore);
-      let count = 0;
+      let importCount = 0;
 
+      // 1. Delete existing documents in allowed collections
       for (const collectionName of allowedCollections) {
-        const collectionData = data[collectionName];
+        const collectionData = dataMap[collectionName as keyof typeof dataMap];
+        if(collectionData) {
+            for (const docToDelete of collectionData) {
+                const docRef = doc(firestore, collectionName, docToDelete.id);
+                batch.delete(docRef);
+            }
+        }
+      }
+
+      // 2. Add new documents from the import file
+      for (const collectionName of allowedCollections) {
+        const collectionData = dataToImport[collectionName];
         if (Array.isArray(collectionData)) {
-          const collectionRef = collection(firestore, collectionName);
-          collectionData.forEach((docData) => {
+          collectionData.forEach((docData: any) => {
+            const collectionRef = collection(firestore, collectionName);
             let docRef;
-            if (collectionName === 'clients' && docData.name === "My Company's Company") {
-              // Special handling for 'my-company-details'
-              docRef = doc(firestore, 'clients', 'my-company-details');
+             // Special handling for 'my-company-details' to keep its ID consistent
+            if (collectionName === 'clients' && docData.name?.includes("Company")) {
+                 docRef = doc(firestore, 'clients', 'my-company-details');
             } else {
-              docRef = doc(collectionRef);
+                 docRef = doc(collectionRef); // Create new doc with new ID
             }
             batch.set(docRef, docData);
-            count++;
+            importCount++;
           });
         }
       }
 
-      if (count === 0) {
+      if (importCount === 0) {
         toast({
             variant: 'destructive',
             title: 'Import Failed',
@@ -70,10 +119,9 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
 
       toast({
         title: 'Import Successful',
-        description: `Successfully imported ${count} documents. The page will now refresh.`,
+        description: `Successfully imported ${importCount} documents. The page will now refresh.`,
       });
 
-      // Refresh the page to show the new data
       setTimeout(() => {
         window.location.reload();
       }, 2000);
@@ -87,10 +135,7 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
       });
     } finally {
       setIsImporting(false);
-      // Reset file input
-      if(fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      setFileToImport(null);
     }
   };
 
@@ -115,6 +160,24 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
         )}
         Import Data
       </Button>
+      
+      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete all existing data in the selected collections ({allowedCollections.join(', ')}) and replace it with the data from the imported file. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setFileToImport(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmImport} disabled={isImporting}>
+              {isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Continue Import
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
