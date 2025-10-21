@@ -23,6 +23,7 @@ import {
 import { useFirestore, deleteDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { getInitials } from '@/lib/utils';
 
 
 interface ClientListProps {
@@ -59,18 +60,6 @@ export function ClientList({ clients }: ClientListProps) {
     setClientToEdit(client);
     setIsEditOpen(true);
   }
-  
-  const getInitials = (name: string) => {
-    if (!name) return '';
-    const words = name.split(' ').filter(Boolean);
-    if (words.length > 1) {
-      return (words[0][0] + words[1][0]).toUpperCase();
-    }
-    if (words.length === 1 && words[0].length > 1) {
-      return words[0].substring(0, 2).toUpperCase();
-    }
-    return name.charAt(0).toUpperCase();
-  };
 
   return (
     <>

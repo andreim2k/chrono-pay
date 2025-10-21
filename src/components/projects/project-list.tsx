@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import type { Project } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import { Card, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Button } from '../ui/button';
 import { MoreVertical } from 'lucide-react';
@@ -23,6 +23,7 @@ import { doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { EditProjectDialog } from './edit-project-dialog';
 import { Avatar, AvatarFallback } from '../ui/avatar';
+import { getInitials } from '@/lib/utils';
 
 interface ProjectListProps {
   projects: Project[];
@@ -58,19 +59,6 @@ export function ProjectList({ projects }: ProjectListProps) {
     setProjectToEdit(project);
     setIsEditOpen(true);
   };
-  
-  const getInitials = (name: string) => {
-    if (!name) return '';
-    const words = name.split(' ').filter(Boolean);
-    if (words.length > 1) {
-      return (words[0][0] + words[1][0]).toUpperCase();
-    }
-    if (words.length === 1 && words[0].length > 1) {
-      return words[0].substring(0, 2).toUpperCase();
-    }
-    return name.charAt(0).toUpperCase();
-  };
-
 
   return (
     <>
