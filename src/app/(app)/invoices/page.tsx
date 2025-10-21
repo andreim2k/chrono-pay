@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -30,8 +29,15 @@ export default function InvoicesPage() {
           </p>
         </div>
         <div className='flex items-center gap-2'>
-          <DataExport data={{invoices: invoices || []}} fileName='invoices_export.json' />
-          <DataImport allowedCollections={['invoices']} />
+          <DataExport 
+            data={{invoices: invoices || []}} 
+            fileName='invoices_export.json' 
+            buttonLabel="Export Invoices"
+          />
+          <DataImport 
+            allowedCollections={['invoices']}
+            buttonLabel="Import Invoices"
+          />
           <Button asChild>
             <Link href="/invoices/create">
               <PlusCircle className="mr-2 h-4 w-4" /> Create New Invoice

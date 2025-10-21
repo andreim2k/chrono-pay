@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -8,9 +7,10 @@ import { useToast } from '@/hooks/use-toast';
 interface DataExportProps {
   data: Record<string, any[]>;
   fileName?: string;
+  buttonLabel?: string;
 }
 
-export function DataExport({ data, fileName = 'chronopay_backup.json' }: DataExportProps) {
+export function DataExport({ data, fileName = 'chronopay_backup.json', buttonLabel = 'Export Data' }: DataExportProps) {
   const { toast } = useToast();
 
   const handleExport = () => {
@@ -53,7 +53,7 @@ export function DataExport({ data, fileName = 'chronopay_backup.json' }: DataExp
   return (
     <Button variant="outline" onClick={handleExport} disabled={!hasData}>
       <Upload className="mr-2 h-4 w-4" />
-      Export Data
+      {buttonLabel}
     </Button>
   );
 }

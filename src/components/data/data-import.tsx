@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useRef } from 'react';
@@ -6,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { writeBatch, collection, doc, query, getDocs } from 'firebase/firestore';
+import { writeBatch, collection, doc } from 'firebase/firestore';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,9 +19,10 @@ import {
 
 interface DataImportProps {
   allowedCollections?: ('clients' | 'projects' | 'invoices')[];
+  buttonLabel?: string;
 }
 
-export function DataImport({ allowedCollections = ['clients', 'projects', 'invoices'] }: DataImportProps) {
+export function DataImport({ allowedCollections = ['clients', 'projects', 'invoices'], buttonLabel = 'Import Data' }: DataImportProps) {
   const [isImporting, setIsImporting] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [fileToImport, setFileToImport] = useState<File | null>(null);
@@ -80,6 +80,10 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
         const collectionData = dataMap[collectionName as keyof typeof dataMap];
         if(collectionData) {
             for (const docToDelete of collectionData) {
+                 // Special handling for 'my-company-details' to prevent deletion
+                if (collectionName === 'clients' && docToDelete.id === 'my-company-details') {
+                    continue;
+                }
                 const docRef = doc(firestore, collectionName, docToDelete.id);
                 batch.delete(docRef);
             }
@@ -158,7 +162,7 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
         ) : (
           <Download className="mr-2 h-4 w-4" />
         )}
-        Import Data
+        {buttonLabel}
       </Button>
       
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
