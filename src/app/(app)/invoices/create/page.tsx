@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
@@ -488,13 +487,24 @@ export default function CreateInvoicePage() {
                              <Label htmlFor="theme-select" className="mb-2 block">Invoice Theme</Label>
                             <Select value={invoiceTheme} onValueChange={(value) => setInvoiceTheme(value as InvoiceTheme)}>
                                 <SelectTrigger id="theme-select">
-                                    <SelectValue placeholder="Select a theme" />
+                                    <SelectValue>
+                                        <div className="flex items-center gap-2">
+                                            <div className="h-5 w-8 rounded-sm border flex overflow-hidden">
+                                                <div className="w-1/3" style={{ backgroundColor: themeStyles[invoiceTheme].accent.replace('border-','').replace('-600','-500').replace('-800','-500').replace('-400','-300').replace('-700','-500') }} />
+                                                <div className="w-2/3" style={{ backgroundColor: themeStyles[invoiceTheme].tableHeaderBg.replace('bg-', '') }} />
+                                            </div>
+                                            {invoiceTheme}
+                                        </div>
+                                    </SelectValue>
                                 </SelectTrigger>
                                 <SelectContent>
                                     {invoiceThemes.map(theme => (
                                         <SelectItem key={theme} value={theme}>
-                                            <div className="flex items-center gap-2">
-                                                <div className="h-4 w-4 rounded-full border" style={{ backgroundColor: themeStyles[theme].tableHeaderBg.replace('bg-', '') }}/>
+                                            <div className="flex items-center gap-3">
+                                                <div className="h-5 w-8 rounded-sm border flex overflow-hidden">
+                                                    <div className="w-1/3" style={{ backgroundColor: themeStyles[theme].accent.replace('border-','').replace('-600','-500').replace('-800','-500').replace('-400','-300').replace('-700','-500') }} />
+                                                    <div className="w-2/3" style={{ backgroundColor: themeStyles[theme].tableHeaderBg.replace('bg-', '') }} />
+                                                </div>
                                                 {theme}
                                             </div>
                                         </SelectItem>
@@ -587,5 +597,3 @@ export default function CreateInvoicePage() {
     </>
   );
 }
-
-    

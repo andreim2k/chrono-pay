@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -137,14 +136,25 @@ export function AddProjectDialog() {
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a theme" />
+                         <SelectValue>
+                            <div className="flex items-center gap-2">
+                                <div className="h-5 w-8 rounded-sm border flex overflow-hidden">
+                                    <div className="w-1/3" style={{ backgroundColor: themeStyles[field.value].accent.replace('border-','').replace('-600','-500').replace('-800','-500').replace('-400','-300').replace('-700','-500') }} />
+                                    <div className="w-2/3" style={{ backgroundColor: themeStyles[field.value].tableHeaderBg.replace('bg-', '') }} />
+                                </div>
+                                {field.value}
+                            </div>
+                        </SelectValue>
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {invoiceThemes.map(theme => (
                         <SelectItem key={theme} value={theme}>
-                          <div className="flex items-center gap-2">
-                            <div className="h-4 w-4 rounded-full border" style={{ backgroundColor: themeStyles[theme].tableHeaderBg.replace('bg-', '') }}/>
+                          <div className="flex items-center gap-3">
+                            <div className="h-5 w-8 rounded-sm border flex overflow-hidden">
+                                <div className="w-1/3" style={{ backgroundColor: themeStyles[theme].accent.replace('border-','').replace('-600','-500').replace('-800','-500').replace('-400','-300').replace('-700','-500') }} />
+                                <div className="w-2/3" style={{ backgroundColor: themeStyles[theme].tableHeaderBg.replace('bg-', '') }} />
+                            </div>
                             {theme}
                           </div>
                         </SelectItem>
@@ -167,5 +177,3 @@ export function AddProjectDialog() {
     </Dialog>
   );
 }
-
-    
