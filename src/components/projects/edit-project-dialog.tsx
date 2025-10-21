@@ -17,8 +17,8 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { useCollection, useFirestore, setDocumentNonBlocking, useMemoFirebase } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection, doc, setDoc } from 'firebase/firestore';
 import type { Client, Project, InvoiceTheme } from '@/lib/types';
 import { themeStyles } from '../invoices/invoice-html-preview';
 import { useMemo } from 'react';
@@ -67,12 +67,12 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
     },
   });
 
-  const onSubmit = (data: ProjectFormValues) => {
+  const onSubmit = async (data: ProjectFormValues) => {
     if (!firestore) return;
     const client = clients?.find(c => c.id === data.clientId);
     const projectRef = doc(firestore, `projects`, project.id);
     
-    setDocumentNonBlocking(projectRef, { 
+    await setDoc(projectRef, { 
       ...data, 
       clientName: client?.name 
     }, { merge: true });

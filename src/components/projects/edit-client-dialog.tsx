@@ -17,8 +17,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Client } from '@/lib/types';
-import { useFirestore, setDocumentNonBlocking } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 import { Switch } from '../ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { cn } from '@/lib/utils';
@@ -89,7 +89,7 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
     }
   }, [isOpen, client, form]);
 
-  const onSubmit = (data: ClientFormValues) => {
+  const onSubmit = async (data: ClientFormValues) => {
     if (!firestore) return;
     const clientRef = doc(firestore, `clients`, client.id);
 
@@ -102,7 +102,7 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
       dataToSave.maxExchangeRateDate = format(data.maxExchangeRateDate, 'yyyy-MM-dd');
     }
 
-    setDocumentNonBlocking(clientRef, dataToSave, { merge: true });
+    await setDoc(clientRef, dataToSave, { merge: true });
     
     toast({
       title: 'Client Updated',
