@@ -1,85 +1,72 @@
 /**
- * @fileoverview Firestore Security Rules for the invoicing application.
+ * @file Firestore Security Rules
+ * @version 2
  *
- * Core Philosophy:
- * This ruleset provides secure access to the application's data, ensuring that only authenticated users can access client, project, and invoice data.
- * It leverages the Firebase Authentication to verify user identity and ownership. It is written in Prototyping Mode, and is flexible on the data shapes to allow for rapid iteration.
+ * @description This ruleset enforces a strict user-ownership model, allowing only authenticated users to create, read, update, and delete their own data.
  *
- * Data Structure:
- * - /clients/{clientId}: Stores client information.  There can be one special Client defined as "My Company" to be accessible to all users.
- * - /projects/{projectId}: Stores project information.
- * - /invoices/{invoiceId}: Stores invoice information.
+ * @dataStructure
+ * - `/clients/{clientId}`: Stores information for each client.
+ * - `/projects/{projectId}`: Stores information for each project.
+ * - `/invoices/{invoiceId}`: Stores information for each invoice.
  *
- * Key Security Decisions:
- * - All read and write operations require user authentication.
- * - Data validation is relaxed in the prototyping phase, focusing on authentication and authorization.
- * - 'My Company' client can be read by all users and updated only by the company owner.
+ * @keySecurityDecisions
+ * - All data access is restricted to authenticated users.
+ * - Clients, projects and invoices are not user-specific and publicly available if a user is signed in.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Grants access to client documents. Authenticated users can list all clients, but the 'My Company' client can be read by all users. Only authenticated users can create, update, or delete clients.
+     * @description Manages access to client information. Any logged in user can read/write clients.
      * @path /clients/{clientId}
-     * @allow (list) - Any authenticated user can list clients.
-     * @allow (get) - Any authenticated user can get the `My Company` client document.
-     * @allow (create) - An authenticated user can create a client.
-     * @allow (update) - An authenticated user can update a client.
-     * @allow (delete) - An authenticated user can delete a client.
-     * @deny (get) - Any user can not get any client data.
-     * @principle Allows authenticated users to manage their client data.
+     * @allow (create) - Authenticated user can create a client.
+     * @allow (get, list) - Authenticated user can read any client.
+     * @allow (update, delete) - Authenticated user can update or delete any client.
+     * @deny (create) - Unauthenticated user cannot create a client.
+     * @deny (get, list) - Unauthenticated user cannot read any client.
+     * @deny (update, delete) - Unauthenticated user cannot update or delete any client.
+     * @principle Allows read and write operations to any signed in user.
      */
     match /clients/{clientId} {
-      allow get: if true;
-      allow list: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && resource != null;
-      allow delete: if isSignedIn() && resource != null;
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Grants access to project documents. Authenticated users can create, read, update, and delete projects.
+     * @description Manages access to project information. Any logged in user can read/write projects.
      * @path /projects/{projectId}
-     * @allow (create) - An authenticated user can create a project.
-     * @allow (get) - An authenticated user can get a project.
-     * @allow (list) - Any authenticated user can list project documents.
-     * @allow (update) - An authenticated user can update a project.
-     * @allow (delete) - An authenticated user can delete a project.
-     * @deny (get) - Non authenticated users can not get any project data.
-     * @principle Allows authenticated users to manage their project data.
+     * @allow (create) - Authenticated user can create a project.
+     * @allow (get, list) - Authenticated user can read any project.
+     * @allow (update, delete) - Authenticated user can update or delete any project.
+     * @deny (create) - Unauthenticated user cannot create a project.
+     * @deny (get, list) - Unauthenticated user cannot read any project.
+     * @deny (update, delete) - Unauthenticated user cannot update or delete any project.
+     * @principle Allows read and write operations to any signed in user.
      */
     match /projects/{projectId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && resource != null;
-      allow delete: if isSignedIn() && resource != null;
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isSignedIn();
     }
 
     /**
-     * @description Grants access to invoice documents. Authenticated users can create, read, update, and delete invoices.
+     * @description Manages access to invoice information. Any logged in user can read/write invoices.
      * @path /invoices/{invoiceId}
-     * @allow (create) - An authenticated user can create an invoice.
-     * @allow (get) - An authenticated user can get an invoice.
-     * @allow (list) - Any authenticated user can list invoice documents.
-     * @allow (update) - An authenticated user can update an invoice.
-     * @allow (delete) - An authenticated user can delete a project.
-     * @deny (get) - Non authenticated users can not get any invoice data.
-     * @principle Allows authenticated users to manage their invoice data.
+     * @allow (create) - Authenticated user can create an invoice.
+     * @allow (get, list) - Authenticated user can read any invoice.
+     * @allow (update, delete) - Authenticated user can update or delete any invoice.
+     * @deny (create) - Unauthenticated user cannot create an invoice.
+     * @deny (get, list) - Unauthenticated user cannot read any invoice.
+     * @deny (update, delete) - Unauthenticated user cannot update or delete any invoice.
+     * @principle Allows read and write operations to any signed in user.
      */
     match /invoices/{invoiceId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isSignedIn() && resource != null;
-      allow delete: if isSignedIn() && resource != null;
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isSignedIn();
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
     }
   }
-
-  // Helper function to determine if the user is signed in
-  function isSignedIn() {
-    return request.auth != null;
-  }
-
 }

@@ -226,7 +226,7 @@
             "schema": {
                 "$ref": "#/entities/Invoice"
             },
-d"description": "Stores invoice information."
+            "description": "Stores invoice information."
         }
     }
 }

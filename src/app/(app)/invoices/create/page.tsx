@@ -327,7 +327,7 @@ export default function CreateInvoicePage() {
               <CardContent className="space-y-4">
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="client-select">Client</Label>
+                        <Label htmlFor="client-select" className="mb-2 block">Client</Label>
                         <Select onValueChange={setSelectedClientId}>
                             <SelectTrigger id="client-select">
                             <SelectValue placeholder="Select a client" />
@@ -345,7 +345,7 @@ export default function CreateInvoicePage() {
                     {selectedClientId && (
                          <div className="grid grid-cols-2 gap-4">
                            <div className="space-y-2">
-                                <Label htmlFor="invoice-month">Service Month</Label>
+                                <Label htmlFor="invoice-month" className="mb-2 block">Service Month</Label>
                                 <Select
                                   value={String(invoicedMonth)}
                                   onValueChange={(value) => setInvoicedMonth(Number(value))}
@@ -363,7 +363,7 @@ export default function CreateInvoicePage() {
                                 </Select>
                            </div>
                            <div className="space-y-2">
-                                <Label htmlFor="invoice-year">Service Year</Label>
+                                <Label htmlFor="invoice-year" className="mb-2 block">Service Year</Label>
                                 <Select
                                   value={String(invoicedYear)}
                                   onValueChange={(value) => setInvoicedYear(Number(value))}
@@ -388,7 +388,7 @@ export default function CreateInvoicePage() {
                   <>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="days-worked">Days Worked</Label>
+                        <Label htmlFor="days-worked" className="mb-2 block">Days Worked</Label>
                         <Input
                           id="days-worked"
                           type="number"
@@ -403,7 +403,7 @@ export default function CreateInvoicePage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="daily-rate">Daily Rate</Label>
+                        <Label htmlFor="daily-rate" className="mb-2 block">Daily Rate</Label>
                         <Input
                           id="daily-rate"
                           type="number"
@@ -418,7 +418,7 @@ export default function CreateInvoicePage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="currency-select">Currency</Label>
+                        <Label htmlFor="currency-select" className="mb-2 block">Currency</Label>
                         <div className="flex items-center gap-2">
                             <Select value={currency} onValueChange={handleCurrencyChange} disabled={!!selectedClient?.maxExchangeRate}>
                             <SelectTrigger id="currency-select">
