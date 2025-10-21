@@ -81,6 +81,10 @@
                     "type": "string",
                     "enum": ["Classic", "Modern", "Sunset", "Ocean", "Monochrome", "Minty", "Velvet", "Corporate Blue", "Earthy Tones", "Creative"],
                     "description": "The default invoice theme for this project."
+                },
+                "order": {
+                    "type": "number",
+                    "description": "The display order of the project."
                 }
             },
             "required": [

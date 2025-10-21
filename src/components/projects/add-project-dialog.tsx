@@ -21,8 +21,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useFirestore, addDocumentNonBlocking, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
-import type { Client, InvoiceTheme } from '@/lib/types';
+import { collection, query } from 'firebase/firestore';
+import type { Client, InvoiceTheme, Project } from '@/lib/types';
 import { themeStyles } from '../invoices/invoice-html-preview';
 
 const invoiceThemes: InvoiceTheme[] = [
@@ -52,6 +52,12 @@ export function AddProjectDialog() {
     [firestore]
   );
   const { data: clients } = useCollection<Client>(clientsQuery);
+  
+  const projectsQuery = useMemoFirebase(
+    () => (firestore ? query(collection(firestore, 'projects')) : null),
+    [firestore]
+  );
+  const { data: projects } = useCollection<Project>(projectsQuery);
 
   const availableClients = useMemo(() => clients?.filter(c => c.id !== 'my-company-details') || [], [clients]);
 
@@ -71,7 +77,8 @@ export function AddProjectDialog() {
     
     addDocumentNonBlocking(projectsCollection, { 
       ...data, 
-      clientName: client?.name 
+      clientName: client?.name,
+      order: projects?.length || 0,
     });
 
     toast({

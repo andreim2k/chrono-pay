@@ -25,6 +25,7 @@ export type Project = {
   clientId: string;
   clientName: string;
   invoiceTheme?: InvoiceTheme;
+  order?: number;
 };
 
 export type User = {

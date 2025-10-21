@@ -1,12 +1,12 @@
 
 'use client';
 
-import { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import type { Project } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Button } from '../ui/button';
-import { MoreVertical } from 'lucide-react';
+import { GripVertical, MoreVertical } from 'lucide-react';
 import { AddProjectDialog } from './add-project-dialog';
 import {
   AlertDialog,
@@ -18,26 +18,114 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useFirestore, deleteDocumentNonBlocking } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useFirestore, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
+import { doc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { EditProjectDialog } from './edit-project-dialog';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { getInitials } from '@/lib/utils';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface ProjectListProps {
   projects: Project[];
 }
 
-export function ProjectList({ projects }: ProjectListProps) {
+function SortableProjectItem({ project, onEdit, onDelete }: { project: Project, onEdit: (project: Project) => void, onDelete: (project: Project) => void }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: project.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 1 : 'auto',
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div className='flex items-center gap-4'>
+            <button {...attributes} {...listeners} className="cursor-grab p-2 text-muted-foreground hover:bg-accent rounded-md">
+              <GripVertical className="h-5 w-5" />
+            </button>
+            <Avatar>
+              <AvatarFallback>{getInitials(project.name)}</AvatarFallback>
+            </Avatar>
+            <div>
+              <CardTitle className="text-lg">{project.name}</CardTitle>
+              <CardDescription>{project.clientName}</CardDescription>
+            </div>
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onSelect={() => onEdit(project)}>
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onSelect={() => onDelete(project)}
+              >
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </CardHeader>
+      </Card>
+    </div>
+  );
+}
+
+export function ProjectList({ projects: initialProjects }: ProjectListProps) {
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
   const [projectToEdit, setProjectToEdit] = useState<Project | null>(null);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
-
+  const [activeProjects, setActiveProjects] = useState<Project[]>([]);
+  
   const firestore = useFirestore();
   const { toast } = useToast();
-  
+
+  useEffect(() => {
+    const sortedProjects = [...initialProjects].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    setActiveProjects(sortedProjects);
+  }, [initialProjects]);
+
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   const handleDelete = () => {
     if (!firestore || !projectToDelete) return;
     const projectRef = doc(firestore, `projects`, projectToDelete.id);
@@ -49,7 +137,7 @@ export function ProjectList({ projects }: ProjectListProps) {
     setProjectToDelete(null);
     setIsAlertOpen(false);
   };
-  
+
   const openDeleteDialog = (project: Project) => {
     setProjectToDelete(project);
     setIsAlertOpen(true);
@@ -59,6 +147,40 @@ export function ProjectList({ projects }: ProjectListProps) {
     setProjectToEdit(project);
     setIsEditOpen(true);
   };
+  
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      setActiveProjects((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over!.id);
+        
+        const newOrder = arrayMove(items, oldIndex, newIndex);
+
+        // Update order in Firestore
+        if (firestore) {
+          const batch = writeBatch(firestore);
+          newOrder.forEach((project, index) => {
+            const projectRef = doc(firestore, 'projects', project.id);
+            batch.update(projectRef, { order: index });
+          });
+          batch.commit().catch(err => {
+             toast({
+              variant: 'destructive',
+              title: 'Error updating order',
+              description: 'Could not save the new project order.',
+            });
+            // Revert local state on failure
+            setActiveProjects(items);
+          });
+        }
+        
+        return newOrder;
+      });
+    }
+  };
+
 
   return (
     <>
@@ -66,69 +188,52 @@ export function ProjectList({ projects }: ProjectListProps) {
         <div className="flex justify-end">
           <AddProjectDialog />
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {projects.map((project) => (
-                <Card key={project.id}>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <div className='flex items-center gap-4'>
-                            <Avatar>
-                                <AvatarFallback>{getInitials(project.name)}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <CardTitle className="text-lg">{project.name}</CardTitle>
-                                <CardDescription>{project.clientName}</CardDescription>
-                            </div>
-                        </div>
-                        <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                            <MoreVertical className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                            <DropdownMenuItem onSelect={() => openEditDialog(project)}>
-                            Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                            className="text-destructive focus:text-destructive" 
-                            onSelect={() => openDeleteDialog(project)}
-                            >
-                            Delete
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                        </DropdownMenu>
-                    </CardHeader>
-                </Card>
-            ))}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={activeProjects} strategy={verticalListSortingStrategy}>
+            <div className="space-y-3">
+              {activeProjects.map((project) => (
+                <SortableProjectItem 
+                  key={project.id} 
+                  project={project}
+                  onEdit={openEditDialog}
+                  onDelete={openDeleteDialog}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       </div>
       {projectToEdit && (
         <EditProjectDialog
-            project={projectToEdit}
-            isOpen={isEditOpen}
-            onOpenChange={(open) => {
-              setIsEditOpen(open);
-              if (!open) {
-                setProjectToEdit(null);
-              }
-            }}
+          project={projectToEdit}
+          isOpen={isEditOpen}
+          onOpenChange={(open) => {
+            setIsEditOpen(open);
+            if (!open) {
+              setProjectToEdit(null);
+            }
+          }}
         />
       )}
-     <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
-        <AlertDialogHeader>
+          <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete the project
-            and all associated data.
+              This action cannot be undone. This will permanently delete the project
+              and all associated data.
             </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
-        </AlertDialogFooter>
+          </AlertDialogFooter>
         </AlertDialogContent>
-    </AlertDialog>
+      </AlertDialog>
     </>
   );
 }
