@@ -194,7 +194,7 @@ export function ProjectList({ projects: initialProjects }: ProjectListProps) {
           onDragEnd={handleDragEnd}
         >
           <SortableContext items={activeProjects} strategy={verticalListSortingStrategy}>
-            <div className="space-y-3">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {activeProjects.map((project) => (
                 <SortableProjectItem 
                   key={project.id} 
