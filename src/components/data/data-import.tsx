@@ -17,32 +17,37 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+import { Label } from '../ui/label';
 
 interface DataImportProps {
   allowedCollections?: string[];
   buttonLabel?: string;
-  importMode?: 'overwrite' | 'merge';
+  defaultImportMode?: 'overwrite' | 'merge';
   existingData?: Record<string, any[]>;
+  allowModeSelection?: boolean;
 }
 
 export function DataImport({ 
   allowedCollections = ['clients', 'projects', 'invoices', 'myCompany'], 
   buttonLabel = 'Import Data',
-  importMode = 'overwrite',
+  defaultImportMode = 'overwrite',
   existingData,
+  allowModeSelection = false,
 }: DataImportProps) {
   const [isImporting, setIsImporting] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [fileToImport, setFileToImport] = useState<File | null>(null);
+  const [selectedImportMode, setSelectedImportMode] = useState<'overwrite' | 'merge'>(defaultImportMode);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user } = useUser();
   
   // These hooks are only needed for 'overwrite' mode to get all existing docs for deletion.
-  const clientsQuery = useMemoFirebase(() => (firestore && user && allowedCollections.includes('clients') && importMode === 'overwrite' ? collection(firestore, `users/${user.uid}/clients`) : null), [firestore, user, allowedCollections, importMode]);
-  const projectsQuery = useMemoFirebase(() => (firestore && user && allowedCollections.includes('projects') && importMode === 'overwrite' ? collection(firestore, `users/${user.uid}/projects`) : null), [firestore, user, allowedCollections, importMode]);
-  const invoicesQuery = useMemoFirebase(() => (firestore && user && allowedCollections.includes('invoices') && importMode === 'overwrite' ? collection(firestore, `users/${user.uid}/invoices`) : null), [firestore, user, allowedCollections, importMode]);
+  const clientsQuery = useMemoFirebase(() => (firestore && user && allowedCollections.includes('clients') ? collection(firestore, `users/${user.uid}/clients`) : null), [firestore, user, allowedCollections]);
+  const projectsQuery = useMemoFirebase(() => (firestore && user && allowedCollections.includes('projects') ? collection(firestore, `users/${user.uid}/projects`) : null), [firestore, user, allowedCollections]);
+  const invoicesQuery = useMemoFirebase(() => (firestore && user && allowedCollections.includes('invoices') ? collection(firestore, `users/${user.uid}/invoices`) : null), [firestore, user, allowedCollections]);
 
   const { data: existingClients } = useCollection(clientsQuery);
   const { data: existingProjects } = useCollection(projectsQuery);
@@ -52,6 +57,7 @@ export function DataImport({
     const file = event.target.files?.[0];
     if (!file) return;
 
+    setSelectedImportMode(defaultImportMode);
     setFileToImport(file);
     setIsAlertOpen(true);
     
@@ -78,8 +84,7 @@ export function DataImport({
       const batch = writeBatch(firestore);
       let importCount = 0;
 
-      // In 'overwrite' mode, delete all existing data for the allowed collections
-      if (importMode === 'overwrite') {
+      if (selectedImportMode === 'overwrite') {
         if (allowedCollections.includes('invoices') && existingInvoicesForOverwrite) {
           existingInvoicesForOverwrite.forEach(inv => batch.delete(doc(firestore, `users/${user.uid}/invoices`, inv.id)));
         }
@@ -91,20 +96,18 @@ export function DataImport({
         }
       }
       
-      // Handle My Company details by merging them into the user document
       if (allowedCollections.includes('myCompany') && dataToImport.myCompany) {
         const userRef = doc(firestore, `users/${user.uid}`);
         batch.set(userRef, dataToImport.myCompany, { merge: true });
-        importCount++;
+        if(selectedImportMode === 'merge') importCount++;
       }
 
-      // Handle collections
       const collectionsToImport = ['clients', 'projects', 'invoices'];
       for (const collectionName of collectionsToImport) {
         if (allowedCollections.includes(collectionName) && Array.isArray(dataToImport[collectionName])) {
           let docsToProcess = dataToImport[collectionName];
 
-          if (importMode === 'merge' && collectionName === 'invoices' && existingData?.invoices) {
+          if (selectedImportMode === 'merge' && collectionName === 'invoices' && existingData?.invoices) {
             const existingInvoiceNumbers = new Set(existingData.invoices.map(inv => inv.invoiceNumber));
             docsToProcess = docsToProcess.filter((docData: any) => !existingInvoiceNumbers.has(docData.invoiceNumber));
           }
@@ -128,11 +131,12 @@ export function DataImport({
       }
 
       await batch.commit();
-
-      const successTitle = importMode === 'overwrite' ? 'Import Successful' : 'Merge Successful';
-      const successDescription = importMode === 'overwrite' 
-        ? `Successfully cleared relevant data and imported ${importCount} records. The page will now refresh.`
-        : `Successfully merged ${importCount} new records. The page will now refresh.`;
+      
+      const countForToast = selectedImportMode === 'overwrite' ? Object.values(dataToImport).reduce((acc, val) => acc + (Array.isArray(val) ? val.length : 1), 0) : importCount;
+      const successTitle = selectedImportMode === 'overwrite' ? 'Import Successful' : 'Merge Successful';
+      const successDescription = selectedImportMode === 'overwrite' 
+        ? `Successfully cleared relevant data and imported ${countForToast} records. The page will now refresh.`
+        : `Successfully merged ${countForToast} new records. The page will now refresh.`;
 
       toast({
         title: successTitle,
@@ -161,12 +165,13 @@ export function DataImport({
   };
   
   const alertDescription = () => {
-    if (importMode === 'merge') {
-      return "This will add all records from the selected file that do not already exist in your current data. It will not delete anything. Are you sure you want to continue?";
+    let description = '';
+
+    if (allowModeSelection && selectedImportMode === 'merge') {
+      return "This will add all invoices from the selected file that do not already exist in your current data. It will not delete anything. Are you sure you want to continue?";
     }
 
     const collectionsToWipe = allowedCollections.filter(c => c !== 'myCompany');
-    let description = '';
 
     if (collectionsToWipe.length > 0) {
         const lastCollection = collectionsToWipe.pop();
@@ -205,6 +210,25 @@ export function DataImport({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            {allowModeSelection && (
+                <div className="py-4 text-sm text-muted-foreground">
+                    <p className='mb-3 font-medium text-foreground'>Please select an import mode:</p>
+                    <RadioGroup defaultValue={selectedImportMode} onValueChange={(value) => setSelectedImportMode(value as 'merge' | 'overwrite')}>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="merge" id="r-merge" />
+                            <Label htmlFor="r-merge" className='font-normal'>
+                                <span className='font-semibold text-foreground'>Merge:</span> Add new invoices from the file. Existing invoices will not be affected.
+                            </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="overwrite" id="r-overwrite" />
+                            <Label htmlFor="r-overwrite" className='font-normal'>
+                                <span className='font-semibold text-foreground'>Overwrite:</span> Delete all current invoices and replace them with invoices from the file.
+                            </Label>
+                        </div>
+                    </RadioGroup>
+                </div>
+            )}
             <AlertDialogDescription>
               {alertDescription()}
             </AlertDialogDescription>

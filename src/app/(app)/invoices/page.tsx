@@ -39,7 +39,8 @@ export default function InvoicesPage() {
           <DataImport 
             allowedCollections={['invoices']}
             buttonLabel="Import Invoices"
-            importMode="merge"
+            defaultImportMode="merge"
+            allowModeSelection={true}
             existingData={{ invoices: invoices || [] }}
           />
           <Button asChild>

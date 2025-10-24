@@ -20,12 +20,12 @@ export function DataManagement({ data }: DataManagementProps) {
       <CardHeader>
         <CardTitle>Data Management</CardTitle>
         <CardDescription>
-          Export all your data for backup or import it to a new workspace.
+          Export all your data for backup or import it to a new workspace. This will overwrite all existing data.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex items-center gap-4">
         <DataExport data={data} />
-        <DataImport allowedCollections={['clients', 'projects', 'invoices', 'myCompany']} />
+        <DataImport allowedCollections={['clients', 'projects', 'invoices', 'myCompany']} defaultImportMode='overwrite' />
       </CardContent>
     </Card>
   );
