@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef } from 'react';
@@ -18,11 +19,11 @@ import {
 } from '@/components/ui/alert-dialog';
 
 interface DataImportProps {
-  allowedCollections?: ('clients' | 'projects' | 'invoices')[];
+  allowedCollections?: string[];
   buttonLabel?: string;
 }
 
-export function DataImport({ allowedCollections = ['clients', 'projects', 'invoices'], buttonLabel = 'Import Data' }: DataImportProps) {
+export function DataImport({ allowedCollections = ['clients', 'projects', 'invoices', 'myCompany'], buttonLabel = 'Import Data' }: DataImportProps) {
   const [isImporting, setIsImporting] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [fileToImport, setFileToImport] = useState<File | null>(null);
@@ -38,7 +39,7 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
   const { data: projects } = useCollection(projectsQuery);
   const { data: invoices } = useCollection(invoicesQuery);
 
-  const dataMap = {
+  const dataMap: Record<string, any[] | undefined> = {
     clients,
     projects,
     invoices
@@ -51,7 +52,6 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
     setFileToImport(file);
     setIsAlertOpen(true);
     
-    // Reset file input so the same file can be selected again
     if(fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -75,13 +75,13 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
       const batch = writeBatch(firestore);
       let importCount = 0;
 
-      // 1. Delete existing documents in allowed collections
-      for (const collectionName of allowedCollections) {
-        const collectionData = dataMap[collectionName as keyof typeof dataMap];
+      // 1. Delete existing documents in allowed collections that are arrays
+      const collectionsToDelete = allowedCollections.filter(c => c !== 'myCompany');
+      for (const collectionName of collectionsToDelete) {
+        const collectionData = dataMap[collectionName];
         if(collectionData) {
             for (const docToDelete of collectionData) {
-                 // Special handling for 'my-company-details' to prevent deletion
-                if (collectionName === 'clients' && docToDelete.id === 'my-company-details') {
+                if (docToDelete.id === 'my-company-details') {
                     continue;
                 }
                 const docRef = doc(firestore, collectionName, docToDelete.id);
@@ -92,20 +92,25 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
 
       // 2. Add new documents from the import file
       for (const collectionName of allowedCollections) {
-        const collectionData = dataToImport[collectionName];
-        if (Array.isArray(collectionData)) {
-          collectionData.forEach((docData: any) => {
-            const collectionRef = collection(firestore, collectionName);
-            let docRef;
-             // Special handling for 'my-company-details' to keep its ID consistent
-            if (collectionName === 'clients' && docData.name?.includes("Company")) {
-                 docRef = doc(firestore, 'clients', 'my-company-details');
-            } else {
-                 docRef = doc(collectionRef); // Create new doc with new ID
-            }
-            batch.set(docRef, docData);
+        if (collectionName === 'myCompany') {
+          // Handle myCompany as a single document
+          const myCompanyData = dataToImport.myCompany;
+          if (myCompanyData && typeof myCompanyData === 'object' && !Array.isArray(myCompanyData)) {
+            const docRef = doc(firestore, 'clients', 'my-company-details');
+            batch.set(docRef, myCompanyData, { merge: true }); // Use merge to be safe
             importCount++;
-          });
+          }
+        } else {
+          // Handle regular collections
+          const collectionData = dataToImport[collectionName];
+          if (Array.isArray(collectionData)) {
+            collectionData.forEach((docData: any) => {
+              const collectionRef = collection(firestore, collectionName);
+              const docRef = doc(collectionRef); // Create new doc with new ID
+              batch.set(docRef, docData);
+              importCount++;
+            });
+          }
         }
       }
 
@@ -123,7 +128,7 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
 
       toast({
         title: 'Import Successful',
-        description: `Successfully imported ${importCount} documents. The page will now refresh.`,
+        description: `Successfully imported ${importCount} documents/records. The page will now refresh.`,
       });
 
       setTimeout(() => {
@@ -170,7 +175,7 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete all existing data in the selected collections ({allowedCollections.join(', ')}) and replace it with the data from the imported file. This action cannot be undone.
+              This will permanently delete all existing clients, projects, and invoices and replace them with the data from the imported file. Your 'My Company' details will be updated. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

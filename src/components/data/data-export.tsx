@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
 interface DataExportProps {
-  data: Record<string, any[]>;
+  data: Record<string, any>;
   fileName?: string;
   buttonLabel?: string;
 }
@@ -16,13 +17,18 @@ export function DataExport({ data, fileName = 'chronopay_backup.json', buttonLab
 
   const handleExport = () => {
     try {
-      const dataToExport = Object.fromEntries(
-        Object.entries(data).map(([collection, docs]) => {
-          // Remove the 'id' field from each document before exporting
-          const cleanedDocs = docs.map(({ id, ...rest }) => rest);
-          return [collection, cleanedDocs];
-        })
-      );
+      const dataToExport: Record<string, any> = {};
+
+      for (const [key, value] of Object.entries(data)) {
+        if (Array.isArray(value)) {
+          // It's a collection, remove 'id' from each document
+          dataToExport[key] = value.map(({ id, ...rest }) => rest);
+        } else if (value && typeof value === 'object' && !Array.isArray(value)) {
+          // It's a single document (like myCompany), remove 'id'
+          const { id, ...rest } = value;
+          dataToExport[key] = rest;
+        }
+      }
       
       const jsonString = JSON.stringify(dataToExport, null, 2);
       const blob = new Blob([jsonString], { type: 'application/json' });
@@ -53,7 +59,12 @@ export function DataExport({ data, fileName = 'chronopay_backup.json', buttonLab
     }
   };
   
-  const hasData = Object.values(data).some(arr => arr.length > 0);
+  const hasData = Object.values(data).some(value => {
+    if (Array.isArray(value)) {
+        return value.length > 0;
+    }
+    return value && Object.keys(value).length > 0;
+  });
 
   return (
     <Button variant="outline" onClick={handleExport} disabled={!hasData}>

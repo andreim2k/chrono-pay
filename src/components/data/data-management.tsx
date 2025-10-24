@@ -7,6 +7,7 @@ import { DataImport } from './data-import';
 
 interface DataManagementProps {
     data: {
+        myCompany: any;
         clients: any[];
         projects: any[];
         invoices: any[];
@@ -24,7 +25,7 @@ export function DataManagement({ data }: DataManagementProps) {
       </CardHeader>
       <CardContent className="flex items-center gap-4">
         <DataExport data={data} />
-        <DataImport />
+        <DataImport allowedCollections={['clients', 'projects', 'invoices', 'myCompany']} />
       </CardContent>
     </Card>
   );

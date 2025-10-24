@@ -16,7 +16,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { EditClientDialog } from '@/components/projects/edit-client-dialog';
 import { DataManagement } from '@/components/data/data-management';
 
@@ -58,7 +58,8 @@ export default function SettingsPage() {
     );
     const { data: invoices } = useCollection<Invoice>(invoicesQuery);
 
-    const myCompany = clients ? clients.find(c => c.id === 'my-company-details') : null;
+    const myCompany = useMemo(() => clients?.find(c => c.id === 'my-company-details'), [clients]);
+    const actualClients = useMemo(() => clients?.filter(c => c.id !== 'my-company-details') || [], [clients]);
 
     const form = useForm<CompanyFormValues>({
         resolver: zodResolver(companySchema),
@@ -105,7 +106,7 @@ export default function SettingsPage() {
         const companyData: Omit<Client, 'id'> = {
             ...data,
             vatRate: data.vatRate ? data.vatRate / 100 : 0,
-            logoUrl: `https://picsum.photos/seed/my-company/40/40`
+            logoUrl: myCompany?.logoUrl || `https://picsum.photos/seed/my-company/40/40`
         };
 
         setDocumentNonBlocking(companyRef, companyData, { merge: true });
@@ -242,7 +243,7 @@ export default function SettingsPage() {
           </TabsContent>
           <TabsContent value="clients">
             <ClientList 
-                clients={clients?.filter(c => c.id !== 'my-company-details') || []}
+                clients={actualClients}
                 onEditClient={onEditClient}
              />
           </TabsContent>
@@ -252,7 +253,8 @@ export default function SettingsPage() {
            <TabsContent value="data">
              <DataManagement
                 data={{
-                    clients: clients?.filter(c => c.id !== 'my-company-details') || [],
+                    myCompany: myCompany || {},
+                    clients: actualClients,
                     projects: projects || [],
                     invoices: invoices || [],
                 }}
