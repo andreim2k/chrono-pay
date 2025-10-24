@@ -102,13 +102,20 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
     const clientRef = doc(firestore, `users/${user.uid}/clients`, client.id);
 
     const dataToSave: any = {
+      ...client, // Preserve existing fields like order, logoUrl
       ...data,
-      logoUrl: client.logoUrl
     };
 
     if (data.maxExchangeRateDate) {
       dataToSave.maxExchangeRateDate = format(data.maxExchangeRateDate, 'yyyy-MM-dd');
     }
+
+    // Remove undefined fields to prevent Firestore errors
+    Object.keys(dataToSave).forEach(key => {
+        if (dataToSave[key] === undefined) {
+            delete dataToSave[key];
+        }
+    });
 
     await setDoc(clientRef, dataToSave, { merge: true });
     
@@ -370,5 +377,3 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
     </Dialog>
   );
 }
-
-    
