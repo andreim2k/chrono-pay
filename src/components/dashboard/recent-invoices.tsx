@@ -1,4 +1,3 @@
-
 'use client';
 import {
     Avatar,
@@ -39,7 +38,7 @@ export function RecentInvoices({ invoices }: { invoices: Invoice[] }) {
 
     const formatCurrencyDisplay = (value: number | undefined | null, currency: string): string => {
         const symbol = currencySymbols[currency] || currency;
-        if (typeof value !== 'number') return '';
+        if (value === 0 || typeof value !== 'number') return '';
         return `${symbol}${value.toFixed(2)}`;
     };
 
