@@ -252,7 +252,7 @@ export default function SettingsPage() {
            <TabsContent value="data">
              <DataManagement
                 data={{
-                    clients: clients || [],
+                    clients: clients?.filter(c => c.id !== 'my-company-details') || [],
                     projects: projects || [],
                     invoices: invoices || [],
                 }}
