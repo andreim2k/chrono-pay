@@ -9,7 +9,7 @@ import { ProjectList } from '@/components/projects/project-list';
 import { ClientList } from '@/components/projects/client-list';
 import { useCollection, useDoc, useFirestore, useMemoFirebase, setDocumentNonBlocking, useUser } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
-import type { Client, Project, Invoice, Company } from '@/lib/types';
+import type { Client, Project, Invoice, User } from '@/lib/types';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,13 +20,13 @@ import { EditClientDialog } from '@/components/projects/edit-client-dialog';
 import { DataManagement } from '@/components/data/data-management';
 
 const companySchema = z.object({
-    name: z.string().min(1, 'Company name is required'),
-    address: z.string().min(1, 'Address is required'),
-    vat: z.string().min(1, 'VAT is required').regex(/^[A-Z0-9]+$/, 'Invalid VAT format, should be alphanumeric.'),
-    iban: z.string().min(1, 'IBAN is required').regex(/^[A-Z]{2}[0-9]{2}[A-Z0-9]{4,30}$/, 'Invalid IBAN. It should start with 2 letters followed by numbers (e.g., DE89370400440532013000).'),
-    bankName: z.string().min(1, 'Bank name is required'),
-    swift: z.string().min(1, 'SWIFT/BIC is required').regex(/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/, 'Invalid SWIFT/BIC format.'),
-    vatRate: z.coerce.number().min(0, 'VAT rate must be positive').multipleOf(0.01, { message: "VAT rate can have at most 2 decimal places." }),
+    companyName: z.string().min(1, 'Company name is required'),
+    companyAddress: z.string().min(1, 'Address is required'),
+    companyVat: z.string().min(1, 'VAT is required').regex(/^[A-Z0-9]+$/, 'Invalid VAT format, should be alphanumeric.'),
+    companyIban: z.string().min(1, 'IBAN is required').regex(/^[A-Z]{2}[0-9]{2}[A-Z0-9]{4,30}$/, 'Invalid IBAN. It should start with 2 letters followed by numbers (e.g., DE89370400440532013000).'),
+    companyBankName: z.string().min(1, 'Bank name is required'),
+    companySwift: z.string().min(1, 'SWIFT/BIC is required').regex(/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/, 'Invalid SWIFT/BIC format.'),
+    companyVatRate: z.coerce.number().min(0, 'VAT rate must be positive').multipleOf(0.01, { message: "VAT rate can have at most 2 decimal places." }),
 });
 
 type CompanyFormValues = z.infer<typeof companySchema>;
@@ -39,17 +39,18 @@ export default function SettingsPage() {
     const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
     const [isEditOpen, setIsEditOpen] = useState(false);
 
+    const userDocRef = useMemoFirebase(
+        () => (firestore && user ? doc(firestore, `users/${user.uid}`) : null),
+        [firestore, user]
+    );
+    const { data: myCompany } = useDoc<User>(userDocRef, `users/${user?.uid}`);
+
     const clientsQuery = useMemoFirebase(
         () => (firestore && user ? collection(firestore, `users/${user.uid}/clients`) : null),
         [firestore, user]
     );
     const { data: clients } = useCollection<Client>(clientsQuery, `users/${user?.uid}/clients`);
     
-    const companyDocRef = useMemoFirebase(
-        () => (firestore && user ? doc(firestore, `company/${user.uid}`) : null),
-        [firestore, user]
-    );
-    const { data: myCompany } = useDoc<Company>(companyDocRef, `company/${user?.uid}`);
 
     const projectsQuery = useMemoFirebase(
         () => (firestore && user ? collection(firestore, `users/${user.uid}/projects`) : null),
@@ -68,36 +69,36 @@ export default function SettingsPage() {
         resolver: zodResolver(companySchema),
         mode: 'onChange',
         defaultValues: {
-            name: '',
-            vat: '',
-            address: '',
-            iban: '',
-            bankName: '',
-            swift: '',
-            vatRate: 0,
+            companyName: '',
+            companyVat: '',
+            companyAddress: '',
+            companyIban: '',
+            companyBankName: '',
+            companySwift: '',
+            companyVatRate: 0,
         }
     });
 
     useEffect(() => {
         if (myCompany) {
             form.reset({
-                name: myCompany.name || '',
-                address: myCompany.address || '',
-                vat: myCompany.vat || '',
-                iban: myCompany.iban || '',
-                bankName: myCompany.bankName || '',
-                swift: myCompany.swift || '',
-                vatRate: myCompany.vatRate ? myCompany.vatRate * 100 : 0,
+                companyName: myCompany.companyName || '',
+                companyAddress: myCompany.companyAddress || '',
+                companyVat: myCompany.companyVat || '',
+                companyIban: myCompany.companyIban || '',
+                companyBankName: myCompany.companyBankName || '',
+                companySwift: myCompany.companySwift || '',
+                companyVatRate: myCompany.companyVatRate ? myCompany.companyVatRate * 100 : 0,
             });
         } else {
              form.reset({
-                name: '',
-                vat: '',
-                address: '',
-                iban: '',
-                bankName: '',
-                swift: '',
-                vatRate: 0,
+                companyName: '',
+                companyVat: '',
+                companyAddress: '',
+                companyIban: '',
+                companyBankName: '',
+                companySwift: '',
+                companyVatRate: 0,
             });
         }
     }, [myCompany, form]);
@@ -105,15 +106,15 @@ export default function SettingsPage() {
 
     const handleSaveCompany = (data: CompanyFormValues) => {
         if (!firestore || !user) return;
-        const companyRef = doc(firestore, `company/${user.uid}`);
+        const userRef = doc(firestore, `users/${user.uid}`);
 
-        const companyData: Omit<Company, 'id'> = {
+        const companyData: Partial<User> = {
             ...data,
-            vatRate: data.vatRate ? data.vatRate / 100 : 0,
-            logoUrl: myCompany?.logoUrl || `https://picsum.photos/seed/my-company/40/40`
+            companyVatRate: data.companyVatRate ? data.companyVatRate / 100 : 0,
+            companyLogoUrl: myCompany?.companyLogoUrl || `https://picsum.photos/seed/my-company/40/40`
         };
 
-        setDocumentNonBlocking(companyRef, companyData, { merge: true });
+        setDocumentNonBlocking(userRef, companyData, { merge: true });
 
         toast({
             title: 'Company Details Saved',
@@ -156,7 +157,7 @@ export default function SettingsPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <FormField
                                   control={form.control}
-                                  name="name"
+                                  name="companyName"
                                   render={({ field }) => (
                                       <FormItem>
                                           <FormLabel>Company Name</FormLabel>
@@ -167,7 +168,7 @@ export default function SettingsPage() {
                               />
                                <FormField
                                   control={form.control}
-                                  name="address"
+                                  name="companyAddress"
                                   render={({ field }) => (
                                       <FormItem>
                                           <FormLabel>Address</FormLabel>
@@ -180,7 +181,7 @@ export default function SettingsPage() {
                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <FormField
                                       control={form.control}
-                                      name="vat"
+                                      name="companyVat"
                                       render={({ field }) => (
                                           <FormItem>
                                               <FormLabel>VAT Number</FormLabel>
@@ -191,7 +192,7 @@ export default function SettingsPage() {
                                   />
                                    <FormField
                                       control={form.control}
-                                      name="vatRate"
+                                      name="companyVatRate"
                                       render={({ field }) => (
                                           <FormItem>
                                               <FormLabel>VAT Rate (%)</FormLabel>
@@ -204,7 +205,7 @@ export default function SettingsPage() {
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <FormField
                                       control={form.control}
-                                      name="bankName"
+                                      name="companyBankName"
                                       render={({ field }) => (
                                           <FormItem>
                                               <FormLabel>Bank Name</FormLabel>
@@ -215,7 +216,7 @@ export default function SettingsPage() {
                                   />
                                   <FormField
                                       control={form.control}
-                                      name="swift"
+                                      name="companySwift"
                                       render={({ field }) => (
                                           <FormItem>
                                               <FormLabel>SWIFT/BIC</FormLabel>
@@ -228,7 +229,7 @@ export default function SettingsPage() {
                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <FormField
                                       control={form.control}
-                                      name="iban"
+                                      name="companyIban"
                                       render={({ field }) => (
                                           <FormItem>
                                               <FormLabel>IBAN</FormLabel>

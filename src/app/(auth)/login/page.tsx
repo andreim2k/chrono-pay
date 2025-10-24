@@ -47,26 +47,21 @@ export default function LoginPage() {
       const userDocSnap = await getDoc(userDocRef);
 
       if (!userDocSnap.exists()) {
-        // Use await to ensure these critical documents are created before proceeding
         await setDoc(userDocRef, {
             id: googleUser.uid,
             name: googleUser.displayName,
             email: googleUser.email,
             avatarUrl: googleUser.photoURL,
-            role: "Admin"
-        });
-        
-        // Create company details in the top-level 'company' collection
-        const companyDocRef = doc(firestore, `company/${googleUser.uid}`);
-        await setDoc(companyDocRef, {
-            name: `${googleUser.displayName}'s Company`,
-            address: 'Your Company Address',
-            vat: 'Your VAT Number',
-            iban: 'Your IBAN',
-            vatRate: 0.19, // Default to 19%
-            bankName: 'Your Bank Name',
-            swift: 'Your SWIFT/BIC'
-        });
+            role: "Admin",
+            // Add default company details
+            companyName: `${googleUser.displayName}'s Company`,
+            companyAddress: 'Your Company Address',
+            companyVat: 'Your VAT Number',
+            companyIban: 'Your IBAN',
+            companyVatRate: 0.19, // Default to 19%
+            companyBankName: 'Your Bank Name',
+            companySwift: 'Your SWIFT/BIC'
+        }, { merge: true });
         
         toast({
             title: "Account Initialized",

@@ -7,7 +7,7 @@ import { DataImport } from './data-import';
 
 interface DataManagementProps {
     data: {
-        myCompany: any;
+        myCompany: any; // This will now be the User object which includes company fields
         clients: any[];
         projects: any[];
         invoices: any[];

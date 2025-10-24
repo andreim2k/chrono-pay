@@ -1,5 +1,21 @@
 
 
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl?: string;
+  role: 'Admin' | 'Member';
+  // Merged company fields
+  companyName?: string;
+  companyAddress?: string;
+  companyVat?: string;
+  companyIban?: string;
+  companyBankName?: string;
+  companySwift?: string;
+  companyVatRate?: number;
+  companyLogoUrl?: string;
+}
 
 export type Client = {
   id: string;

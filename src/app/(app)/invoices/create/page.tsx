@@ -13,7 +13,7 @@ import { Download, Save, Loader2, RefreshCw, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import type { Client, Invoice, Project, InvoiceTheme, Company } from '@/lib/types';
+import type { Client, Invoice, Project, InvoiceTheme, User } from '@/lib/types';
 import { getExchangeRate } from '@/ai/flows/get-exchange-rate';
 import { useCollection, useFirestore, addDocumentNonBlocking, useMemoFirebase, useUser, useDoc } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
@@ -82,6 +82,12 @@ export default function CreateInvoicePage() {
   const firestore = useFirestore();
   const { user } = useUser();
   const invoiceCreationDate = useMemo(() => new Date(), []);
+  
+  const userDocRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, `users/${user.uid}`) : null),
+    [firestore, user]
+  );
+  const { data: myCompany } = useDoc<User>(userDocRef, `users/${user?.uid}`);
 
   const clientsQuery = useMemoFirebase(
     () => (firestore && user ? collection(firestore, `users/${user.uid}/clients`) : null),
@@ -89,12 +95,6 @@ export default function CreateInvoicePage() {
   );
   const { data: clients } = useCollection<Client>(clientsQuery, `users/${user?.uid}/clients`);
   
-  const companyDocRef = useMemoFirebase(
-    () => (firestore && user ? doc(firestore, `company/${user.uid}`) : null),
-    [firestore, user]
-  );
-  const { data: myCompany } = useDoc<Company>(companyDocRef, `company/${user?.uid}`);
-
   const invoicesQuery = useMemoFirebase(
     () => (firestore && user ? collection(firestore, `users/${user.uid}/invoices`) : null),
     [firestore, user]
@@ -230,19 +230,19 @@ export default function CreateInvoicePage() {
     if (!selectedClient || !selectedProject || !daysWorked || !dailyRate || !myCompany || !invoices) return null;
 
     const subtotal = daysWorked * dailyRate;
-    const vatAmount = selectedClient.hasVat ? subtotal * (myCompany?.vatRate || 0) : 0;
+    const vatAmount = selectedClient.hasVat ? subtotal * (myCompany?.companyVatRate || 0) : 0;
     const total = subtotal + vatAmount;
     const totalRon = exchangeRate ? total * exchangeRate : undefined;
     const servicePeriod = new Date(invoicedYear, invoicedMonth);
 
-    const data: Omit<Invoice, 'id'> = {
+    const data: Omit<Invoice, 'id'> & { vatRate?: number } = {
       invoiceNumber: generateInvoiceNumber(selectedClient, invoices),
-      companyName: myCompany.name,
-      companyAddress: myCompany.address,
-      companyVat: myCompany.vat,
-      companyIban: myCompany.iban,
-      companyBankName: myCompany.bankName,
-      companySwift: myCompany.swift,
+      companyName: myCompany.companyName!,
+      companyAddress: myCompany.companyAddress!,
+      companyVat: myCompany.companyVat!,
+      companyIban: myCompany.companyIban,
+      companyBankName: myCompany.companyBankName,
+      companySwift: myCompany.companySwift,
       clientName: selectedClient.name,
       clientAddress: selectedClient.address,
       clientVat: selectedClient.vat,
@@ -271,8 +271,8 @@ export default function CreateInvoicePage() {
       theme: invoiceTheme,
     };
     
-    if (selectedClient.hasVat && myCompany.vatRate) {
-        data.vatRate = myCompany.vatRate;
+    if (selectedClient.hasVat && myCompany.companyVatRate) {
+        data.vatRate = myCompany.companyVatRate;
     }
 
     return data;
@@ -316,7 +316,7 @@ export default function CreateInvoicePage() {
     const invoicesCol = collection(firestore, `users/${user.uid}/invoices`);
 
     const dataToSave = { ...invoiceData };
-    if (!dataToSave.vatRate) {
+    if (dataToSave.vatRate === undefined) {
       delete (dataToSave as Partial<typeof dataToSave>).vatRate;
     }
 

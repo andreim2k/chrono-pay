@@ -82,11 +82,10 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
       }
       
       // 2. Add new data from the import file
-      // Handle My Company
+      // Handle My Company details by merging them into the user document
       if (allowedCollections.includes('myCompany') && dataToImport.myCompany) {
-        const myCompanyRef = doc(firestore, `company/${user.uid}`);
-        batch.set(myCompanyRef, dataToImport.myCompany, { merge: true });
-        // This is an update, so we don't increment the main import count
+        const userRef = doc(firestore, `users/${user.uid}`);
+        batch.set(userRef, dataToImport.myCompany, { merge: true });
       }
 
       // Handle other collections
@@ -188,5 +187,3 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
     </>
   );
 }
-
-    

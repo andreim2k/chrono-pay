@@ -4,7 +4,7 @@
         "User": {
             "title": "User",
             "type": "object",
-            "description": "Represents a user within the ChronoPay application.",
+            "description": "Represents a user and their company details within the ChronoPay application.",
             "properties": {
                 "id": {
                     "type": "string",
@@ -30,54 +30,21 @@
                         "Admin",
                         "Member"
                     ]
-                }
+                },
+                "companyName": { "type": "string", "description": "The user's company name." },
+                "companyAddress": { "type": "string", "description": "The user's company address." },
+                "companyVat": { "type": "string", "description": "The user's company VAT number." },
+                "companyIban": { "type": "string", "description": "The user's company IBAN." },
+                "companyBankName": { "type": "string", "description": "The user's company bank name." },
+                "companySwift": { "type": "string", "description": "The user's company SWIFT/BIC code." },
+                "companyVatRate": { "type": "number", "description": "The user's company VAT rate." },
+                "companyLogoUrl": { "type": "string", "description": "URL for the user's company logo." }
             },
             "required": [
                 "id",
                 "name",
                 "email",
                 "role"
-            ]
-        },
-        "Company": {
-            "title": "Company",
-            "type": "object",
-            "description": "Represents the user's own company details for invoicing.",
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "address": {
-                    "type": "string"
-                },
-                "vat": {
-                    "type": "string"
-                },
-                "iban": {
-                    "type": "string"
-                },
-                "logoUrl": {
-                    "type": "string"
-                },
-                "bankName": {
-                    "type": "string"
-                },
-                "swift": {
-                    "type": "string"
-                },
-                "vatRate": {
-                    "type": "number",
-                    "description": "The VAT rate to be applied on invoices."
-                }
-            },
-            "required": [
-                "name",
-                "address",
-                "vat",
-                "iban",
-                "bankName",
-                "swift",
-                "vatRate"
             ]
         },
         "Client": {
@@ -319,13 +286,7 @@
             "schema": {
                 "$ref": "#/entities/User"
             },
-            "description": "Stores user profiles."
-        },
-        "/company/{userId}": {
-            "schema": {
-                "$ref": "#/entities/Company"
-            },
-            "description": "Stores the user's own company details for invoicing. The document ID is the user's UID."
+            "description": "Stores user profiles and their company settings."
         },
         "/users/{userId}/clients/{clientId}": {
             "schema": {

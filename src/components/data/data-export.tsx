@@ -20,13 +20,13 @@ export function DataExport({ data, fileName = 'chronopay_backup.json', buttonLab
       const dataToExport: Record<string, any> = {};
 
       for (const [key, value] of Object.entries(data)) {
-        if (Array.isArray(value)) {
+        if (key === 'myCompany' && value && typeof value === 'object') {
+           // Handle the merged user/company object
+           const { id, avatarUrl, email, name, role, ...companyDetails } = value;
+           dataToExport[key] = companyDetails;
+        } else if (Array.isArray(value)) {
           // It's a collection (clients, projects, invoices), remove 'id' from each document
           dataToExport[key] = value.map(({ id, ...rest }) => rest);
-        } else if (value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length > 0) {
-          // It's a single document (like myCompany), remove 'id' if it exists
-          const { id, ...rest } = value;
-          dataToExport[key] = rest;
         }
       }
       
