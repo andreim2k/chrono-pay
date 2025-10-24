@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -150,30 +149,17 @@ export default function SettingsPage() {
                           </CardDescription>
                           </CardHeader>
                           <CardContent className="space-y-4">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <FormField
-                                      control={form.control}
-                                      name="name"
-                                      render={({ field }) => (
-                                          <FormItem>
-                                              <FormLabel>Company Name</FormLabel>
-                                              <FormControl><Input placeholder="Your Company Name" {...field} /></FormControl>
-                                              <FormMessage />
-                                          </FormItem>
-                                      )}
-                                  />
-                                  <FormField
-                                      control={form.control}
-                                      name="vat"
-                                      render={({ field }) => (
-                                          <FormItem>
-                                              <FormLabel>VAT Number</FormLabel>
-                                              <FormControl><Input placeholder="Your VAT Number" {...field} /></FormControl>
-                                              <FormMessage />
-                                          </FormItem>
-                                      )}
-                                  />
-                              </div>
+                              <FormField
+                                  control={form.control}
+                                  name="name"
+                                  render={({ field }) => (
+                                      <FormItem>
+                                          <FormLabel>Company Name</FormLabel>
+                                          <FormControl><Input placeholder="Your Company Name" {...field} /></FormControl>
+                                          <FormMessage />
+                                      </FormItem>
+                                  )}
+                              />
                                <FormField
                                   control={form.control}
                                   name="address"
@@ -185,6 +171,31 @@ export default function SettingsPage() {
                                       </FormItem>
                                   )}
                               />
+                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <FormField
+                                      control={form.control}
+                                      name="vat"
+                                      render={({ field }) => (
+                                          <FormItem>
+                                              <FormLabel>VAT Number</FormLabel>
+                                              <FormControl><Input placeholder="Your VAT Number" {...field} /></FormControl>
+                                              <FormMessage />
+                                          </FormItem>
+                                      )}
+                                  />
+                                   <FormField
+                                      control={form.control}
+                                      name="vatRate"
+                                      render={({ field }) => (
+                                          <FormItem>
+                                              <FormLabel>VAT Rate (%)</FormLabel>
+                                              <FormControl><Input type="number" placeholder="e.g., 19" step="0.01" {...field} /></FormControl>
+                                              <FormDescription>Enter the percentage, e.g., 19 for 19%.</FormDescription>
+                                              <FormMessage />
+                                          </FormItem>
+                                      )}
+                                  />
+                              </div>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <FormField
                                       control={form.control}
@@ -217,18 +228,6 @@ export default function SettingsPage() {
                                           <FormItem>
                                               <FormLabel>IBAN</FormLabel>
                                               <FormControl><Input placeholder="Your IBAN" {...field} /></FormControl>
-                                              <FormMessage />
-                                          </FormItem>
-                                      )}
-                                  />
-                                   <FormField
-                                      control={form.control}
-                                      name="vatRate"
-                                      render={({ field }) => (
-                                          <FormItem>
-                                              <FormLabel>VAT Rate (%)</FormLabel>
-                                              <FormControl><Input type="number" placeholder="e.g., 19" step="0.01" {...field} /></FormControl>
-                                              <FormDescription>Enter the percentage, e.g., 19 for 19%.</FormDescription>
                                               <FormMessage />
                                           </FormItem>
                                       )}
