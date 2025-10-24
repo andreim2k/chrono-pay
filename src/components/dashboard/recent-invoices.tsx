@@ -61,11 +61,11 @@ export function RecentInvoices({ invoices }: { invoices: Invoice[] }) {
                             <div className="flex items-center gap-4">
                                 <div className="text-right w-28">
                                     <p className="font-medium">
-                                        {currencySymbols[invoice.currency] || invoice.currency}{invoice.total.toFixed(2)}
+                                        {currencySymbols[invoice.currency] || invoice.currency}{(typeof invoice.total === 'number' ? invoice.total.toFixed(2) : '0.00')}
                                     </p>
                                     {invoice.vatAmount && invoice.vatAmount > 0 && (
                                         <p className="text-xs text-muted-foreground">
-                                            incl. {invoice.vatAmount.toFixed(2)} VAT
+                                            incl. {(typeof invoice.vatAmount === 'number' ? invoice.vatAmount.toFixed(2) : '0.00')} VAT
                                         </p>
                                     )}
                                 </div>
