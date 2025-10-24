@@ -19,7 +19,7 @@ export default function InvoicesPage() {
     () => (firestore && user ? collection(firestore, `users/${user.uid}/invoices`) : null),
     [firestore, user]
   );
-  const { data: invoices } = useCollection<Invoice>(invoicesQuery);
+  const { data: invoices } = useCollection<Invoice>(invoicesQuery, `users/${user?.uid}/invoices`);
   
   return (
     <div className="space-y-6">

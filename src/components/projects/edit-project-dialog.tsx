@@ -55,7 +55,7 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
     () => (firestore && user ? collection(firestore, `users/${user.uid}/clients`) : null),
     [firestore, user]
   );
-  const { data: clients } = useCollection<Client>(clientsQuery);
+  const { data: clients } = useCollection<Client>(clientsQuery, `users/${user?.uid}/clients`);
   
   const availableClients = useMemo(() => clients?.filter(c => c.id !== 'my-company-details') || [], [clients]);
 

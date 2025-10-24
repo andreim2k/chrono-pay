@@ -18,13 +18,13 @@ export default function DashboardPage() {
     () => (firestore && user ? collection(firestore, `users/${user.uid}/invoices`) : null),
     [firestore, user]
   );
-  const { data: invoices } = useCollection<Invoice>(invoicesQuery);
+  const { data: invoices } = useCollection<Invoice>(invoicesQuery, `users/${user?.uid}/invoices`);
 
   const clientsQuery = useMemoFirebase(
     () => (firestore && user ? collection(firestore, `users/${user.uid}/clients`) : null),
     [firestore, user]
   );
-  const { data: clients } = useCollection(clientsQuery);
+  const { data: clients } = useCollection(clientsQuery, `users/${user?.uid}/clients`);
 
   const dashboardStats = useMemo(() => {
     if (!invoices || !clients) {

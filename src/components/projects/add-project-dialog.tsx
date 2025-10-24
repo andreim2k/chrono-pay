@@ -52,13 +52,13 @@ export function AddProjectDialog() {
     () => (firestore && user ? collection(firestore, `users/${user.uid}/clients`) : null),
     [firestore, user]
   );
-  const { data: clients } = useCollection<Client>(clientsQuery);
+  const { data: clients } = useCollection<Client>(clientsQuery, `users/${user?.uid}/clients`);
   
   const projectsQuery = useMemoFirebase(
     () => (firestore && user ? query(collection(firestore, `users/${user.uid}/projects`)) : null),
     [firestore, user]
   );
-  const { data: projects } = useCollection<Project>(projectsQuery);
+  const { data: projects } = useCollection<Project>(projectsQuery, `users/${user?.uid}/projects`);
 
   const availableClients = useMemo(() => clients?.filter(c => c.id !== 'my-company-details') || [], [clients]);
 

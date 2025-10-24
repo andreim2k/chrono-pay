@@ -36,9 +36,9 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
   const projectsQuery = useMemoFirebase(() => (firestore && user && allowedCollections.includes('projects') ? collection(firestore, `users/${user.uid}/projects`) : null), [firestore, user, allowedCollections]);
   const invoicesQuery = useMemoFirebase(() => (firestore && user && allowedCollections.includes('invoices') ? collection(firestore, `users/${user.uid}/invoices`) : null), [firestore, user, allowedCollections]);
 
-  const { data: existingClients } = useCollection(clientsQuery);
-  const { data: existingProjects } = useCollection(projectsQuery);
-  const { data: existingInvoices } = useCollection(invoicesQuery);
+  const { data: existingClients } = useCollection(clientsQuery, `users/${user?.uid}/clients`);
+  const { data: existingProjects } = useCollection(projectsQuery, `users/${user?.uid}/projects`);
+  const { data: existingInvoices } = useCollection(invoicesQuery, `users/${user?.uid}/invoices`);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

@@ -57,7 +57,7 @@ export function AddClientDialog() {
     () => (firestore && user ? query(collection(firestore, `users/${user.uid}/clients`)) : null),
     [firestore, user]
   );
-  const { data: clients } = useCollection<Client>(clientsQuery);
+  const { data: clients } = useCollection<Client>(clientsQuery, `users/${user?.uid}/clients`);
 
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(clientSchema),

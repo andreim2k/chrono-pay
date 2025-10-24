@@ -45,19 +45,19 @@ export default function SettingsPage() {
         () => (firestore && user ? collection(firestore, `users/${user.uid}/clients`) : null),
         [firestore, user]
     );
-    const { data: clients } = useCollection<Client>(clientsQuery);
+    const { data: clients } = useCollection<Client>(clientsQuery, `users/${user?.uid}/clients`);
     
     const projectsQuery = useMemoFirebase(
         () => (firestore && user ? collection(firestore, `users/${user.uid}/projects`) : null),
         [firestore, user]
     );
-    const { data: projects } = useCollection<Project>(projectsQuery);
+    const { data: projects } = useCollection<Project>(projectsQuery, `users/${user?.uid}/projects`);
 
     const invoicesQuery = useMemoFirebase(
       () => (firestore && user ? collection(firestore, `users/${user.uid}/invoices`) : null),
       [firestore, user]
     );
-    const { data: invoices } = useCollection<Invoice>(invoicesQuery);
+    const { data: invoices } = useCollection<Invoice>(invoicesQuery, `users/${user?.uid}/invoices`);
 
     const myCompany = useMemo(() => clients?.find(c => c.id === 'my-company-details'), [clients]);
     const actualClients = useMemo(() => clients?.filter(c => c.id !== 'my-company-details') || [], [clients]);
