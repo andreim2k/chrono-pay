@@ -25,9 +25,9 @@ const companySchema = z.object({
     vat: z.string().min(1, 'VAT is required'),
     address: z.string().min(1, 'Address is required'),
     iban: z.string().min(1, 'IBAN is required'),
-    bankName: z.string().optional(),
-    swift: z.string().optional(),
-    vatRate: z.coerce.number().min(0, 'VAT rate must be positive').optional(),
+    bankName: z.string().min(1, 'Bank name is required'),
+    swift: z.string().min(1, 'SWIFT/BIC is required'),
+    vatRate: z.coerce.number().min(0, 'VAT rate must be positive'),
 });
 
 type CompanyFormValues = z.infer<typeof companySchema>;
@@ -156,7 +156,7 @@ export default function SettingsPage() {
                                       render={({ field }) => (
                                           <FormItem>
                                               <FormLabel>Company Name</FormLabel>
-                                              <FormControl><Input {...field} /></FormControl>
+                                              <FormControl><Input placeholder="Your Company Name" {...field} /></FormControl>
                                               <FormMessage />
                                           </FormItem>
                                       )}
@@ -167,7 +167,7 @@ export default function SettingsPage() {
                                       render={({ field }) => (
                                           <FormItem>
                                               <FormLabel>VAT Number</FormLabel>
-                                              <FormControl><Input {...field} /></FormControl>
+                                              <FormControl><Input placeholder="Your VAT Number" {...field} /></FormControl>
                                               <FormMessage />
                                           </FormItem>
                                       )}
@@ -179,7 +179,7 @@ export default function SettingsPage() {
                                   render={({ field }) => (
                                       <FormItem>
                                           <FormLabel>Address</FormLabel>
-                                          <FormControl><Input {...field} /></FormControl>
+                                          <FormControl><Input placeholder="Your Company Address" {...field} /></FormControl>
                                           <FormMessage />
                                       </FormItem>
                                   )}
@@ -191,7 +191,7 @@ export default function SettingsPage() {
                                       render={({ field }) => (
                                           <FormItem>
                                               <FormLabel>Bank Name</FormLabel>
-                                              <FormControl><Input {...field} /></FormControl>
+                                              <FormControl><Input placeholder="Your Bank Name" {...field} /></FormControl>
                                               <FormMessage />
                                           </FormItem>
                                       )}
@@ -202,7 +202,7 @@ export default function SettingsPage() {
                                       render={({ field }) => (
                                           <FormItem>
                                               <FormLabel>SWIFT/BIC</FormLabel>
-                                              <FormControl><Input {...field} /></FormControl>
+                                              <FormControl><Input placeholder="Your SWIFT/BIC Code" {...field} /></FormControl>
                                               <FormMessage />
                                           </FormItem>
                                       )}
@@ -215,7 +215,7 @@ export default function SettingsPage() {
                                       render={({ field }) => (
                                           <FormItem>
                                               <FormLabel>IBAN</FormLabel>
-                                              <FormControl><Input {...field} /></FormControl>
+                                              <FormControl><Input placeholder="Your IBAN" {...field} /></FormControl>
                                               <FormMessage />
                                           </FormItem>
                                       )}
@@ -226,7 +226,7 @@ export default function SettingsPage() {
                                       render={({ field }) => (
                                           <FormItem>
                                               <FormLabel>VAT Rate (%)</FormLabel>
-                                              <FormControl><Input type="number" {...field} /></FormControl>
+                                              <FormControl><Input type="number" placeholder="e.g., 19" {...field} /></FormControl>
                                               <FormDescription>Enter the percentage, e.g., 19 for 19%.</FormDescription>
                                               <FormMessage />
                                           </FormItem>

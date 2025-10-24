@@ -1,6 +1,44 @@
 
 {
     "entities": {
+        "User": {
+            "title": "User",
+            "type": "object",
+            "description": "Represents a user within the ChronoPay application.",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "description": "The unique identifier for the user, matches Firebase Auth UID."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "The name of the user."
+                },
+                "email": {
+                    "type": "string",
+                    "description": "The email address of the user.",
+                    "format": "email"
+                },
+                "avatarUrl": {
+                    "type": "string",
+                    "description": "URL of the user's avatar image."
+                },
+                "role": {
+                    "type": "string",
+                    "description": "The role of the user.",
+                    "enum": [
+                        "Admin",
+                        "Member"
+                    ]
+                }
+            },
+            "required": [
+                "id",
+                "name",
+                "email",
+                "role"
+            ]
+        },
         "Client": {
             "title": "Client",
             "type": "object",
@@ -64,7 +102,10 @@
                 "name",
                 "address",
                 "vat",
-                "iban"
+                "iban",
+                "bankName",
+                "swift",
+                "vatRate"
             ]
         },
         "Project": {
@@ -238,23 +279,29 @@
         ]
     },
     "firestore": {
-        "/clients/{clientId}": {
+        "/users/{userId}": {
+            "schema": {
+                "$ref": "#/entities/User"
+            },
+            "description": "Stores user profiles."
+        },
+        "/users/{userId}/clients/{clientId}": {
             "schema": {
                 "$ref": "#/entities/Client"
             },
-            "description": "Stores client information, including a special document for 'My Company' details."
+            "description": "Stores client information, including a special document for 'My Company' details for a specific user."
         },
-        "/projects/{projectId}": {
+        "/users/{userId}/projects/{projectId}": {
             "schema": {
                 "$ref": "#/entities/Project"
             },
-            "description": "Stores project information."
+            "description": "Stores project information for a specific user."
         },
-        "/invoices/{invoiceId}": {
+        "/users/{userId}/invoices/{invoiceId}": {
             "schema": {
                 "$ref": "#/entities/Invoice"
             },
-            "description": "Stores invoice information."
+            "description": "Stores invoice information for a specific user."
         }
     }
 }
