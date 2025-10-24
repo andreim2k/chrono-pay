@@ -12,7 +12,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           {children}
         </main>
         <footer className="py-4 px-4 text-center text-sm text-muted-foreground md:px-8">
-          <p>&copy; {new Date().getFullYear()} ChronoPay. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} ChronoSapient Pay. All rights reserved.</p>
         </footer>
       </div>
     </AuthGuard>

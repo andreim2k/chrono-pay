@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ThemeToggle } from './theme-toggle';
 import { LogOut, Menu, LayoutDashboard, FileText, BarChart, Settings as SettingsIcon } from 'lucide-react';
-import { ChronoPayLogo } from '../icons';
+import { ChronoSapientPayLogo } from '../icons';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { MainNav } from './main-nav';
 import { useAuth, useUser } from '@/firebase';
@@ -51,8 +51,8 @@ export function Header() {
           href="/dashboard"
           className="flex items-center gap-2 text-lg font-semibold md:text-base"
         >
-          <ChronoPayLogo className="h-6 w-6 text-primary" />
-          <span className="">ChronoPay</span>
+          <ChronoSapientPayLogo className="h-6 w-6 text-primary" />
+          <span className="">ChronoSapient Pay</span>
         </Link>
         <MainNav navItems={mainNav} />
       </nav>
@@ -74,8 +74,8 @@ export function Header() {
               href="/dashboard"
               className="flex items-center gap-2 text-lg font-semibold"
             >
-              <ChronoPayLogo className="h-6 w-6 text-primary" />
-              <span className="">ChronoPay</span>
+              <ChronoSapientPayLogo className="h-6 w-6 text-primary" />
+              <span className="">ChronoSapient Pay</span>
             </Link>
             {mainNav.map(item => (
                 <Link

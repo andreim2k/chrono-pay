@@ -1,4 +1,4 @@
-# ChronoPay - Invoicing Application
+# ChronoSapient Pay - Invoicing Application
 
 This is a full-stack invoicing application built with Next.js and Firebase, designed to make invoice management simple and efficient.
 

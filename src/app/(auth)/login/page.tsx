@@ -4,12 +4,12 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth, useFirestore, useUser } from "@/firebase";
+import { useAuth, useFirestore, useUser, setDocumentNonBlocking } from "@/firebase";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function LoginPage() {
   const { toast } = useToast();
@@ -47,7 +47,7 @@ export default function LoginPage() {
       const userDocSnap = await getDoc(userDocRef);
 
       if (!userDocSnap.exists()) {
-        await setDoc(userDocRef, {
+        const userData = {
             id: googleUser.uid,
             name: googleUser.displayName,
             email: googleUser.email,
@@ -61,11 +61,12 @@ export default function LoginPage() {
             companyVatRate: 0.19, // Default to 19%
             companyBankName: 'Your Bank Name',
             companySwift: 'Your SWIFT/BIC'
-        }, { merge: true });
+        };
+        setDocumentNonBlocking(userDocRef, userData, { merge: true });
         
         toast({
             title: "Account Initialized",
-            description: "Welcome to ChronoPay! Please fill in your company details in Settings.",
+            description: "Welcome to ChronoSapient Pay! Please fill in your company details in Settings.",
         });
       } else {
         toast({
@@ -101,8 +102,8 @@ export default function LoginPage() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Sign In to ChronoPay</CardTitle>
-        <CardDescription>Welcome! ChronoPay is your streamlined solution for invoicing. Sign in to manage your clients, projects, and billing with ease.</CardDescription>
+        <CardTitle>Sign In to ChronoSapient Pay</CardTitle>
+        <CardDescription>Welcome! ChronoSapient Pay is your streamlined solution for invoicing. Sign in to manage your clients, projects, and billing with ease.</CardDescription>
       </CardHeader>
       <CardContent>
         <Button 
