@@ -1,72 +1,13 @@
-/**
- * @file Firestore Security Rules
- * @version 2
- *
- * @description This ruleset enforces a strict user-ownership model, allowing only authenticated users to create, read, update, and delete their own data.
- *
- * @dataStructure
- * - `/clients/{clientId}`: Stores information for each client.
- * - `/projects/{projectId}`: Stores information for each project.
- * - `/invoices/{invoiceId}`: Stores information for each invoice.
- *
- * @keySecurityDecisions
- * - All data access is restricted to authenticated users.
- * - Clients, projects and invoices are not user-specific and publicly available if a user is signed in.
- */
+
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    /**
-     * @description Manages access to client information. Any logged in user can read/write clients.
-     * @path /clients/{clientId}
-     * @allow (create) - Authenticated user can create a client.
-     * @allow (get, list) - Authenticated user can read any client.
-     * @allow (update, delete) - Authenticated user can update or delete any client.
-     * @deny (create) - Unauthenticated user cannot create a client.
-     * @deny (get, list) - Unauthenticated user cannot read any client.
-     * @deny (update, delete) - Unauthenticated user cannot update or delete any client.
-     * @principle Allows read and write operations to any signed in user.
-     */
-    match /clients/{clientId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
-    }
-
-    /**
-     * @description Manages access to project information. Any logged in user can read/write projects.
-     * @path /projects/{projectId}
-     * @allow (create) - Authenticated user can create a project.
-     * @allow (get, list) - Authenticated user can read any project.
-     * @allow (update, delete) - Authenticated user can update or delete any project.
-     * @deny (create) - Unauthenticated user cannot create a project.
-     * @deny (get, list) - Unauthenticated user cannot read any project.
-     * @deny (update, delete) - Unauthenticated user cannot update or delete any project.
-     * @principle Allows read and write operations to any signed in user.
-     */
-    match /projects/{projectId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
-    }
-
-    /**
-     * @description Manages access to invoice information. Any logged in user can read/write invoices.
-     * @path /invoices/{invoiceId}
-     * @allow (create) - Authenticated user can create an invoice.
-     * @allow (get, list) - Authenticated user can read any invoice.
-     * @allow (update, delete) - Authenticated user can update or delete any invoice.
-     * @deny (create) - Unauthenticated user cannot create an invoice.
-     * @deny (get, list) - Unauthenticated user cannot read any invoice.
-     * @deny (update, delete) - Unauthenticated user cannot update or delete any invoice.
-     * @principle Allows read and write operations to any signed in user.
-     */
-    match /invoices/{invoiceId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isSignedIn();
-    }
-
-    function isSignedIn() {
-      return request.auth != null;
+    // Allow read/write access to all collections for any authenticated user.
+    // This is a secure setup for a single-user application where only one
+    // person will ever log in.
+    match /{document=**} {
+      allow read, write: if request.auth != null;
     }
   }
 }
