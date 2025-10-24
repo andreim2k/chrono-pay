@@ -20,7 +20,7 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { useCollection, useFirestore, addDocumentNonBlocking, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, addDocumentNonBlocking, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import type { Client, InvoiceTheme, Project } from '@/lib/types';
 import { themeStyles } from '../invoices/invoice-html-preview';
@@ -46,16 +46,17 @@ export function AddProjectDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { user } = useUser();
 
   const clientsQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'clients') : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, `users/${user.uid}/clients`) : null),
+    [firestore, user]
   );
   const { data: clients } = useCollection<Client>(clientsQuery);
   
   const projectsQuery = useMemoFirebase(
-    () => (firestore ? query(collection(firestore, 'projects')) : null),
-    [firestore]
+    () => (firestore && user ? query(collection(firestore, `users/${user.uid}/projects`)) : null),
+    [firestore, user]
   );
   const { data: projects } = useCollection<Project>(projectsQuery);
 
@@ -71,9 +72,9 @@ export function AddProjectDialog() {
   });
 
   const onSubmit = (data: ProjectFormValues) => {
-    if (!firestore) return;
+    if (!firestore || !user) return;
     const client = clients?.find(c => c.id === data.clientId);
-    const projectsCollection = collection(firestore, 'projects');
+    const projectsCollection = collection(firestore, `users/${user.uid}/projects`);
     
     addDocumentNonBlocking(projectsCollection, { 
       ...data, 

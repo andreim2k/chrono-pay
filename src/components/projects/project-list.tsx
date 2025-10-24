@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useFirestore, deleteDocumentNonBlocking } from '@/firebase';
+import { useFirestore, deleteDocumentNonBlocking, useUser } from '@/firebase';
 import { doc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { EditProjectDialog } from './edit-project-dialog';
@@ -111,6 +111,7 @@ export function ProjectList({ projects: initialProjects }: ProjectListProps) {
   const [activeProjects, setActiveProjects] = useState<Project[]>([]);
   
   const firestore = useFirestore();
+  const { user } = useUser();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -127,8 +128,8 @@ export function ProjectList({ projects: initialProjects }: ProjectListProps) {
   );
 
   const handleDelete = () => {
-    if (!firestore || !projectToDelete) return;
-    const projectRef = doc(firestore, `projects`, projectToDelete.id);
+    if (!firestore || !projectToDelete || !user) return;
+    const projectRef = doc(firestore, `users/${user.uid}/projects`, projectToDelete.id);
     deleteDocumentNonBlocking(projectRef);
     toast({
       title: 'Project Deleted',
@@ -159,10 +160,10 @@ export function ProjectList({ projects: initialProjects }: ProjectListProps) {
         const newOrder = arrayMove(items, oldIndex, newIndex);
 
         // Update order in Firestore
-        if (firestore) {
+        if (firestore && user) {
           const batch = writeBatch(firestore);
           newOrder.forEach((project, index) => {
-            const projectRef = doc(firestore, 'projects', project.id);
+            const projectRef = doc(firestore, `users/${user.uid}/projects`, project.id);
             batch.update(projectRef, { order: index });
           });
           batch.commit().catch(err => {

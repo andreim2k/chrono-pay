@@ -5,7 +5,7 @@ import { RevenueChart } from '@/components/reports/revenue-chart';
 import { InvoiceStatusChart } from '@/components/reports/invoice-status-chart';
 import { InvoicesPerClientChart } from '@/components/reports/invoices-per-client-chart';
 import { UnpaidByClientChart } from '@/components/reports/unpaid-by-client-chart';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { Invoice } from '@/lib/types';
 import { collection } from 'firebase/firestore';
 import { StatCard } from '@/components/dashboard/stat-card';
@@ -17,9 +17,10 @@ import { getYear, parseISO } from 'date-fns';
 
 export default function ReportsPage() {
   const firestore = useFirestore();
+  const { user } = useUser();
   const invoicesQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'invoices') : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, `users/${user.uid}/invoices`) : null),
+    [firestore, user]
   );
   const { data: invoices } = useCollection<Invoice>(invoicesQuery);
 

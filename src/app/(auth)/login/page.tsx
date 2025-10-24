@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -44,7 +45,7 @@ export default function LoginPage() {
       // In a single-user model, we might not even need a user document,
       // but it can be useful for storing profile info. We check for the 'my-company-details'
       // document as an indicator of first-time setup for this single user.
-      const companyDocRef = doc(firestore, `clients`, 'my-company-details');
+      const companyDocRef = doc(firestore, `users/${googleUser.uid}/clients`, 'my-company-details');
       const companyDocSnap = await getDoc(companyDocRef);
 
       if (!companyDocSnap.exists()) {
@@ -54,6 +55,8 @@ export default function LoginPage() {
             vat: 'Your VAT Number',
             iban: 'Your IBAN',
             vatRate: 0,
+            bankName: 'Your Bank Name',
+            swift: 'Your SWIFT/BIC'
         });
 
         toast({

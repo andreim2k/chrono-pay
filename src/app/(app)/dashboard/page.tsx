@@ -3,7 +3,7 @@
 
 import { StatCard } from '@/components/dashboard/stat-card';
 import { RecentInvoices } from '@/components/dashboard/recent-invoices';
-import { useCollection } from '@/firebase';
+import { useCollection, useUser } from '@/firebase';
 import { DollarSign, Users, Clock, Banknote, Landmark } from 'lucide-react';
 import type { Invoice } from '@/lib/types';
 import { useMemo } from 'react';
@@ -12,16 +12,17 @@ import { collection } from 'firebase/firestore';
 
 export default function DashboardPage() {
   const firestore = useFirestore();
+  const { user } = useUser();
 
   const invoicesQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'invoices') : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, `users/${user.uid}/invoices`) : null),
+    [firestore, user]
   );
   const { data: invoices } = useCollection<Invoice>(invoicesQuery);
 
   const clientsQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'clients') : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, `users/${user.uid}/clients`) : null),
+    [firestore, user]
   );
   const { data: clients } = useCollection(clientsQuery);
 

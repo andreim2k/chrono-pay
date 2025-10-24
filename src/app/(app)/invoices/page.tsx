@@ -1,10 +1,11 @@
+
 'use client';
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { InvoiceList } from '@/components/invoices/invoice-list';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { Invoice } from '@/lib/types';
 import { collection } from 'firebase/firestore';
 import { DataExport } from '@/components/data/data-export';
@@ -13,9 +14,10 @@ import { DataImport } from '@/components/data/data-import';
 
 export default function InvoicesPage() {
   const firestore = useFirestore();
+  const { user } = useUser();
   const invoicesQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'invoices') : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, `users/${user.uid}/invoices`) : null),
+    [firestore, user]
   );
   const { data: invoices } = useCollection<Invoice>(invoicesQuery);
   

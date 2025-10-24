@@ -11,7 +11,7 @@ import { MoreHorizontal, Download, Eye, Loader2, Trash2 } from 'lucide-react';
 import type { Invoice } from '@/lib/types';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, updateDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { useFirestore, updateDocumentNonBlocking, deleteDocumentNonBlocking, useUser } from '@/firebase';
 import { doc, writeBatch } from 'firebase/firestore';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -43,6 +43,7 @@ const currencySymbols: { [key: string]: string } = {
 
 export function InvoiceList({ invoices }: InvoiceListProps) {
   const firestore = useFirestore();
+  const { user } = useUser();
   const { toast } = useToast();
   
   const [invoiceToView, setInvoiceToView] = useState<Invoice | null>(null);
@@ -77,8 +78,8 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
   };
 
   const handleStatusChange = (invoice: Invoice, newStatus: Invoice['status']) => {
-    if (!firestore) return;
-    const invoiceRef = doc(firestore, `invoices`, invoice.id);
+    if (!firestore || !user) return;
+    const invoiceRef = doc(firestore, `users/${user.uid}/invoices`, invoice.id);
     updateDocumentNonBlocking(invoiceRef, { status: newStatus });
     toast({
         title: 'Invoice Updated',
@@ -155,8 +156,8 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
   }
 
   const confirmDelete = () => {
-    if (!firestore || !invoiceToDelete) return;
-    const invoiceRef = doc(firestore, `invoices`, invoiceToDelete.id);
+    if (!firestore || !invoiceToDelete || !user) return;
+    const invoiceRef = doc(firestore, `users/${user.uid}/invoices`, invoiceToDelete.id);
     deleteDocumentNonBlocking(invoiceRef);
     toast({
       title: 'Invoice Deleted',
@@ -179,13 +180,13 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
   };
 
   const handleDeleteSelected = async () => {
-    if (!firestore || selectedRowCount === 0) return;
+    if (!firestore || selectedRowCount === 0 || !user) return;
     
     const batch = writeBatch(firestore);
     const idsToDelete = Object.keys(selectedRows).filter(id => selectedRows[id]);
     
     idsToDelete.forEach(id => {
-        const invoiceRef = doc(firestore, 'invoices', id);
+        const invoiceRef = doc(firestore, `users/${user.uid}/invoices`, id);
         batch.delete(invoiceRef);
     });
 

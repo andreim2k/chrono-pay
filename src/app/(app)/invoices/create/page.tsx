@@ -15,7 +15,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import type { Client, Invoice, Project, InvoiceTheme } from '@/lib/types';
 import { getExchangeRate } from '@/ai/flows/get-exchange-rate';
-import { useCollection, useFirestore, addDocumentNonBlocking, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, addDocumentNonBlocking, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, where } from 'firebase/firestore';
 import { InvoiceHtmlPreview, themeStyles } from '@/components/invoices/invoice-html-preview';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -80,27 +80,27 @@ export default function CreateInvoicePage() {
   const router = useRouter();
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { user } = useUser();
   const invoiceCreationDate = useMemo(() => new Date(), []);
 
-
   const clientsQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'clients') : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, `users/${user.uid}/clients`) : null),
+    [firestore, user]
   );
   const { data: clients } = useCollection<Client>(clientsQuery);
   
   const invoicesQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'invoices') : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, `users/${user.uid}/invoices`) : null),
+    [firestore, user]
   );
   const { data: invoices } = useCollection<Invoice>(invoicesQuery);
 
   const projectsForClientQuery = useMemoFirebase(
     () => {
-        if (!firestore || !selectedClientId) return null;
-        return query(collection(firestore, 'projects'), where('clientId', '==', selectedClientId))
+        if (!firestore || !selectedClientId || !user) return null;
+        return query(collection(firestore, `users/${user.uid}/projects`), where('clientId', '==', selectedClientId))
     },
-    [firestore, selectedClientId]
+    [firestore, selectedClientId, user]
   );
   const { data: projectsForClient } = useCollection<Project>(projectsForClientQuery);
 
@@ -305,8 +305,8 @@ export default function CreateInvoicePage() {
   }, [isPreviewOpen, generatePreview]);
 
   const handleSaveInvoice = () => {
-    if (!invoiceData || !firestore) return;
-    const invoicesCol = collection(firestore, `invoices`);
+    if (!invoiceData || !firestore || !user) return;
+    const invoicesCol = collection(firestore, `users/${user.uid}/invoices`);
     addDocumentNonBlocking(invoicesCol, invoiceData);
     toast({
       title: 'Invoice Saved',

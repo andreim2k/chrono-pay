@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ProjectList } from '@/components/projects/project-list';
 import { ClientList } from '@/components/projects/client-list';
-import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking, useUser } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import type { Client, Project, Invoice } from '@/lib/types';
 import { useForm } from 'react-hook-form';
@@ -34,6 +34,7 @@ type CompanyFormValues = z.infer<typeof companySchema>;
 
 export default function SettingsPage() {
     const firestore = useFirestore();
+    const { user } = useUser();
     const { toast } = useToast();
     
     const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
@@ -41,20 +42,20 @@ export default function SettingsPage() {
 
 
     const clientsQuery = useMemoFirebase(
-        () => (firestore ? collection(firestore, 'clients') : null),
-        [firestore]
+        () => (firestore && user ? collection(firestore, `users/${user.uid}/clients`) : null),
+        [firestore, user]
     );
     const { data: clients } = useCollection<Client>(clientsQuery);
     
     const projectsQuery = useMemoFirebase(
-        () => (firestore ? collection(firestore, 'projects') : null),
-        [firestore]
+        () => (firestore && user ? collection(firestore, `users/${user.uid}/projects`) : null),
+        [firestore, user]
     );
     const { data: projects } = useCollection<Project>(projectsQuery);
 
     const invoicesQuery = useMemoFirebase(
-      () => (firestore ? collection(firestore, 'invoices') : null),
-      [firestore]
+      () => (firestore && user ? collection(firestore, `users/${user.uid}/invoices`) : null),
+      [firestore, user]
     );
     const { data: invoices } = useCollection<Invoice>(invoicesQuery);
 
@@ -101,8 +102,8 @@ export default function SettingsPage() {
 
 
     const handleSaveCompany = (data: CompanyFormValues) => {
-        if (!firestore) return;
-        const companyRef = doc(firestore, `clients`, 'my-company-details');
+        if (!firestore || !user) return;
+        const companyRef = doc(firestore, `users/${user.uid}/clients`, 'my-company-details');
 
         const companyData: Omit<Client, 'id'> = {
             ...data,

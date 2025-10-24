@@ -17,7 +17,7 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { collection, doc, setDoc } from 'firebase/firestore';
 import type { Client, Project, InvoiceTheme } from '@/lib/types';
 import { themeStyles } from '../invoices/invoice-html-preview';
@@ -49,10 +49,11 @@ interface EditProjectDialogProps {
 export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProjectDialogProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { user } = useUser();
 
   const clientsQuery = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'clients') : null),
-    [firestore]
+    () => (firestore && user ? collection(firestore, `users/${user.uid}/clients`) : null),
+    [firestore, user]
   );
   const { data: clients } = useCollection<Client>(clientsQuery);
   
@@ -68,9 +69,9 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
   });
 
   const onSubmit = async (data: ProjectFormValues) => {
-    if (!firestore) return;
+    if (!firestore || !user) return;
     const client = clients?.find(c => c.id === data.clientId);
-    const projectRef = doc(firestore, `projects`, project.id);
+    const projectRef = doc(firestore, `users/${user.uid}/projects`, project.id);
     
     await setDoc(projectRef, { 
       ...data, 

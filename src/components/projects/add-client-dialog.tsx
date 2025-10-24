@@ -20,7 +20,7 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useFirestore, addDocumentNonBlocking, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, addDocumentNonBlocking, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import { Switch } from '../ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
@@ -51,10 +51,11 @@ export function AddClientDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { user } = useUser();
 
   const clientsQuery = useMemoFirebase(
-    () => (firestore ? query(collection(firestore, 'clients')) : null),
-    [firestore]
+    () => (firestore && user ? query(collection(firestore, `users/${user.uid}/clients`)) : null),
+    [firestore, user]
   );
   const { data: clients } = useCollection<Client>(clientsQuery);
 
@@ -73,8 +74,8 @@ export function AddClientDialog() {
   });
 
   const onSubmit = (data: ClientFormValues) => {
-    if (!firestore) return;
-    const clientsCollection = collection(firestore, 'clients');
+    if (!firestore || !user) return;
+    const clientsCollection = collection(firestore, `users/${user.uid}/clients`);
     
     const dataToSave: any = {
       ...data,
@@ -208,7 +209,7 @@ export function AddClientDialog() {
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select language" />
-                        </SelectTrigger>
+                        </Trigger>
                       </FormControl>
                       <SelectContent>
                         {languages.map(lang => (

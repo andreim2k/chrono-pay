@@ -5,7 +5,7 @@ import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { writeBatch, collection, doc } from 'firebase/firestore';
 import {
   AlertDialog,
@@ -30,10 +30,11 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { user } = useUser();
   
-  const clientsQuery = useMemoFirebase(() => (firestore && allowedCollections.includes('clients') ? collection(firestore, 'clients') : null), [firestore, allowedCollections]);
-  const projectsQuery = useMemoFirebase(() => (firestore && allowedCollections.includes('projects') ? collection(firestore, 'projects') : null), [firestore, allowedCollections]);
-  const invoicesQuery = useMemoFirebase(() => (firestore && allowedCollections.includes('invoices') ? collection(firestore, 'invoices') : null), [firestore, allowedCollections]);
+  const clientsQuery = useMemoFirebase(() => (firestore && user && allowedCollections.includes('clients') ? collection(firestore, `users/${user.uid}/clients`) : null), [firestore, user, allowedCollections]);
+  const projectsQuery = useMemoFirebase(() => (firestore && user && allowedCollections.includes('projects') ? collection(firestore, `users/${user.uid}/projects`) : null), [firestore, user, allowedCollections]);
+  const invoicesQuery = useMemoFirebase(() => (firestore && user && allowedCollections.includes('invoices') ? collection(firestore, `users/${user.uid}/invoices`) : null), [firestore, user, allowedCollections]);
 
   const { data: existingClients } = useCollection(clientsQuery);
   const { data: existingProjects } = useCollection(projectsQuery);
@@ -52,11 +53,11 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
   };
 
   const handleConfirmImport = async () => {
-    if (!firestore || !fileToImport) {
+    if (!firestore || !fileToImport || !user) {
       toast({
         variant: 'destructive',
         title: 'Import Failed',
-        description: 'Firestore is not available or no file was selected.',
+        description: 'Firestore is not available, no file was selected, or user is not logged in.',
       });
       return;
     }
@@ -71,15 +72,15 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
 
       // 1. Delete all existing data for the allowed collections
       if (allowedCollections.includes('invoices') && existingInvoices) {
-        existingInvoices.forEach(inv => batch.delete(doc(firestore, 'invoices', inv.id)));
+        existingInvoices.forEach(inv => batch.delete(doc(firestore, `users/${user.uid}/invoices`, inv.id)));
       }
       if (allowedCollections.includes('projects') && existingProjects) {
-        existingProjects.forEach(proj => batch.delete(doc(firestore, 'projects', proj.id)));
+        existingProjects.forEach(proj => batch.delete(doc(firestore, `users/${user.uid}/projects`, proj.id)));
       }
       if (allowedCollections.includes('clients') && existingClients) {
         existingClients.forEach(client => {
           if (client.id !== 'my-company-details') {
-            batch.delete(doc(firestore, 'clients', client.id));
+            batch.delete(doc(firestore, `users/${user.uid}/clients`, client.id));
           }
         });
       }
@@ -87,7 +88,7 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
       // 2. Add new data from the import file
       // Handle My Company
       if (allowedCollections.includes('myCompany') && dataToImport.myCompany) {
-        const myCompanyRef = doc(firestore, 'clients', 'my-company-details');
+        const myCompanyRef = doc(firestore, `users/${user.uid}/clients`, 'my-company-details');
         batch.set(myCompanyRef, dataToImport.myCompany, { merge: true });
         importCount++;
       }
@@ -96,7 +97,7 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
       ['clients', 'projects', 'invoices'].forEach(collectionName => {
         if (allowedCollections.includes(collectionName) && Array.isArray(dataToImport[collectionName])) {
           dataToImport[collectionName].forEach((docData: any) => {
-            const newDocRef = doc(collection(firestore, collectionName));
+            const newDocRef = doc(collection(firestore, `users/${user.uid}/${collectionName}`));
             batch.set(newDocRef, docData);
             importCount++;
           });

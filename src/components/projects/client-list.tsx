@@ -19,7 +19,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useFirestore, deleteDocumentNonBlocking } from '@/firebase';
+import { useFirestore, deleteDocumentNonBlocking, useUser } from '@/firebase';
 import { doc, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { getInitials } from '@/lib/utils';
@@ -114,6 +114,7 @@ export function ClientList({ clients: initialClients, onEditClient }: ClientList
   const [activeClients, setActiveClients] = useState<Client[]>([]);
 
   const firestore = useFirestore();
+  const { user } = useUser();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -130,8 +131,8 @@ export function ClientList({ clients: initialClients, onEditClient }: ClientList
   );
 
   const handleDelete = () => {
-    if (!firestore || !clientToDelete) return;
-    const clientRef = doc(firestore, `clients`, clientToDelete.id);
+    if (!firestore || !clientToDelete || !user) return;
+    const clientRef = doc(firestore, `users/${user.uid}/clients`, clientToDelete.id);
     deleteDocumentNonBlocking(clientRef);
     toast({
       title: 'Client Deleted',
@@ -157,10 +158,10 @@ export function ClientList({ clients: initialClients, onEditClient }: ClientList
         const newOrder = arrayMove(items, oldIndex, newIndex);
 
         // Update order in Firestore
-        if (firestore) {
+        if (firestore && user) {
           const batch = writeBatch(firestore);
           newOrder.forEach((client, index) => {
-            const clientRef = doc(firestore, 'clients', client.id);
+            const clientRef = doc(firestore, `users/${user.uid}/clients`, client.id);
             batch.update(clientRef, { order: index });
           });
           batch.commit().catch(err => {

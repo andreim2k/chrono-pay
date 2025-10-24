@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -17,7 +18,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Client } from '@/lib/types';
-import { useFirestore } from '@/firebase';
+import { useFirestore, useUser } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { Switch } from '../ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
@@ -55,6 +56,7 @@ interface EditClientDialogProps {
 export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDialogProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { user } = useUser();
 
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(clientSchema),
@@ -90,8 +92,8 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
   }, [isOpen, client, form]);
 
   const onSubmit = async (data: ClientFormValues) => {
-    if (!firestore) return;
-    const clientRef = doc(firestore, `clients`, client.id);
+    if (!firestore || !user) return;
+    const clientRef = doc(firestore, `users/${user.uid}/clients`, client.id);
 
     const dataToSave: any = {
       ...data,
