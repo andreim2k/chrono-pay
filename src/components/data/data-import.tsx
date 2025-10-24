@@ -77,6 +77,7 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
       if (allowedCollections.includes('projects') && existingProjects) {
         existingProjects.forEach(proj => batch.delete(doc(firestore, `users/${user.uid}/projects`, proj.id)));
       }
+      // Delete only regular clients, not 'my-company-details'
       if (allowedCollections.includes('clients') && existingClients) {
         existingClients.forEach(client => {
           if (client.id !== 'my-company-details') {
@@ -90,11 +91,12 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
       if (allowedCollections.includes('myCompany') && dataToImport.myCompany) {
         const myCompanyRef = doc(firestore, `users/${user.uid}/clients`, 'my-company-details');
         batch.set(myCompanyRef, dataToImport.myCompany, { merge: true });
-        importCount++;
+        // This is an update, so we don't increment the main import count
       }
 
       // Handle other collections
-      ['clients', 'projects', 'invoices'].forEach(collectionName => {
+      const collectionsToImport = ['clients', 'projects', 'invoices'];
+      collectionsToImport.forEach(collectionName => {
         if (allowedCollections.includes(collectionName) && Array.isArray(dataToImport[collectionName])) {
           dataToImport[collectionName].forEach((docData: any) => {
             const newDocRef = doc(collection(firestore, `users/${user.uid}/${collectionName}`));
@@ -105,7 +107,7 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
       });
       
 
-      if (importCount === 0) {
+      if (importCount === 0 && !dataToImport.myCompany) {
         toast({
             variant: 'destructive',
             title: 'Import Failed',
@@ -119,7 +121,7 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
 
       toast({
         title: 'Import Successful',
-        description: `Successfully cleared relevant data and imported ${importCount} records. The page will now refresh.`,
+        description: `Successfully cleared relevant data and imported ${importCount} records. Your 'My Company' details have been updated. The page will now refresh.`,
       });
 
       setTimeout(() => {
@@ -145,11 +147,12 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
   
   const alertDescription = () => {
     const collectionsToWipe = allowedCollections.filter(c => c !== 'myCompany');
-    if (collectionsToWipe.length === 1) {
-        return `This will permanently delete all existing ${collectionsToWipe[0]} and replace them with the data from the imported file.`;
+    if (collectionsToWipe.length === 0) {
+        return "This will update your 'My Company' details with the data from the imported file.";
     }
     const lastCollection = collectionsToWipe.pop();
-    return `This will permanently delete all existing ${collectionsToWipe.join(', ')} and ${lastCollection} and replace them with the data from the imported file. Your 'My Company' details will be updated if present in the file.`;
+    const collectionText = collectionsToWipe.length > 0 ? `${collectionsToWipe.join(', ')} and ${lastCollection}` : lastCollection;
+    return `This will permanently delete all existing ${collectionText} and replace them with the data from the imported file. Your 'My Company' details will be updated if present in the file. This action cannot be undone.`;
   }
 
   return (
@@ -175,7 +178,7 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              {alertDescription()} This action cannot be undone.
+              {alertDescription()}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
