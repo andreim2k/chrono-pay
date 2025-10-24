@@ -37,12 +37,11 @@ export function RecentInvoices({ invoices }: { invoices: Invoice[] }) {
         }
       };
 
-    const formatCurrencyValue = (value: number | undefined | null) => {
-        if (typeof value === 'number') {
-            return value.toFixed(2);
-        }
-        return '0.00';
-    }
+    const formatCurrency = (value: number | undefined | null, currency: string): string => {
+        const symbol = currencySymbols[currency] || currency;
+        const amount = typeof value === 'number' ? value : 0;
+        return `${symbol}${amount.toFixed(2)}`;
+    };
 
 
     return (
@@ -68,11 +67,11 @@ export function RecentInvoices({ invoices }: { invoices: Invoice[] }) {
                             <div className="flex items-center gap-4">
                                 <div className="text-right w-28">
                                     <p className="font-medium">
-                                        {currencySymbols[invoice.currency] || invoice.currency}{formatCurrencyValue(invoice.total)}
+                                        {formatCurrency(invoice.total, invoice.currency)}
                                     </p>
                                     {invoice.vatAmount && invoice.vatAmount > 0 && (
                                         <p className="text-xs text-muted-foreground">
-                                            incl. {formatCurrencyValue(invoice.vatAmount)} VAT
+                                           incl. VAT {formatCurrency(invoice.vatAmount, invoice.currency)}
                                         </p>
                                     )}
                                 </div>
