@@ -21,8 +21,8 @@ import { DataManagement } from '@/components/data/data-management';
 
 const companySchema = z.object({
     name: z.string().min(1, 'Company name is required'),
-    vat: z.string().min(1, 'VAT is required').regex(/^[A-Z0-9]+$/, 'Invalid VAT format, should be alphanumeric.'),
     address: z.string().min(1, 'Address is required'),
+    vat: z.string().min(1, 'VAT is required').regex(/^[A-Z0-9]+$/, 'Invalid VAT format, should be alphanumeric.'),
     iban: z.string().min(1, 'IBAN is required').regex(/^[A-Z]{2}[0-9]{2}[A-Z0-9]{4,30}$/, 'Invalid IBAN. It should start with 2 letters followed by numbers (e.g., DE89370400440532013000).'),
     bankName: z.string().min(1, 'Bank name is required'),
     swift: z.string().min(1, 'SWIFT/BIC is required').regex(/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/, 'Invalid SWIFT/BIC format.'),
@@ -149,6 +149,7 @@ export default function SettingsPage() {
                           </CardDescription>
                           </CardHeader>
                           <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <FormField
                                   control={form.control}
                                   name="name"
@@ -171,6 +172,7 @@ export default function SettingsPage() {
                                       </FormItem>
                                   )}
                               />
+                            </div>
                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <FormField
                                       control={form.control}
