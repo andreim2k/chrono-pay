@@ -209,7 +209,7 @@ export function AddClientDialog() {
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select language" />
-                        </Trigger>
+                        </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {languages.map(lang => (
