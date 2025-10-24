@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { DependencyList, createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
@@ -152,17 +153,8 @@ export const useFirebaseApp = (): FirebaseApp => {
   return firebaseApp;
 };
 
-type MemoFirebase <T> = T & {__memo?: boolean};
-
-export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T | (MemoFirebase<T>) {
-  const memoized = useMemo(factory, deps);
-  
-  if(typeof memoized !== 'object' || memoized === null) return memoized;
-  if(!('__memo' in memoized)) {
-    (memoized as MemoFirebase<T>).__memo = true;
-  }
-  
-  return memoized;
+export function useMemoFirebase<T>(factory: () => T, deps: DependencyList): T {
+  return useMemo(factory, deps);
 }
 
 
