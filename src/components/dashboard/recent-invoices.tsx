@@ -62,7 +62,7 @@ export function RecentInvoices({ invoices }: { invoices: Invoice[] }) {
                                     <p className="font-medium">
                                         {(currencySymbols[invoice.currency] || invoice.currency) + invoice.total.toFixed(2)}
                                     </p>
-                                    {invoice.vatAmount && invoice.vatAmount > 0 && (
+                                    {typeof invoice.vatAmount === 'number' && invoice.vatAmount > 0 && (
                                         <p className="text-xs text-muted-foreground">
                                            incl. VAT {(currencySymbols[invoice.currency] || invoice.currency) + invoice.vatAmount.toFixed(2)}
                                         </p>
