@@ -24,7 +24,7 @@ const companySchema = z.object({
     name: z.string().min(1, 'Company name is required'),
     vat: z.string().min(1, 'VAT is required').regex(/^[A-Z0-9]+$/, 'Invalid VAT format, should be alphanumeric.'),
     address: z.string().min(1, 'Address is required'),
-    iban: z.string().min(1, 'IBAN is required').regex(/^[A-Z]{2}[0-9]{2}[A-Z0-9]{4,30}$/, 'Invalid IBAN format.'),
+    iban: z.string().min(1, 'IBAN is required').regex(/^[A-Z]{2}[0-9]{2}[A-Z0-9]{4,30}$/, 'Invalid IBAN. It should start with 2 letters followed by numbers (e.g., DE89370400440532013000).'),
     bankName: z.string().min(1, 'Bank name is required'),
     swift: z.string().min(1, 'SWIFT/BIC is required').regex(/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/, 'Invalid SWIFT/BIC format.'),
     vatRate: z.coerce.number().min(0, 'VAT rate must be positive').multipleOf(0.01, { message: "VAT rate can have at most 2 decimal places." }),
@@ -63,7 +63,7 @@ export default function SettingsPage() {
 
     const form = useForm<CompanyFormValues>({
         resolver: zodResolver(companySchema),
-        mode: 'onBlur', // Validate on blur
+        mode: 'onChange', // Validate on every keystroke
         defaultValues: {
             name: '',
             vat: '',
