@@ -9,7 +9,7 @@ import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, writeBatch } from "firebase/firestore";
 
 export default function LoginPage() {
   const { toast } = useToast();
@@ -42,14 +42,24 @@ export default function LoginPage() {
       const result = await signInWithPopup(auth, provider);
       const googleUser = result.user;
 
-      // In a single-user model, we might not even need a user document,
-      // but it can be useful for storing profile info. We check for the 'my-company-details'
-      // document as an indicator of first-time setup for this single user.
-      const companyDocRef = doc(firestore, `users/${googleUser.uid}/clients`, 'my-company-details');
-      const companyDocSnap = await getDoc(companyDocRef);
+      const userDocRef = doc(firestore, `users/${googleUser.uid}`);
+      const userDocSnap = await getDoc(userDocRef);
 
-      if (!companyDocSnap.exists()) {
-        await setDoc(companyDocRef, {
+      if (!userDocSnap.exists()) {
+        const batch = writeBatch(firestore);
+
+        // 1. Create the user document
+        batch.set(userDocRef, {
+            id: googleUser.uid,
+            name: googleUser.displayName,
+            email: googleUser.email,
+            avatarUrl: googleUser.photoURL,
+            role: "Admin" // Default role
+        });
+
+        // 2. Create the initial 'my-company-details' document
+        const companyDocRef = doc(firestore, `users/${googleUser.uid}/clients`, 'my-company-details');
+        batch.set(companyDocRef, {
             name: `${googleUser.displayName}'s Company`,
             address: 'Your Company Address',
             vat: 'Your VAT Number',
@@ -58,6 +68,8 @@ export default function LoginPage() {
             bankName: 'Your Bank Name',
             swift: 'Your SWIFT/BIC'
         });
+
+        await batch.commit();
 
         toast({
             title: "Account Initialized",
