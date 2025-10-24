@@ -363,7 +363,7 @@ export function CreateInvoiceDialog() {
                 </Button>
             </DialogTrigger>
             <DialogContent className="max-w-3xl">
-                 <DialogHeader>
+                 <DialogHeader className="px-1">
                     <DialogTitle>Create New Invoice</DialogTitle>
                     <DialogDescription>
                     Select a client and enter details to generate a new invoice.
@@ -614,6 +614,3 @@ export function CreateInvoiceDialog() {
     </>
   );
 }
-
-
-
