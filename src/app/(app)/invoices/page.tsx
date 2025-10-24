@@ -40,6 +40,7 @@ export default function InvoicesPage() {
             allowedCollections={['invoices']}
             buttonLabel="Import Invoices"
             importMode="merge"
+            existingData={{ invoices: invoices || [] }}
           />
           <Button asChild>
             <Link href="/invoices/create">

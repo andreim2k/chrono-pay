@@ -22,12 +22,14 @@ interface DataImportProps {
   allowedCollections?: string[];
   buttonLabel?: string;
   importMode?: 'overwrite' | 'merge';
+  existingData?: Record<string, any[]>;
 }
 
 export function DataImport({ 
   allowedCollections = ['clients', 'projects', 'invoices', 'myCompany'], 
   buttonLabel = 'Import Data',
   importMode = 'overwrite',
+  existingData,
 }: DataImportProps) {
   const [isImporting, setIsImporting] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
@@ -37,13 +39,14 @@ export function DataImport({
   const firestore = useFirestore();
   const { user } = useUser();
   
+  // These hooks are only needed for 'overwrite' mode to get all existing docs for deletion.
   const clientsQuery = useMemoFirebase(() => (firestore && user && allowedCollections.includes('clients') && importMode === 'overwrite' ? collection(firestore, `users/${user.uid}/clients`) : null), [firestore, user, allowedCollections, importMode]);
   const projectsQuery = useMemoFirebase(() => (firestore && user && allowedCollections.includes('projects') && importMode === 'overwrite' ? collection(firestore, `users/${user.uid}/projects`) : null), [firestore, user, allowedCollections, importMode]);
   const invoicesQuery = useMemoFirebase(() => (firestore && user && allowedCollections.includes('invoices') && importMode === 'overwrite' ? collection(firestore, `users/${user.uid}/invoices`) : null), [firestore, user, allowedCollections, importMode]);
 
-  const { data: existingClients } = useCollection(clientsQuery, `users/${user?.uid}/clients`);
-  const { data: existingProjects } = useCollection(projectsQuery, `users/${user?.uid}/projects`);
-  const { data: existingInvoices } = useCollection(invoicesQuery, `users/${user?.uid}/invoices`);
+  const { data: existingClients } = useCollection(clientsQuery);
+  const { data: existingProjects } = useCollection(projectsQuery);
+  const { data: existingInvoicesForOverwrite } = useCollection(invoicesQuery);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -77,8 +80,8 @@ export function DataImport({
 
       // In 'overwrite' mode, delete all existing data for the allowed collections
       if (importMode === 'overwrite') {
-        if (allowedCollections.includes('invoices') && existingInvoices) {
-          existingInvoices.forEach(inv => batch.delete(doc(firestore, `users/${user.uid}/invoices`, inv.id)));
+        if (allowedCollections.includes('invoices') && existingInvoicesForOverwrite) {
+          existingInvoicesForOverwrite.forEach(inv => batch.delete(doc(firestore, `users/${user.uid}/invoices`, inv.id)));
         }
         if (allowedCollections.includes('projects') && existingProjects) {
           existingProjects.forEach(proj => batch.delete(doc(firestore, `users/${user.uid}/projects`, proj.id)));
@@ -88,33 +91,37 @@ export function DataImport({
         }
       }
       
-      // Add new data from the import file
       // Handle My Company details by merging them into the user document
       if (allowedCollections.includes('myCompany') && dataToImport.myCompany) {
         const userRef = doc(firestore, `users/${user.uid}`);
-        const { id, avatarUrl, email, name, role, ...companyDetails } = dataToImport.myCompany;
-        batch.set(userRef, companyDetails, { merge: true });
+        batch.set(userRef, dataToImport.myCompany, { merge: true });
         importCount++;
       }
 
       // Handle collections
       const collectionsToImport = ['clients', 'projects', 'invoices'];
-      collectionsToImport.forEach(collectionName => {
+      for (const collectionName of collectionsToImport) {
         if (allowedCollections.includes(collectionName) && Array.isArray(dataToImport[collectionName])) {
-          dataToImport[collectionName].forEach((docData: any) => {
+          let docsToProcess = dataToImport[collectionName];
+
+          if (importMode === 'merge' && collectionName === 'invoices' && existingData?.invoices) {
+            const existingInvoiceNumbers = new Set(existingData.invoices.map(inv => inv.invoiceNumber));
+            docsToProcess = docsToProcess.filter((docData: any) => !existingInvoiceNumbers.has(docData.invoiceNumber));
+          }
+
+          docsToProcess.forEach((docData: any) => {
             const newDocRef = doc(collection(firestore, `users/${user.uid}/${collectionName}`));
             batch.set(newDocRef, docData);
             importCount++;
           });
         }
-      });
+      }
       
 
       if (importCount === 0) {
         toast({
-            variant: 'destructive',
-            title: 'Import Failed',
-            description: 'No valid data found in the selected file to import.',
+            title: 'No New Data',
+            description: 'No new data was found in the selected file to import.',
         });
         setIsImporting(false);
         return;
@@ -125,7 +132,7 @@ export function DataImport({
       const successTitle = importMode === 'overwrite' ? 'Import Successful' : 'Merge Successful';
       const successDescription = importMode === 'overwrite' 
         ? `Successfully cleared relevant data and imported ${importCount} records. The page will now refresh.`
-        : `Successfully merged ${importCount} records. The page will now refresh.`;
+        : `Successfully merged ${importCount} new records. The page will now refresh.`;
 
       toast({
         title: successTitle,
@@ -155,7 +162,7 @@ export function DataImport({
   
   const alertDescription = () => {
     if (importMode === 'merge') {
-      return "This will add all records from the selected file to your existing data. It will not delete anything. Are you sure you want to continue?";
+      return "This will add all records from the selected file that do not already exist in your current data. It will not delete anything. Are you sure you want to continue?";
     }
 
     const collectionsToWipe = allowedCollections.filter(c => c !== 'myCompany');
