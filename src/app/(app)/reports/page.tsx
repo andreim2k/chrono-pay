@@ -4,9 +4,10 @@
 import { RevenueChart } from '@/components/reports/revenue-chart';
 import { InvoiceStatusChart } from '@/components/reports/invoice-status-chart';
 import { InvoicesPerClientChart } from '@/components/reports/invoices-per-client-chart';
+import { InvoicesPerProjectChart } from '@/components/reports/invoices-per-project-chart';
 import { UnpaidByClientChart } from '@/components/reports/unpaid-by-client-chart';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { Invoice } from '@/lib/types';
+import { Invoice, Project } from '@/lib/types';
 import { collection } from 'firebase/firestore';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { Banknote, Landmark } from 'lucide-react';
@@ -23,6 +24,12 @@ export default function ReportsPage() {
     [firestore, user]
   );
   const { data: invoices } = useCollection<Invoice>(invoicesQuery, `users/${user?.uid}/invoices`);
+
+  const projectsQuery = useMemoFirebase(
+    () => (firestore && user ? collection(firestore, `users/${user.uid}/projects`) : null),
+    [firestore, user]
+  );
+  const { data: projects } = useCollection<Project>(projectsQuery, `users/${user?.uid}/projects`);
 
   const availableYears = useMemo(() => {
     if (!invoices) return [];
@@ -123,6 +130,7 @@ export default function ReportsPage() {
         <VatChart invoices={filteredInvoices || []} selectedYear={selectedYear} />
         <InvoiceStatusChart invoices={filteredInvoices || []} />
         <InvoicesPerClientChart invoices={filteredInvoices || []} />
+        <InvoicesPerProjectChart invoices={filteredInvoices || []} projects={projects || []} />
         <UnpaidByClientChart invoices={filteredInvoices || []} />
       </div>
     </div>
