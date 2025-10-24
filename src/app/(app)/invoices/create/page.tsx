@@ -232,8 +232,7 @@ export default function CreateInvoicePage() {
     const totalRon = exchangeRate ? total * exchangeRate : undefined;
     const servicePeriod = new Date(invoicedYear, invoicedMonth);
 
-
-    return {
+    const data: Omit<Invoice, 'id'> = {
       invoiceNumber: generateInvoiceNumber(selectedClient, invoices),
       companyName: myCompany.name,
       companyAddress: myCompany.address,
@@ -266,9 +265,14 @@ export default function CreateInvoicePage() {
       exchangeRate,
       exchangeRateDate,
       usedMaxExchangeRate: usedMaxRate,
-      vatRate: selectedClient.hasVat ? myCompany.vatRate : undefined,
       theme: invoiceTheme,
     };
+    
+    if (selectedClient.hasVat && myCompany.vatRate) {
+        data.vatRate = myCompany.vatRate;
+    }
+
+    return data;
   }, [selectedClient, selectedProject, dailyRate, invoices, daysWorked, currency, exchangeRate, exchangeRateDate, myCompany, invoicedMonth, invoicedYear, invoiceCreationDate, usedMaxRate, invoiceTheme]);
   
   const generatePreview = useCallback(async () => {
