@@ -370,7 +370,7 @@ export function CreateInvoiceDialog() {
                     </DialogDescription>
                 </DialogHeader>
                 
-                <div className="max-h-[70vh] overflow-y-auto px-4 space-y-4 py-4">
+                <div className="max-h-[70vh] overflow-y-auto space-y-4 py-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="client-select" className="mb-2 block">Client</Label>
@@ -614,4 +614,5 @@ export function CreateInvoiceDialog() {
     </>
   );
 }
+
 
