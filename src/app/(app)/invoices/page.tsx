@@ -39,6 +39,7 @@ export default function InvoicesPage() {
           <DataImport 
             allowedCollections={['invoices']}
             buttonLabel="Import Invoices"
+            importMode="merge"
           />
           <Button asChild>
             <Link href="/invoices/create">
