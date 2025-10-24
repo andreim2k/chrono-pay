@@ -1,15 +1,14 @@
 
 'use client';
 
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
 import { InvoiceList } from '@/components/invoices/invoice-list';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { Invoice } from '@/lib/types';
 import { collection } from 'firebase/firestore';
 import { DataExport } from '@/components/data/data-export';
 import { DataImport } from '@/components/data/data-import';
+import { CreateInvoiceDialog } from '@/components/invoices/create-invoice-dialog';
 
 
 export default function InvoicesPage() {
@@ -43,11 +42,7 @@ export default function InvoicesPage() {
             allowModeSelection={true}
             existingData={{ invoices: invoices || [] }}
           />
-          <Button asChild>
-            <Link href="/invoices/create">
-              <PlusCircle className="mr-2 h-4 w-4" /> Create New Invoice
-            </Link>
-          </Button>
+          <CreateInvoiceDialog />
         </div>
       </div>
       <InvoiceList invoices={invoices || []} />
