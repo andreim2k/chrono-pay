@@ -39,8 +39,8 @@ export function RecentInvoices({ invoices }: { invoices: Invoice[] }) {
 
     const formatCurrencyDisplay = (value: number | undefined | null, currency: string): string => {
         const symbol = currencySymbols[currency] || currency;
-        const amount = typeof value === 'number' ? value : 0;
-        return `${symbol}${amount.toFixed(2)}`;
+        if (typeof value !== 'number' || value === 0) return '';
+        return `${symbol}${value.toFixed(2)}`;
     };
 
 
