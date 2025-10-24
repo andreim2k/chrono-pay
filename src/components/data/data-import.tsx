@@ -35,14 +35,14 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
   const projectsQuery = useMemoFirebase(() => (firestore ? collection(firestore, 'projects') : null), [firestore]);
   const invoicesQuery = useMemoFirebase(() => (firestore ? collection(firestore, 'invoices') : null), [firestore]);
 
-  const { data: clients } = useCollection(clientsQuery);
-  const { data: projects } = useCollection(projectsQuery);
-  const { data: invoices } = useCollection(invoicesQuery);
+  const { data: existingClients } = useCollection(clientsQuery);
+  const { data: existingProjects } = useCollection(projectsQuery);
+  const { data: existingInvoices } = useCollection(invoicesQuery);
 
   const dataMap: Record<string, any[] | undefined> = {
-    clients,
-    projects,
-    invoices
+    clients: existingClients,
+    projects: existingProjects,
+    invoices: existingInvoices,
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,50 +75,40 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
       const batch = writeBatch(firestore);
       let importCount = 0;
 
-      // 1. Delete existing documents in allowed collections that are arrays
-      const collectionsToDelete = allowedCollections.filter(c => c !== 'myCompany');
-      for (const collectionName of collectionsToDelete) {
-        const collectionData = dataMap[collectionName];
-        if(collectionData) {
-            for (const docToDelete of collectionData) {
-                if (docToDelete.id === 'my-company-details') {
-                    continue;
-                }
-                const docRef = doc(firestore, collectionName, docToDelete.id);
-                batch.delete(docRef);
-            }
+      // 1. Delete all existing data
+      existingInvoices?.forEach(inv => batch.delete(doc(firestore, 'invoices', inv.id)));
+      existingProjects?.forEach(proj => batch.delete(doc(firestore, 'projects', proj.id)));
+      existingClients?.forEach(client => {
+        if (client.id !== 'my-company-details') {
+          batch.delete(doc(firestore, 'clients', client.id));
         }
+      });
+      
+      // 2. Add new data from the import file
+      // Handle My Company
+      if (dataToImport.myCompany) {
+        const myCompanyRef = doc(firestore, 'clients', 'my-company-details');
+        batch.set(myCompanyRef, dataToImport.myCompany, { merge: true });
+        importCount++;
       }
 
-      // 2. Add new documents from the import file
-      for (const collectionName of allowedCollections) {
-        if (collectionName === 'myCompany') {
-          // Handle myCompany as a single document
-          const myCompanyData = dataToImport.myCompany;
-          if (myCompanyData && typeof myCompanyData === 'object' && !Array.isArray(myCompanyData)) {
-            const docRef = doc(firestore, 'clients', 'my-company-details');
-            batch.set(docRef, myCompanyData, { merge: true }); // Use merge to be safe
+      // Handle Clients, Projects, Invoices
+      ['clients', 'projects', 'invoices'].forEach(collectionName => {
+        if (Array.isArray(dataToImport[collectionName])) {
+          dataToImport[collectionName].forEach((docData: any) => {
+            const newDocRef = doc(collection(firestore, collectionName));
+            batch.set(newDocRef, docData);
             importCount++;
-          }
-        } else {
-          // Handle regular collections
-          const collectionData = dataToImport[collectionName];
-          if (Array.isArray(collectionData)) {
-            collectionData.forEach((docData: any) => {
-              const collectionRef = collection(firestore, collectionName);
-              const docRef = doc(collectionRef); // Create new doc with new ID
-              batch.set(docRef, docData);
-              importCount++;
-            });
-          }
+          });
         }
-      }
+      });
+      
 
       if (importCount === 0) {
         toast({
             variant: 'destructive',
             title: 'Import Failed',
-            description: 'No valid data found in the selected file for the allowed collections.',
+            description: 'No valid data found in the selected file to import.',
         });
         setIsImporting(false);
         return;
@@ -128,7 +118,7 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
 
       toast({
         title: 'Import Successful',
-        description: `Successfully imported ${importCount} documents/records. The page will now refresh.`,
+        description: `Successfully cleared database and imported ${importCount} records. The page will now refresh.`,
       });
 
       setTimeout(() => {
