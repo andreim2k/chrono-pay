@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -74,13 +75,9 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (error: FirestoreError) => {
-        const path = source || (memoizedTargetRefOrQuery.type === 'collection'
-          ? (memoizedTargetRefOrQuery as CollectionReference).path
-          : 'unknown query');
-
         const contextualError = new FirestorePermissionError({
           operation: 'list',
-          path,
+          path: source || 'unknown query path',
         })
 
         setError(contextualError)

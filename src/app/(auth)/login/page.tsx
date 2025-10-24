@@ -47,6 +47,7 @@ export default function LoginPage() {
       const userDocSnap = await getDoc(userDocRef);
 
       if (!userDocSnap.exists()) {
+        // Use await to ensure these critical documents are created before proceeding
         await setDoc(userDocRef, {
             id: googleUser.uid,
             name: googleUser.displayName,
