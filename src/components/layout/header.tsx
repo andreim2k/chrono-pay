@@ -51,7 +51,7 @@ export function Header() {
           href="/dashboard"
           className="flex items-center gap-2 text-lg font-semibold md:text-base"
         >
-          <ChronoSapientPayLogo className="h-6 w-6 text-primary" />
+          <ChronoSapientPayLogo className="h-8 w-8 text-primary" />
           <span className="">ChronoSapient Pay</span>
         </Link>
         <MainNav navItems={mainNav} />
@@ -74,7 +74,7 @@ export function Header() {
               href="/dashboard"
               className="flex items-center gap-2 text-lg font-semibold"
             >
-              <ChronoSapientPayLogo className="h-6 w-6 text-primary" />
+              <ChronoSapientPayLogo className="h-8 w-8 text-primary" />
               <span className="">ChronoSapient Pay</span>
             </Link>
             {mainNav.map(item => (
