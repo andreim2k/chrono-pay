@@ -46,10 +46,10 @@ export default function SettingsPage() {
     const { data: clients } = useCollection<Client>(clientsQuery, `users/${user?.uid}/clients`);
     
     const companyDocRef = useMemoFirebase(
-        () => (firestore && user ? doc(firestore, `users/${user.uid}/company/details`) : null),
+        () => (firestore && user ? doc(firestore, `company/${user.uid}`) : null),
         [firestore, user]
     );
-    const { data: myCompany } = useDoc<Company>(companyDocRef, `users/${user?.uid}/company/details`);
+    const { data: myCompany } = useDoc<Company>(companyDocRef, `company/${user?.uid}`);
 
     const projectsQuery = useMemoFirebase(
         () => (firestore && user ? collection(firestore, `users/${user.uid}/projects`) : null),
@@ -105,7 +105,7 @@ export default function SettingsPage() {
 
     const handleSaveCompany = (data: CompanyFormValues) => {
         if (!firestore || !user) return;
-        const companyRef = doc(firestore, `users/${user.uid}/company`, 'details');
+        const companyRef = doc(firestore, `company/${user.uid}`);
 
         const companyData: Omit<Company, 'id'> = {
             ...data,
@@ -282,5 +282,3 @@ export default function SettingsPage() {
     </>
   );
 }
-
-    

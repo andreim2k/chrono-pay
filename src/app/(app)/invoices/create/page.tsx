@@ -90,10 +90,10 @@ export default function CreateInvoicePage() {
   const { data: clients } = useCollection<Client>(clientsQuery, `users/${user?.uid}/clients`);
   
   const companyDocRef = useMemoFirebase(
-    () => (firestore && user ? doc(firestore, `users/${user.uid}/company/details`) : null),
+    () => (firestore && user ? doc(firestore, `company/${user.uid}`) : null),
     [firestore, user]
   );
-  const { data: myCompany } = useDoc<Company>(companyDocRef, `users/${user?.uid}/company/details`);
+  const { data: myCompany } = useDoc<Company>(companyDocRef, `company/${user?.uid}`);
 
   const invoicesQuery = useMemoFirebase(
     () => (firestore && user ? collection(firestore, `users/${user.uid}/invoices`) : null),
@@ -316,7 +316,7 @@ export default function CreateInvoicePage() {
     const invoicesCol = collection(firestore, `users/${user.uid}/invoices`);
 
     const dataToSave = { ...invoiceData };
-    if (dataToSave.vatRate === undefined) {
+    if (!dataToSave.vatRate) {
       delete (dataToSave as Partial<typeof dataToSave>).vatRate;
     }
 
@@ -618,5 +618,3 @@ export default function CreateInvoicePage() {
     </>
   );
 }
-
-    

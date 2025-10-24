@@ -321,11 +321,11 @@
             },
             "description": "Stores user profiles."
         },
-        "/users/{userId}/company/details": {
+        "/company/{userId}": {
             "schema": {
                 "$ref": "#/entities/Company"
             },
-            "description": "Stores the user's own company details for invoicing."
+            "description": "Stores the user's own company details for invoicing. The document ID is the user's UID."
         },
         "/users/{userId}/clients/{clientId}": {
             "schema": {
@@ -347,5 +347,3 @@
         }
     }
 }
-
-    

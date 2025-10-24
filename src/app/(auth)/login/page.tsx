@@ -55,8 +55,10 @@ export default function LoginPage() {
             avatarUrl: googleUser.photoURL,
             role: "Admin"
         });
-
-        await setDoc(doc(firestore, `users/${googleUser.uid}/company`, 'details'), {
+        
+        // Create company details in the top-level 'company' collection
+        const companyDocRef = doc(firestore, `company/${googleUser.uid}`);
+        await setDoc(companyDocRef, {
             name: `${googleUser.displayName}'s Company`,
             address: 'Your Company Address',
             vat: 'Your VAT Number',
@@ -124,5 +126,3 @@ export default function LoginPage() {
     </Card>
   );
 }
-
-    
