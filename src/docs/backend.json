@@ -4,7 +4,7 @@
         "User": {
             "title": "User",
             "type": "object",
-            "description": "Represents a user within the ChronoPay application.",
+            "description": "Represents a user and their company details within the ChronoPay application.",
             "properties": {
                 "id": {
                     "type": "string",
@@ -30,7 +30,15 @@
                         "Admin",
                         "Member"
                     ]
-                }
+                },
+                "companyName": { "type": "string", "description": "The user's company name." },
+                "companyAddress": { "type": "string", "description": "The user's company address." },
+                "companyVat": { "type": "string", "description": "The user's company VAT number." },
+                "companyIban": { "type": "string", "description": "The user's company IBAN." },
+                "companyBankName": { "type": "string", "description": "The user's company bank name." },
+                "companySwift": { "type": "string", "description": "The user's company SWIFT/BIC code." },
+                "companyVatRate": { "type": "number", "description": "The user's company VAT rate." },
+                "companyLogoUrl": { "type": "string", "description": "URL for the user's company logo." }
             },
             "required": [
                 "id",
@@ -42,7 +50,7 @@
         "Client": {
             "title": "Client",
             "type": "object",
-            "description": "Represents a client company or 'My Company' details.",
+            "description": "Represents a client company.",
             "properties": {
                 "name": {
                     "type": "string"
@@ -88,10 +96,6 @@
                     "type": "string",
                     "format": "date",
                     "description": "Date the max exchange rate was set."
-                },
-                "vatRate": {
-                    "type": "number",
-                    "description": "The VAT rate to be applied, specific to 'My Company'."
                 },
                 "order": {
                     "type": "number",
@@ -178,7 +182,7 @@
                 },
                 "projectName": {
                     "type": "string",
-                    "description": "The name of the associated project."
+                    "description": "The name of the associated project (denormalized)."
                 },
                 "date": {
                     "type": "string",
@@ -263,7 +267,6 @@
                 "invoiceNumber",
                 "clientName",
                 "projectId",
-                "projectName",
                 "date",
                 "currency",
                 "items",
@@ -282,13 +285,13 @@
             "schema": {
                 "$ref": "#/entities/User"
             },
-            "description": "Stores user profiles."
+            "description": "Stores user profiles and their company settings."
         },
         "/users/{userId}/clients/{clientId}": {
             "schema": {
                 "$ref": "#/entities/Client"
             },
-            "description": "Stores client information, including a special document for 'My Company' details for a specific user."
+            "description": "Stores client information for a specific user."
         },
         "/users/{userId}/projects/{projectId}": {
             "schema": {

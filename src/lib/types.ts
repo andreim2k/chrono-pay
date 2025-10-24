@@ -69,7 +69,7 @@ export type Invoice = {
   clientAddress: string;
   clientVat: string;
   projectId: string;
-  projectName: string;
+  projectName?: string;
   date: string;
   currency: string;
   language?: 'English' | 'Romanian';

@@ -9,25 +9,28 @@ import { useMemo } from 'react';
 
 export function InvoicesPerProjectChart({ invoices, projects }: { invoices: Invoice[], projects: Project[] }) {
     const projectData = useMemo(() => {
-        const counts: { [projectName: string]: { count: number, clientName: string } } = {};
+        if (!projects || projects.length === 0) {
+            return [];
+        }
+
+        const projectMap = new Map(projects.map(p => [p.id, p]));
+        const counts: { [projectId: string]: { count: number } } = {};
         
         invoices.forEach(inv => {
-            const projectName = inv.projectName || 'Unknown Project';
-            if (counts[projectName]) {
-                counts[projectName].count++;
-            } else {
-                // Try to find the client name from the project list for the first invoice of this project
-                const project = projects.find(p => p.id === inv.projectId);
-                counts[projectName] = {
-                    count: 1,
-                    clientName: project ? project.clientName : inv.clientName, // Fallback to client name on invoice
-                };
+            if (inv.projectId) {
+                if (!counts[inv.projectId]) {
+                    counts[inv.projectId] = { count: 0 };
+                }
+                counts[inv.projectId].count++;
             }
         });
 
-        return Object.entries(counts).map(([projectName, data]) => {
+        return Object.entries(counts).map(([projectId, data]) => {
+            const project = projectMap.get(projectId);
+            const projectName = project ? project.name : 'Unknown Project';
+            const clientName = project ? project.clientName : '';
             return {
-                project: `${projectName} (${data.clientName})`,
+                project: `${projectName} (${clientName})`,
                 invoices: data.count,
             }
         }).sort((a, b) => b.invoices - a.invoices);
