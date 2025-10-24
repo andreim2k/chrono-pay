@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,7 @@ import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import { doc, getDoc, setDoc, writeBatch } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 export default function LoginPage() {
   const { toast } = useToast();
@@ -46,20 +45,16 @@ export default function LoginPage() {
       const userDocSnap = await getDoc(userDocRef);
 
       if (!userDocSnap.exists()) {
-        const batch = writeBatch(firestore);
-
-        // 1. Create the user document
-        batch.set(userDocRef, {
+        // Use Promise.all to perform writes concurrently
+        await Promise.all([
+          setDoc(userDocRef, {
             id: googleUser.uid,
             name: googleUser.displayName,
             email: googleUser.email,
             avatarUrl: googleUser.photoURL,
-            role: "Admin" // Default role
-        });
-
-        // 2. Create the initial 'my-company-details' document
-        const companyDocRef = doc(firestore, `users/${googleUser.uid}/clients`, 'my-company-details');
-        batch.set(companyDocRef, {
+            role: "Admin"
+          }),
+          setDoc(doc(firestore, `users/${googleUser.uid}/clients`, 'my-company-details'), {
             name: `${googleUser.displayName}'s Company`,
             address: 'Your Company Address',
             vat: 'Your VAT Number',
@@ -67,9 +62,8 @@ export default function LoginPage() {
             vatRate: 0,
             bankName: 'Your Bank Name',
             swift: 'Your SWIFT/BIC'
-        });
-
-        await batch.commit();
+          })
+        ]);
 
         toast({
             title: "Account Initialized",
