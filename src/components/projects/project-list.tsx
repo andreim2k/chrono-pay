@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import type { Project } from '@/lib/types';
+import type { Project, Invoice } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Button } from '../ui/button';
@@ -18,8 +18,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useFirestore, deleteDocumentNonBlocking, useUser } from '@/firebase';
-import { doc, writeBatch } from 'firebase/firestore';
+import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
+import { doc, writeBatch, collection } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { EditProjectDialog } from './edit-project-dialog';
 import { Avatar, AvatarFallback } from '../ui/avatar';
@@ -114,6 +114,12 @@ export function ProjectList({ projects: initialProjects }: ProjectListProps) {
   const { user } = useUser();
   const { toast } = useToast();
 
+  const invoicesQuery = useMemoFirebase(
+    () => (firestore && user ? collection(firestore, `users/${user.uid}/invoices`) : null),
+    [firestore, user]
+  );
+  const { data: allInvoices } = useCollection<Invoice>(invoicesQuery, `users/${user?.uid}/invoices`);
+
   useEffect(() => {
     const sortedProjects = [...initialProjects].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     setActiveProjects(sortedProjects);
@@ -127,14 +133,37 @@ export function ProjectList({ projects: initialProjects }: ProjectListProps) {
     })
   );
 
-  const handleDelete = () => {
-    if (!firestore || !projectToDelete || !user) return;
+  const handleDelete = async () => {
+    if (!firestore || !projectToDelete || !user || !allInvoices) return;
+    
+    const batch = writeBatch(firestore);
+
+    // 1. Delete the project document
     const projectRef = doc(firestore, `users/${user.uid}/projects`, projectToDelete.id);
-    deleteDocumentNonBlocking(projectRef);
-    toast({
-      title: 'Project Deleted',
-      description: `${projectToDelete.name} has been deleted.`,
+    batch.delete(projectRef);
+
+    // 2. Find and delete all associated invoices
+    const invoicesToDelete = allInvoices.filter(inv => inv.projectId === projectToDelete.id);
+    invoicesToDelete.forEach(invoice => {
+      const invoiceRef = doc(firestore, `users/${user.uid}/invoices`, invoice.id);
+      batch.delete(invoiceRef);
     });
+
+    try {
+      await batch.commit();
+      toast({
+        title: 'Project and Invoices Deleted',
+        description: `${projectToDelete.name} and its associated invoices have been deleted.`,
+      });
+    } catch (error) {
+      console.error("Error deleting project and invoices:", error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Could not delete the project and its invoices. Please try again.',
+      });
+    }
+
     setProjectToDelete(null);
     setIsAlertOpen(false);
   };
@@ -223,15 +252,14 @@ export function ProjectList({ projects: initialProjects }: ProjectListProps) {
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the project
-              and all associated data.
+              This action cannot be undone. This will permanently delete the project <span className='font-bold'>{projectToDelete?.name}</span> and all of its associated invoices.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete}>Delete Project & Invoices</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

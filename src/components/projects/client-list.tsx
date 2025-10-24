@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { Client } from '@/lib/types';
+import type { Client, Project, Invoice } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { GripVertical, MoreVertical } from 'lucide-react';
@@ -19,8 +19,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useFirestore, deleteDocumentNonBlocking, useUser } from '@/firebase';
-import { doc, writeBatch } from 'firebase/firestore';
+import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
+import { doc, writeBatch, collection, query, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { getInitials } from '@/lib/utils';
 import {
@@ -116,6 +116,18 @@ export function ClientList({ clients: initialClients, onEditClient }: ClientList
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
+  
+  const projectsQuery = useMemoFirebase(
+    () => (firestore && user ? collection(firestore, `users/${user.uid}/projects`) : null),
+    [firestore, user]
+  );
+  const { data: allProjects } = useCollection<Project>(projectsQuery, `users/${user?.uid}/projects`);
+
+  const invoicesQuery = useMemoFirebase(
+    () => (firestore && user ? collection(firestore, `users/${user.uid}/invoices`) : null),
+    [firestore, user]
+  );
+  const { data: allInvoices } = useCollection<Invoice>(invoicesQuery, `users/${user?.uid}/invoices`);
 
   useEffect(() => {
     const sortedClients = [...initialClients].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
@@ -130,14 +142,54 @@ export function ClientList({ clients: initialClients, onEditClient }: ClientList
     })
   );
 
-  const handleDelete = () => {
-    if (!firestore || !clientToDelete || !user) return;
+  const handleDelete = async () => {
+    if (!firestore || !clientToDelete || !user || !allProjects || !allInvoices) return;
+
+    const batch = writeBatch(firestore);
+
+    // 1. Delete the client document
     const clientRef = doc(firestore, `users/${user.uid}/clients`, clientToDelete.id);
-    deleteDocumentNonBlocking(clientRef);
-    toast({
-      title: 'Client Deleted',
-      description: `${clientToDelete.name} has been deleted.`,
+    batch.delete(clientRef);
+
+    // 2. Find and delete all associated projects
+    const projectsToDelete = allProjects.filter(p => p.clientId === clientToDelete.id);
+    projectsToDelete.forEach(project => {
+        const projectRef = doc(firestore, `users/${user.uid}/projects`, project.id);
+        batch.delete(projectRef);
     });
+    
+    // 3. Find and delete all associated invoices for that client (covers all projects)
+    const clientInvoicesToDelete = allInvoices.filter(inv => {
+        const project = projectsToDelete.find(p => p.id === inv.projectId);
+        return project && project.clientId === clientToDelete.id;
+    });
+
+    // We can also find invoices just by clientName if projectId is not reliable enough across all schemas
+    const invoicesByClientName = allInvoices.filter(inv => inv.clientName === clientToDelete.name);
+    
+    const combinedInvoices = [...new Map([...clientInvoicesToDelete, ...invoicesByClientName].map(item => [item.id, item])).values()];
+
+
+    combinedInvoices.forEach(invoice => {
+        const invoiceRef = doc(firestore, `users/${user.uid}/invoices`, invoice.id);
+        batch.delete(invoiceRef);
+    });
+
+    try {
+        await batch.commit();
+        toast({
+          title: 'Client and Data Deleted',
+          description: `${clientToDelete.name}, along with their projects and invoices, has been deleted.`,
+        });
+    } catch (error) {
+        console.error("Error deleting client and associated data: ", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not delete the client and their data. Please try again.',
+        });
+    }
+
     setClientToDelete(null);
     setIsAlertOpen(false);
   };
@@ -209,15 +261,14 @@ export function ClientList({ clients: initialClients, onEditClient }: ClientList
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the client
-              and all associated data.
+              This action cannot be undone. This will permanently delete the client <span className='font-bold'>{clientToDelete?.name}</span>, all of their associated projects, and all of their invoices.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete}>Delete Everything</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
