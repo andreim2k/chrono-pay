@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ export default function LoginPage() {
   const [isSigningIn, setIsSigningIn] = useState(false);
 
   useEffect(() => {
+    // This effect should only run on the client after hydration
     if (user && !isUserLoading) {
       router.push('/dashboard');
     }
@@ -45,31 +47,28 @@ export default function LoginPage() {
       const userDocSnap = await getDoc(userDocRef);
 
       if (!userDocSnap.exists()) {
-        // Use Promise.all to perform writes concurrently
-        await Promise.all([
-          setDoc(userDocRef, {
+        await setDoc(userDocRef, {
             id: googleUser.uid,
             name: googleUser.displayName,
             email: googleUser.email,
             avatarUrl: googleUser.photoURL,
             role: "Admin"
-          }),
-          setDoc(doc(firestore, `users/${googleUser.uid}/clients`, 'my-company-details'), {
+        });
+
+        await setDoc(doc(firestore, `users/${googleUser.uid}/clients`, 'my-company-details'), {
             name: `${googleUser.displayName}'s Company`,
             address: 'Your Company Address',
             vat: 'Your VAT Number',
             iban: 'Your IBAN',
-            vatRate: 0,
+            vatRate: 0.19, // Default to 19%
             bankName: 'Your Bank Name',
             swift: 'Your SWIFT/BIC'
-          })
-        ]);
-
+        });
+        
         toast({
             title: "Account Initialized",
             description: "Welcome to ChronoPay! Please fill in your company details in Settings.",
         });
-
       } else {
         toast({
             title: "Login Successful",
@@ -77,8 +76,7 @@ export default function LoginPage() {
         });
       }
       
-      router.push('/dashboard');
-
+      // The useEffect will handle the redirect
     } catch (error: any) {
       console.error(error);
       toast({
@@ -91,6 +89,8 @@ export default function LoginPage() {
     }
   };
 
+  // While loading auth state or if user is already logged in, show a loader.
+  // The useEffect will handle the redirect.
   if (isUserLoading || user) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -99,6 +99,7 @@ export default function LoginPage() {
     )
   }
 
+  // Only render the login form if not loading and no user is present
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
