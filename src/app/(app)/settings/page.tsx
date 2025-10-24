@@ -22,12 +22,12 @@ import { DataManagement } from '@/components/data/data-management';
 
 const companySchema = z.object({
     name: z.string().min(1, 'Company name is required'),
-    vat: z.string().min(1, 'VAT is required'),
+    vat: z.string().min(1, 'VAT is required').regex(/^[A-Z0-9]+$/, 'Invalid VAT format, should be alphanumeric.'),
     address: z.string().min(1, 'Address is required'),
-    iban: z.string().min(1, 'IBAN is required'),
+    iban: z.string().min(1, 'IBAN is required').regex(/^[A-Z]{2}[0-9]{2}[A-Z0-9]{4,30}$/, 'Invalid IBAN format.'),
     bankName: z.string().min(1, 'Bank name is required'),
-    swift: z.string().min(1, 'SWIFT/BIC is required'),
-    vatRate: z.coerce.number().min(0, 'VAT rate must be positive'),
+    swift: z.string().min(1, 'SWIFT/BIC is required').regex(/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/, 'Invalid SWIFT/BIC format.'),
+    vatRate: z.coerce.number().min(0, 'VAT rate must be positive').multipleOf(0.01, { message: "VAT rate can have at most 2 decimal places." }),
 });
 
 type CompanyFormValues = z.infer<typeof companySchema>;
@@ -63,6 +63,7 @@ export default function SettingsPage() {
 
     const form = useForm<CompanyFormValues>({
         resolver: zodResolver(companySchema),
+        mode: 'onBlur', // Validate on blur
         defaultValues: {
             name: '',
             vat: '',
@@ -226,7 +227,7 @@ export default function SettingsPage() {
                                       render={({ field }) => (
                                           <FormItem>
                                               <FormLabel>VAT Rate (%)</FormLabel>
-                                              <FormControl><Input type="number" placeholder="e.g., 19" {...field} /></FormControl>
+                                              <FormControl><Input type="number" placeholder="e.g., 19" step="0.01" {...field} /></FormControl>
                                               <FormDescription>Enter the percentage, e.g., 19 for 19%.</FormDescription>
                                               <FormMessage />
                                           </FormItem>
