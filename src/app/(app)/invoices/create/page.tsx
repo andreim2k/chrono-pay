@@ -87,13 +87,13 @@ export default function CreateInvoicePage() {
     () => (firestore && user ? collection(firestore, `users/${user.uid}/clients`) : null),
     [firestore, user]
   );
-  const { data: clients } = useCollection<Client>(clientsQuery);
+  const { data: clients } = useCollection<Client>(clientsQuery, `users/${user?.uid}/clients`);
   
   const invoicesQuery = useMemoFirebase(
     () => (firestore && user ? collection(firestore, `users/${user.uid}/invoices`) : null),
     [firestore, user]
   );
-  const { data: invoices } = useCollection<Invoice>(invoicesQuery);
+  const { data: invoices } = useCollection<Invoice>(invoicesQuery, `users/${user?.uid}/invoices`);
 
   const projectsForClientQuery = useMemoFirebase(
     () => {
@@ -102,7 +102,7 @@ export default function CreateInvoicePage() {
     },
     [firestore, selectedClientId, user]
   );
-  const { data: projectsForClient } = useCollection<Project>(projectsForClientQuery);
+  const { data: projectsForClient } = useCollection<Project>(projectsForClientQuery, `users/${user?.uid}/projects`);
 
 
   const handleDownloadPdf = async () => {
