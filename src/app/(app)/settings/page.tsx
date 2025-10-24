@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -62,7 +63,7 @@ export default function SettingsPage() {
 
     const form = useForm<CompanyFormValues>({
         resolver: zodResolver(companySchema),
-        mode: 'onChange', // Validate on every keystroke
+        mode: 'onChange',
         defaultValues: {
             name: '',
             vat: '',
@@ -192,7 +193,6 @@ export default function SettingsPage() {
                                           <FormItem>
                                               <FormLabel>VAT Rate (%)</FormLabel>
                                               <FormControl><Input type="number" placeholder="e.g., 19" step="0.01" {...field} /></FormControl>
-                                              <FormDescription>Enter the percentage, e.g., 19 for 19%.</FormDescription>
                                               <FormMessage />
                                           </FormItem>
                                       )}
