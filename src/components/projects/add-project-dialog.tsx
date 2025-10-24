@@ -60,8 +60,6 @@ export function AddProjectDialog() {
   );
   const { data: projects } = useCollection<Project>(projectsQuery, `users/${user?.uid}/projects`);
 
-  const availableClients = useMemo(() => clients?.filter(c => c.id !== 'my-company-details') || [], [clients]);
-
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
     defaultValues: {
@@ -132,7 +130,7 @@ export function AddProjectDialog() {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {availableClients.map(client => (
+                      {clients?.map(client => (
                         <SelectItem key={client.id} value={client.id}>
                           {client.name}
                         </SelectItem>
@@ -193,3 +191,5 @@ export function AddProjectDialog() {
     </Dialog>
   );
 }
+
+    

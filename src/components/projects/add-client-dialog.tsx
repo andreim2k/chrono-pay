@@ -37,6 +37,8 @@ const clientSchema = z.object({
   address: z.string().min(1, 'Address is required'),
   vat: z.string().min(1, 'VAT number is required'),
   iban: z.string().min(1, 'IBAN is required'),
+  bankName: z.string().min(1, 'Bank name is required'),
+  swift: z.string().min(1, 'SWIFT/BIC is required'),
   currency: z.string().min(1, 'Currency is required'),
   language: z.string().min(1, 'Language is required'),
   invoiceNumberPrefix: z.string().optional(),
@@ -66,6 +68,8 @@ export function AddClientDialog() {
       address: '',
       vat: '',
       iban: '',
+      bankName: '',
+      swift: '',
       currency: 'EUR',
       language: 'English',
       invoiceNumberPrefix: '',
@@ -180,6 +184,34 @@ export function AddClientDialog() {
                         ))}
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+             <div className="grid grid-cols-2 gap-4">
+                <FormField
+                control={form.control}
+                name="bankName"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Bank Name</FormLabel>
+                    <FormControl>
+                        <Input placeholder="Client Bank Name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                 <FormField
+                control={form.control}
+                name="swift"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>SWIFT/BIC</FormLabel>
+                    <FormControl>
+                      <Input placeholder="DEUTDEFF" {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -332,3 +364,5 @@ export function AddClientDialog() {
     </Dialog>
   );
 }
+
+    

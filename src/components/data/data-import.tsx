@@ -77,19 +77,15 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
       if (allowedCollections.includes('projects') && existingProjects) {
         existingProjects.forEach(proj => batch.delete(doc(firestore, `users/${user.uid}/projects`, proj.id)));
       }
-      // Delete only regular clients, not 'my-company-details'
+      // Delete only regular clients
       if (allowedCollections.includes('clients') && existingClients) {
-        existingClients.forEach(client => {
-          if (client.id !== 'my-company-details') {
-            batch.delete(doc(firestore, `users/${user.uid}/clients`, client.id));
-          }
-        });
+        existingClients.forEach(client => batch.delete(doc(firestore, `users/${user.uid}/clients`, client.id)));
       }
       
       // 2. Add new data from the import file
       // Handle My Company
       if (allowedCollections.includes('myCompany') && dataToImport.myCompany) {
-        const myCompanyRef = doc(firestore, `users/${user.uid}/clients`, 'my-company-details');
+        const myCompanyRef = doc(firestore, `users/${user.uid}/company`, 'details');
         batch.set(myCompanyRef, dataToImport.myCompany, { merge: true });
         // This is an update, so we don't increment the main import count
       }
@@ -193,3 +189,5 @@ export function DataImport({ allowedCollections = ['clients', 'projects', 'invoi
     </>
   );
 }
+
+    

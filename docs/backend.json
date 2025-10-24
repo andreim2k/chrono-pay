@@ -39,10 +39,51 @@
                 "role"
             ]
         },
+        "Company": {
+            "title": "Company",
+            "type": "object",
+            "description": "Represents the user's own company details for invoicing.",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "address": {
+                    "type": "string"
+                },
+                "vat": {
+                    "type": "string"
+                },
+                "iban": {
+                    "type": "string"
+                },
+                "logoUrl": {
+                    "type": "string"
+                },
+                "bankName": {
+                    "type": "string"
+                },
+                "swift": {
+                    "type": "string"
+                },
+                "vatRate": {
+                    "type": "number",
+                    "description": "The VAT rate to be applied on invoices."
+                }
+            },
+            "required": [
+                "name",
+                "address",
+                "vat",
+                "iban",
+                "bankName",
+                "swift",
+                "vatRate"
+            ]
+        },
         "Client": {
             "title": "Client",
             "type": "object",
-            "description": "Represents a client company or 'My Company' details.",
+            "description": "Represents a client company.",
             "properties": {
                 "name": {
                     "type": "string"
@@ -89,10 +130,6 @@
                     "format": "date",
                     "description": "Date the max exchange rate was set."
                 },
-                "vatRate": {
-                    "type": "number",
-                    "description": "The VAT rate to be applied, specific to 'My Company'."
-                },
                 "order": {
                     "type": "number",
                     "description": "The display order of the client."
@@ -104,8 +141,7 @@
                 "vat",
                 "iban",
                 "bankName",
-                "swift",
-                "vatRate"
+                "swift"
             ]
         },
         "Project": {
@@ -285,11 +321,17 @@
             },
             "description": "Stores user profiles."
         },
+        "/users/{userId}/company/details": {
+            "schema": {
+                "$ref": "#/entities/Company"
+            },
+            "description": "Stores the user's own company details for invoicing."
+        },
         "/users/{userId}/clients/{clientId}": {
             "schema": {
                 "$ref": "#/entities/Client"
             },
-            "description": "Stores client information, including a special document for 'My Company' details for a specific user."
+            "description": "Stores client information for a specific user."
         },
         "/users/{userId}/projects/{projectId}": {
             "schema": {
@@ -305,3 +347,5 @@
         }
     }
 }
+
+    

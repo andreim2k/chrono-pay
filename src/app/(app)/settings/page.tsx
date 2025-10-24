@@ -5,16 +5,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { ProjectList } from '@/components/projects/project-list';
 import { ClientList } from '@/components/projects/client-list';
-import { useCollection, useFirestore, useMemoFirebase, setDocumentNonBlocking, useUser } from '@/firebase';
+import { useCollection, useDoc, useFirestore, useMemoFirebase, setDocumentNonBlocking, useUser } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
-import type { Client, Project, Invoice } from '@/lib/types';
+import type { Client, Project, Invoice, Company } from '@/lib/types';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useMemo } from 'react';
 import { EditClientDialog } from '@/components/projects/edit-client-dialog';
@@ -40,13 +39,18 @@ export default function SettingsPage() {
     const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
     const [isEditOpen, setIsEditOpen] = useState(false);
 
-
     const clientsQuery = useMemoFirebase(
         () => (firestore && user ? collection(firestore, `users/${user.uid}/clients`) : null),
         [firestore, user]
     );
     const { data: clients } = useCollection<Client>(clientsQuery, `users/${user?.uid}/clients`);
     
+    const companyDocRef = useMemoFirebase(
+        () => (firestore && user ? doc(firestore, `users/${user.uid}/company/details`) : null),
+        [firestore, user]
+    );
+    const { data: myCompany } = useDoc<Company>(companyDocRef, `users/${user?.uid}/company/details`);
+
     const projectsQuery = useMemoFirebase(
         () => (firestore && user ? collection(firestore, `users/${user.uid}/projects`) : null),
         [firestore, user]
@@ -59,8 +63,6 @@ export default function SettingsPage() {
     );
     const { data: invoices } = useCollection<Invoice>(invoicesQuery, `users/${user?.uid}/invoices`);
 
-    const myCompany = useMemo(() => clients?.find(c => c.id === 'my-company-details'), [clients]);
-    const actualClients = useMemo(() => clients?.filter(c => c.id !== 'my-company-details') || [], [clients]);
 
     const form = useForm<CompanyFormValues>({
         resolver: zodResolver(companySchema),
@@ -103,9 +105,9 @@ export default function SettingsPage() {
 
     const handleSaveCompany = (data: CompanyFormValues) => {
         if (!firestore || !user) return;
-        const companyRef = doc(firestore, `users/${user.uid}/clients`, 'my-company-details');
+        const companyRef = doc(firestore, `users/${user.uid}/company`, 'details');
 
-        const companyData: Omit<Client, 'id'> = {
+        const companyData: Omit<Company, 'id'> = {
             ...data,
             vatRate: data.vatRate ? data.vatRate / 100 : 0,
             logoUrl: myCompany?.logoUrl || `https://picsum.photos/seed/my-company/40/40`
@@ -246,7 +248,7 @@ export default function SettingsPage() {
           </TabsContent>
           <TabsContent value="clients">
             <ClientList 
-                clients={actualClients}
+                clients={clients || []}
                 onEditClient={onEditClient}
              />
           </TabsContent>
@@ -257,7 +259,7 @@ export default function SettingsPage() {
              <DataManagement
                 data={{
                     myCompany: myCompany || {},
-                    clients: actualClients,
+                    clients: clients || [],
                     projects: projects || [],
                     invoices: invoices || [],
                 }}
@@ -280,3 +282,5 @@ export default function SettingsPage() {
     </>
   );
 }
+
+    

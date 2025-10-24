@@ -1,5 +1,6 @@
 
 
+
 export type Client = {
   id: string;
   name: string;
@@ -15,8 +16,19 @@ export type Client = {
   maxExchangeRate?: number;
   maxExchangeRateDate?: string;
   language?: 'English' | 'Romanian';
-  vatRate?: number;
   order?: number;
+};
+
+export type Company = {
+  id?: string; // id is not needed here as we use a specific doc
+  name: string;
+  address: string;
+  vat: string;
+  iban: string;
+  bankName: string;
+  swift: string;
+  vatRate: number;
+  logoUrl?: string;
 };
 
 export type Project = {
@@ -65,3 +77,5 @@ export type Invoice = {
 };
 
 export type InvoiceTheme = 'Classic' | 'Modern' | 'Sunset' | 'Ocean' | 'Monochrome' | 'Minty' | 'Velvet' | 'Corporate Blue' | 'Earthy Tones' | 'Creative' | 'Slate Gray' | 'Dark Charcoal' | 'Navy Blue' | 'Forest Green' | 'Burgundy' | 'Teal' | 'Coral' | 'Lavender' | 'Golden' | 'Steel Blue' | 'Light Blue' | 'Sky Blue' | 'Mint Green' | 'Lime' | 'Peach' | 'Rose' | 'Lilac' | 'Sand' | 'Olive' | 'Maroon' | 'Deep Purple' | 'Turquoise' | 'Charcoal' | 'Crimson' | 'Sapphire';
+
+    

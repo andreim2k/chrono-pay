@@ -56,7 +56,7 @@ export default function LoginPage() {
             role: "Admin"
         });
 
-        await setDoc(doc(firestore, `users/${googleUser.uid}/clients`, 'my-company-details'), {
+        await setDoc(doc(firestore, `users/${googleUser.uid}/company`, 'details'), {
             name: `${googleUser.displayName}'s Company`,
             address: 'Your Company Address',
             vat: 'Your VAT Number',
@@ -124,3 +124,5 @@ export default function LoginPage() {
     </Card>
   );
 }
+
+    

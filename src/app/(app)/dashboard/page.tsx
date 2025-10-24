@@ -43,7 +43,7 @@ export default function DashboardPage() {
     const paidInvoices = invoices.filter(inv => inv.status === 'Paid');
     const unpaidInvoices = invoices.filter(inv => inv.status !== 'Paid');
     
-    const clientCount = clients.filter(c => c.id !== 'my-company-details').length;
+    const clientCount = clients.length;
 
     const totalRevenue = paidInvoices.reduce((acc, inv) => acc + inv.total, 0);
     const unpaidTotal = unpaidInvoices.reduce((acc, inv) => acc + inv.total, 0);
@@ -136,3 +136,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

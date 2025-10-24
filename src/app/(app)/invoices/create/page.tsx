@@ -13,10 +13,10 @@ import { Download, Save, Loader2, RefreshCw, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import type { Client, Invoice, Project, InvoiceTheme } from '@/lib/types';
+import type { Client, Invoice, Project, InvoiceTheme, Company } from '@/lib/types';
 import { getExchangeRate } from '@/ai/flows/get-exchange-rate';
-import { useCollection, useFirestore, addDocumentNonBlocking, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { useCollection, useFirestore, addDocumentNonBlocking, useMemoFirebase, useUser, useDoc } from '@/firebase';
+import { collection, query, where, doc } from 'firebase/firestore';
 import { InvoiceHtmlPreview, themeStyles } from '@/components/invoices/invoice-html-preview';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
@@ -89,6 +89,12 @@ export default function CreateInvoicePage() {
   );
   const { data: clients } = useCollection<Client>(clientsQuery, `users/${user?.uid}/clients`);
   
+  const companyDocRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, `users/${user.uid}/company/details`) : null),
+    [firestore, user]
+  );
+  const { data: myCompany } = useDoc<Company>(companyDocRef, `users/${user?.uid}/company/details`);
+
   const invoicesQuery = useMemoFirebase(
     () => (firestore && user ? collection(firestore, `users/${user.uid}/invoices`) : null),
     [firestore, user]
@@ -138,9 +144,6 @@ export default function CreateInvoicePage() {
     }
   }, [selectedProject]);
 
-  const myCompany = useMemo(() => {
-    return clients?.find(c => c.id === 'my-company-details') || null;
-  }, [clients]);
 
   const fetchExchangeRate = useCallback(async (currentCurrency: string) => {
     if (currentCurrency === 'RON' || !currentCurrency) {
@@ -311,7 +314,13 @@ export default function CreateInvoicePage() {
   const handleSaveInvoice = () => {
     if (!invoiceData || !firestore || !user) return;
     const invoicesCol = collection(firestore, `users/${user.uid}/invoices`);
-    addDocumentNonBlocking(invoicesCol, invoiceData);
+
+    const dataToSave = { ...invoiceData };
+    if (dataToSave.vatRate === undefined) {
+      delete (dataToSave as Partial<typeof dataToSave>).vatRate;
+    }
+
+    addDocumentNonBlocking(invoicesCol, dataToSave);
     toast({
       title: 'Invoice Saved',
       description: `Invoice ${invoiceData.invoiceNumber} has been saved.`,
@@ -328,7 +337,7 @@ export default function CreateInvoicePage() {
   }
 
   const buttonsDisabled = !invoiceData || isGenerating || isFetchingRate;
-  const availableClients = useMemo(() => clients?.filter(c => c.id !== 'my-company-details') || [], [clients]);
+  const availableClients = clients || [];
 
   const totalRonDisplay = useMemo(() => {
     if (invoiceData?.total && exchangeRate && currency !== 'RON') {
@@ -609,3 +618,5 @@ export default function CreateInvoicePage() {
     </>
   );
 }
+
+    
