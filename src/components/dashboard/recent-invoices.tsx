@@ -36,12 +36,6 @@ export function RecentInvoices({ invoices }: { invoices: Invoice[] }) {
         }
       };
 
-    const formatCurrencyDisplay = (value: number | undefined | null, currency: string): string => {
-        const symbol = currencySymbols[currency] || currency;
-        if (value === 0 || typeof value !== 'number') return '';
-        return `${symbol}${value.toFixed(2)}`;
-    };
-
 
     return (
         <Card>
@@ -66,11 +60,11 @@ export function RecentInvoices({ invoices }: { invoices: Invoice[] }) {
                             <div className="flex items-center gap-4">
                                 <div className="text-right w-28">
                                     <p className="font-medium">
-                                        {formatCurrencyDisplay(invoice.total, invoice.currency)}
+                                        {(currencySymbols[invoice.currency] || invoice.currency) + invoice.total.toFixed(2)}
                                     </p>
                                     {invoice.vatAmount && invoice.vatAmount > 0 && (
                                         <p className="text-xs text-muted-foreground">
-                                           incl. VAT {formatCurrencyDisplay(invoice.vatAmount, invoice.currency)}
+                                           incl. VAT {(currencySymbols[invoice.currency] || invoice.currency) + invoice.vatAmount.toFixed(2)}
                                         </p>
                                     )}
                                 </div>
