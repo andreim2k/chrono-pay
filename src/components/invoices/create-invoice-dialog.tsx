@@ -191,20 +191,24 @@ export function CreateInvoiceDialog() {
 
   // Debounced toast for rate
   useEffect(() => {
-    const projectRate = selectedProject?.rate;
-    if (manualQuantity && projectRate) {
-        const handler = setTimeout(() => {
-            toast({
-                title: 'Project Rate Applied',
-                description: `Using rate: ${projectRate} ${selectedProject?.currency || 'EUR'} / ${selectedProject?.rateType || 'day'}`,
-            });
-        }, 1000);
+    // Only run if manualQuantity is a number and greater than 0, and we have a project rate.
+    if (typeof manualQuantity === 'number' && manualQuantity > 0 && selectedProject?.rate) {
+      const handler = setTimeout(() => {
+        toast({
+          title: 'Project Rate Applied',
+          description: `Using rate: ${selectedProject.rate} ${selectedProject.currency || 'EUR'} / ${selectedProject.rateType || 'day'}`,
+        });
+      }, 1000); // 1-second delay
 
-        return () => {
-            clearTimeout(handler);
-        };
+      // Cleanup function to clear the timeout if the quantity changes again before the delay is over
+      return () => {
+        clearTimeout(handler);
+      };
     }
-  }, [manualQuantity, selectedProject, toast]);
+  // We only want this effect to re-run when manualQuantity changes.
+  // The other values (project rate, currency, etc.) are stable for the current calculation.
+  }, [manualQuantity, selectedProject?.rate, selectedProject?.currency, selectedProject?.rateType, toast]);
+
 
 
   const fetchExchangeRate = useCallback(async (currentCurrency: string) => {
@@ -781,5 +785,3 @@ export function CreateInvoiceDialog() {
     </>
   );
 }
-
-    
