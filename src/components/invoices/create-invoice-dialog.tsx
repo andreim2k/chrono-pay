@@ -67,7 +67,6 @@ export function CreateInvoiceDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [rate, setRate] = useState<number | ''>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isFetchingRate, setIsFetchingRate] = useState(false);
   const [manualQuantity, setManualQuantity] = useState<number | ''>(0);
@@ -162,21 +161,14 @@ export function CreateInvoiceDialog() {
   const selectedProject = useMemo(() => {
     return projectsForClient?.find(p => p.id === selectedProjectId) || null;
   }, [selectedProjectId, projectsForClient]);
+  
+  const projectRate = selectedProject?.rate || 0;
 
   useEffect(() => {
     if (selectedProject) {
         setInvoiceTheme(selectedProject.invoiceTheme || 'Classic');
         setCurrency(selectedProject.currency || 'EUR');
-        const projectRate = selectedProject.rate || '';
-        setRate(projectRate);
         
-        if (projectRate) {
-            toast({
-                title: 'Project Rate Applied',
-                description: `Using project rate: ${projectRate} ${selectedProject.currency || 'EUR'} / ${selectedProject.rateType || 'day'}`,
-            });
-        }
-
         if (selectedProject.maxExchangeRate && selectedProject.maxExchangeRateDate) {
           setExchangeRate(selectedProject.maxExchangeRate);
           setExchangeRateDate(selectedProject.maxExchangeRateDate);
@@ -196,9 +188,24 @@ export function CreateInvoiceDialog() {
         setExchangeRate(undefined);
         setExchangeRateDate(undefined);
         setUsedMaxRate(false);
-        setRate('');
     }
   }, [selectedProject, toast]);
+
+  // Debounced toast for rate
+  useEffect(() => {
+    if (manualQuantity && projectRate) {
+        const handler = setTimeout(() => {
+            toast({
+                title: 'Project Rate Applied',
+                description: `Using rate: ${projectRate} ${selectedProject?.currency || 'EUR'} / ${selectedProject?.rateType || 'day'}`,
+            });
+        }, 1000);
+
+        return () => {
+            clearTimeout(handler);
+        };
+    }
+  }, [manualQuantity, projectRate, selectedProject?.currency, selectedProject?.rateType, toast]);
 
 
   const fetchExchangeRate = useCallback(async (currentCurrency: string) => {
@@ -257,7 +264,7 @@ export function CreateInvoiceDialog() {
   };
 
   const invoiceData: Omit<Invoice, 'id'> | null = useMemo(() => {
-    if (!selectedClient || !selectedProject || !myCompany || !invoices || !rate) return null;
+    if (!selectedClient || !selectedProject || !myCompany || !invoices ) return null;
 
     let items: Invoice['items'], subtotal: number, billedTimecardIds: string[] = [];
     const servicePeriod = new Date(invoicedYear, invoicedMonth);
@@ -292,13 +299,13 @@ export function CreateInvoiceDialog() {
         }];
 
     } else { // manual mode
-        if (!manualQuantity) return null;
-        subtotal = manualQuantity * rate;
+        if (!manualQuantity || !projectRate) return null;
+        subtotal = manualQuantity * projectRate;
         items = [{
           description,
           quantity: manualQuantity,
           unit: selectedProject.rateType === 'hourly' ? 'hours' : 'days',
-          rate: rate,
+          rate: projectRate,
           amount: subtotal,
         }];
     }
@@ -342,7 +349,7 @@ export function CreateInvoiceDialog() {
 
     return data;
   }, [
-      selectedClient, selectedProject, rate, invoices, manualQuantity, currency, exchangeRate, 
+      selectedClient, selectedProject, projectRate, invoices, manualQuantity, currency, exchangeRate, 
       exchangeRateDate, myCompany, invoicedMonth, invoicedYear, invoiceCreationDate, usedMaxRate, 
       invoiceTheme, generationMode, filteredTimecards, selectedTimecards
     ]);
@@ -437,7 +444,6 @@ export function CreateInvoiceDialog() {
         setSelectedClientId(null);
         setSelectedProjectId(null);
         setManualQuantity(0);
-        setRate('');
         setGenerationMode('manual');
         setSelectedTimecards({});
     }
@@ -775,3 +781,5 @@ export function CreateInvoiceDialog() {
     </>
   );
 }
+
+    
