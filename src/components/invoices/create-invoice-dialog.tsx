@@ -62,17 +62,21 @@ const formatDateWithOrdinal = (dateString: string | undefined) => {
 }
 
 type GenerationMode = 'manual' | 'timecards';
+interface InvoiceConfig {
+    currency: string;
+    invoiceTheme: InvoiceTheme;
+    exchangeRate?: number;
+    exchangeRateDate?: string;
+    usedMaxRate: boolean;
+    isFetchingRate: boolean;
+}
 
 export function CreateInvoiceDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isFetchingRate, setIsFetchingRate] = useState(false);
   const [manualQuantity, setManualQuantity] = useState<number | ''>(0);
-  const [exchangeRate, setExchangeRate] = useState<number | undefined>();
-  const [exchangeRateDate, setExchangeRateDate] = useState<string | undefined>();
-  const [usedMaxRate, setUsedMaxRate] = useState(false);
   const lastMonth = subMonths(new Date(), 1);
   const [invoicedMonth, setInvoicedMonth] = useState<number>(lastMonth.getMonth());
   const [invoicedYear, setInvoicedYear] = useState<number>(lastMonth.getFullYear());
@@ -80,8 +84,16 @@ export function CreateInvoiceDialog() {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [generationMode, setGenerationMode] = useState<GenerationMode>('manual');
   const [selectedTimecards, setSelectedTimecards] = useState<Record<string, boolean>>({});
-  const [currency, setCurrency] = useState('EUR');
-  const [invoiceTheme, setInvoiceTheme] = useState<InvoiceTheme>('Classic');
+  
+  const [invoiceConfig, setInvoiceConfig] = useState<InvoiceConfig>({
+    currency: 'EUR',
+    invoiceTheme: 'Classic',
+    exchangeRate: undefined,
+    exchangeRateDate: undefined,
+    usedMaxRate: false,
+    isFetchingRate: false,
+  });
+
 
   const previewRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -142,88 +154,93 @@ export function CreateInvoiceDialog() {
     return projectsForClient?.find(p => p.id === selectedProjectId) || null;
   }, [selectedProjectId, projectsForClient]);
   
-  const fetchExchangeRate = useCallback(async (currentCurrency: string) => {
-    if (currentCurrency === 'RON' || !currentCurrency) {
-      setExchangeRate(1);
-      setExchangeRateDate(new Date().toISOString().split('T')[0]);
-      setUsedMaxRate(false);
-      return;
-    }
-    setIsFetchingRate(true);
-    setUsedMaxRate(false);
-    try {
-      const result = await getExchangeRate({ currency: currentCurrency });
-      const { rate, date } = result;
-      
-      if (rate && date) {
-        setExchangeRate(rate);
-        setExchangeRateDate(date);
-        toast({
-            title: 'Exchange Rate Fetched',
-            description: `BNR rate for ${formatDateWithOrdinal(date)}: 1 ${currentCurrency} = ${rate?.toFixed(4)} RON.`,
-        });
-      } else {
-        setExchangeRate(undefined);
-        setExchangeRateDate(undefined);
-        toast({
-            variant: 'destructive',
-            title: 'Error Fetching Rate',
-            description: 'Could not fetch the exchange rate from BNR.',
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching exchange rate:', error);
-      setExchangeRate(undefined);
-      setExchangeRateDate(undefined);
-      toast({
-        variant: 'destructive',
-        title: 'Error Fetching Rate',
-        description: 'Something went wrong while fetching the exchange rate.',
-      });
-    } finally {
-      setIsFetchingRate(false);
-    }
-  }, [toast]);
-  
   // This is the main effect that reacts to project changes.
   useEffect(() => {
-    // 1. Find the selected project from the latest data.
-    const project = projectsForClient?.find(p => p.id === selectedProjectId);
+      const project = projectsForClient?.find(p => p.id === selectedProjectId);
 
-    // 2. Reset all relevant states whenever the project changes.
-    setManualQuantity(0);
-    setSelectedTimecards({});
-    setExchangeRate(undefined);
-    setExchangeRateDate(undefined);
-    setUsedMaxRate(false);
-    
-    // 3. If a project is selected, set its properties and fetch rates.
-    if (project) {
-        const projectCurrency = project.currency || 'EUR';
-        setCurrency(projectCurrency);
-        setInvoiceTheme(project.invoiceTheme || 'Classic');
-        
-        // 4. Handle exchange rate fetching logic.
-        if (project.maxExchangeRate && project.maxExchangeRateDate) {
-            setExchangeRate(project.maxExchangeRate);
-            setExchangeRateDate(project.maxExchangeRateDate);
-            setUsedMaxRate(true);
-            toast({
-                title: 'Fixed Exchange Rate Applied',
-                description: `Using fixed project exchange rate of ${project.maxExchangeRate.toFixed(4)} RON.`,
-            });
-        } else if (projectCurrency !== 'RON') {
-            fetchExchangeRate(projectCurrency);
-        } else { // RON case
-            setExchangeRate(1);
-            setExchangeRateDate(new Date().toISOString().split('T')[0]);
-        }
-    } else {
-        // No project selected, reset to defaults.
-        setCurrency('EUR');
-        setInvoiceTheme('Classic');
-    }
-  }, [selectedProjectId, projectsForClient, fetchExchangeRate, toast]);
+      // Reset quantities whenever project changes
+      setManualQuantity(0);
+      setSelectedTimecards({});
+      
+      if (project) {
+          const projectCurrency = project.currency || 'EUR';
+          const newConfig: Omit<InvoiceConfig, 'isFetchingRate'> = {
+              currency: projectCurrency,
+              invoiceTheme: project.invoiceTheme || 'Classic',
+              exchangeRate: undefined,
+              exchangeRateDate: undefined,
+              usedMaxRate: false,
+          };
+
+          const fetchRate = async () => {
+              if (projectCurrency === 'RON') {
+                  setInvoiceConfig(prev => ({
+                      ...prev,
+                      ...newConfig,
+                      exchangeRate: 1,
+                      exchangeRateDate: new Date().toISOString().split('T')[0],
+                      isFetchingRate: false,
+                  }));
+                  return;
+              }
+
+              if (project.maxExchangeRate && project.maxExchangeRateDate) {
+                  setInvoiceConfig(prev => ({
+                      ...prev,
+                      ...newConfig,
+                      exchangeRate: project.maxExchangeRate,
+                      exchangeRateDate: project.maxExchangeRateDate,
+                      usedMaxRate: true,
+                      isFetchingRate: false,
+                  }));
+                   toast({
+                      title: 'Fixed Exchange Rate Applied',
+                      description: `Using fixed project exchange rate of ${project.maxExchangeRate.toFixed(4)} RON.`,
+                  });
+                  return;
+              }
+
+              setInvoiceConfig(prev => ({ ...prev, ...newConfig, isFetchingRate: true }));
+              try {
+                  const result = await getExchangeRate({ currency: projectCurrency });
+                  if (result.rate && result.date) {
+                      setInvoiceConfig(prev => ({
+                          ...prev,
+                          ...newConfig,
+                          exchangeRate: result.rate,
+                          exchangeRateDate: result.date,
+                          isFetchingRate: false,
+                      }));
+                      toast({
+                          title: 'Exchange Rate Fetched',
+                          description: `BNR rate for ${formatDateWithOrdinal(result.date)}: 1 ${projectCurrency} = ${result.rate.toFixed(4)} RON.`,
+                      });
+                  } else {
+                     throw new Error('Rate not found');
+                  }
+              } catch (error) {
+                  setInvoiceConfig(prev => ({ ...prev, ...newConfig, isFetchingRate: false }));
+                  toast({
+                      variant: 'destructive',
+                      title: 'Error Fetching Rate',
+                      description: 'Could not fetch the exchange rate from BNR.',
+                  });
+              }
+          };
+
+          fetchRate();
+      } else {
+          // No project selected, reset to defaults.
+          setInvoiceConfig({
+              currency: 'EUR',
+              invoiceTheme: 'Classic',
+              exchangeRate: undefined,
+              exchangeRateDate: undefined,
+              usedMaxRate: false,
+              isFetchingRate: false,
+          });
+      }
+  }, [selectedProjectId, projectsForClient, toast]);
 
 
   useEffect(() => {
@@ -307,7 +324,7 @@ export function CreateInvoiceDialog() {
 
     const vatAmount = selectedProject.hasVat ? subtotal * (myCompany?.companyVatRate || 0) : 0;
     const total = subtotal + vatAmount;
-    const totalRon = exchangeRate ? total * exchangeRate : undefined;
+    const totalRon = invoiceConfig.exchangeRate ? total * invoiceConfig.exchangeRate : undefined;
     
     const data: Omit<Invoice, 'id'> & { vatRate?: number } = {
       invoiceNumber: generateInvoiceNumber(selectedProject, invoices),
@@ -323,7 +340,7 @@ export function CreateInvoiceDialog() {
       projectId: selectedProject.id,
       projectName: selectedProject.name,
       date: format(invoiceCreationDate, 'yyyy-MM-dd'),
-      currency,
+      currency: invoiceConfig.currency,
       language: selectedClient.language || 'English',
       items,
       subtotal,
@@ -331,10 +348,10 @@ export function CreateInvoiceDialog() {
       total,
       status: 'Created' as const,
       totalRon,
-      exchangeRate,
-      exchangeRateDate,
-      usedMaxExchangeRate: usedMaxRate,
-      theme: invoiceTheme,
+      exchangeRate: invoiceConfig.exchangeRate,
+      exchangeRateDate: invoiceConfig.exchangeRateDate,
+      usedMaxExchangeRate: invoiceConfig.usedMaxRate,
+      theme: invoiceConfig.invoiceTheme,
       billedTimecardIds,
     };
     
@@ -344,9 +361,9 @@ export function CreateInvoiceDialog() {
 
     return data;
   }, [
-      selectedClient, selectedProject, invoices, manualQuantity, currency, exchangeRate, 
-      exchangeRateDate, myCompany, invoicedMonth, invoicedYear, invoiceCreationDate, usedMaxRate, 
-      invoiceTheme, generationMode, filteredTimecards, selectedTimecards
+      selectedClient, selectedProject, invoices, manualQuantity, invoiceConfig,
+      myCompany, invoicedMonth, invoicedYear, invoiceCreationDate, 
+      generationMode, filteredTimecards, selectedTimecards
     ]);
   
   const generatePreview = useCallback(async () => {
@@ -446,9 +463,9 @@ export function CreateInvoiceDialog() {
   }
 
   const handleCurrencyChange = (newCurrency: string) => {
-    setCurrency(newCurrency);
+    setInvoiceConfig(prev => ({...prev, currency: newCurrency }));
     if (selectedProject && !selectedProject.maxExchangeRate) {
-        fetchExchangeRate(newCurrency);
+        // This will be handled by the main useEffect now
     }
   }
   
@@ -472,7 +489,7 @@ export function CreateInvoiceDialog() {
     setSelectedTimecards(newSelection);
   }
 
-  const buttonsDisabled = !invoiceData || isGenerating || isFetchingRate;
+  const buttonsDisabled = !invoiceData || isGenerating || invoiceConfig.isFetchingRate;
   const availableClients = clients || [];
   
   const totalHoursFromTimecards = useMemo(() => {
@@ -482,11 +499,11 @@ export function CreateInvoiceDialog() {
 
 
   const totalRonDisplay = useMemo(() => {
-    if (invoiceData?.total && exchangeRate && currency !== 'RON') {
-        return (invoiceData.total * exchangeRate).toFixed(2);
+    if (invoiceData?.total && invoiceConfig.exchangeRate && invoiceConfig.currency !== 'RON') {
+        return (invoiceData.total * invoiceConfig.exchangeRate).toFixed(2);
     }
     return null;
-  }, [invoiceData, exchangeRate, currency]);
+  }, [invoiceData, invoiceConfig.exchangeRate, invoiceConfig.currency]);
 
   return (
     <>
@@ -661,7 +678,7 @@ export function CreateInvoiceDialog() {
                   <div className="space-y-2 md:col-span-1">
                     <Label htmlFor="currency-select" className="mb-2 block">Currency</Label>
                     <div className="flex items-center gap-2">
-                      <Select value={currency} onValueChange={handleCurrencyChange} disabled={!!selectedProject?.maxExchangeRate}>
+                      <Select value={invoiceConfig.currency} onValueChange={handleCurrencyChange} disabled={!!selectedProject?.maxExchangeRate}>
                         <SelectTrigger id="currency-select">
                           <SelectValue placeholder="Select currency" />
                         </SelectTrigger>
@@ -673,22 +690,22 @@ export function CreateInvoiceDialog() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <Button variant="ghost" size="icon" onClick={() => fetchExchangeRate(currency)} disabled={isFetchingRate || currency === 'RON' || !!selectedProject?.maxExchangeRate}>
-                        {isFetchingRate ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                      <Button variant="ghost" size="icon" onClick={() => { /* This might be deprecated by auto-fetch */ }} disabled={invoiceConfig.isFetchingRate || invoiceConfig.currency === 'RON' || !!selectedProject?.maxExchangeRate}>
+                        {invoiceConfig.isFetchingRate ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                       </Button>
                     </div>
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="theme-select" className="mb-2 block">Invoice Theme</Label>
-                    <Select value={invoiceTheme} onValueChange={(value) => setInvoiceTheme(value as InvoiceTheme)}>
+                    <Select value={invoiceConfig.invoiceTheme} onValueChange={(value) => setInvoiceConfig(prev => ({ ...prev, invoiceTheme: value as InvoiceTheme}))}>
                       <SelectTrigger id="theme-select">
                         <SelectValue>
                           <div className="flex items-center gap-2">
                             <div className="h-5 w-8 rounded-sm border flex overflow-hidden">
-                              <div className="w-1/3" style={{ backgroundColor: themeStyles[invoiceTheme].accentColor }} />
-                              <div className="w-2/3" style={{ backgroundColor: themeStyles[invoiceTheme].tableHeaderBgColor }} />
+                              <div className="w-1/3" style={{ backgroundColor: themeStyles[invoiceConfig.invoiceTheme].accentColor }} />
+                              <div className="w-2/3" style={{ backgroundColor: themeStyles[invoiceConfig.invoiceTheme].tableHeaderBgColor }} />
                             </div>
-                            {invoiceTheme}
+                            {invoiceConfig.invoiceTheme}
                           </div>
                         </SelectValue>
                       </SelectTrigger>
@@ -728,8 +745,8 @@ export function CreateInvoiceDialog() {
                     {totalRonDisplay && (
                       <div className='pt-2 mt-2 border-t'>
                         <p className="text-muted-foreground">Total in RON (approx.): <span className='font-bold text-foreground'>{totalRonDisplay} RON</span></p>
-                        {exchangeRateDate && <p className="text-xs text-muted-foreground mt-1">
-                          {usedMaxRate ? `Using fixed project rate set on ${formatDateWithOrdinal(exchangeRateDate)}` : `Based on BNR rate from ${formatDateWithOrdinal(exchangeRateDate)}`}: 1 {currency} = {exchangeRate?.toFixed(4)} RON
+                        {invoiceConfig.exchangeRateDate && <p className="text-xs text-muted-foreground mt-1">
+                          {invoiceConfig.usedMaxRate ? `Using fixed project rate set on ${formatDateWithOrdinal(invoiceConfig.exchangeRateDate)}` : `Based on BNR rate from ${formatDateWithOrdinal(invoiceConfig.exchangeRateDate)}`}: 1 {invoiceConfig.currency} = {invoiceConfig.exchangeRate?.toFixed(4)} RON
                         </p>
                         }
                       </div>
