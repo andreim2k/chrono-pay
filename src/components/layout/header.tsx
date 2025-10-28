@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ThemeToggle } from './theme-toggle';
 import { LogOut, Menu, LayoutDashboard, FileText, BarChart, Settings as SettingsIcon, Clock } from 'lucide-react';
-import { ChronoSapientWorkPayLogo } from '../icons';
+import { WorkPayLogo } from '../icons';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { MainNav } from './main-nav';
 import { useAuth, useUser } from '@/firebase';
@@ -52,8 +52,8 @@ export function Header() {
           href="/dashboard"
           className="flex items-center gap-2 text-lg font-semibold md:text-base"
         >
-          <ChronoSapientWorkPayLogo className="h-8 w-8 text-primary" />
-          <span className="">ChronoSapient WorkPay</span>
+          <WorkPayLogo className="h-8 w-8 text-primary" />
+          <span className="">WorkPay</span>
         </Link>
         <MainNav navItems={mainNav} />
       </nav>
@@ -75,8 +75,8 @@ export function Header() {
               href="/dashboard"
               className="flex items-center gap-2 text-lg font-semibold"
             >
-              <ChronoSapientWorkPayLogo className="h-8 w-8 text-primary" />
-              <span className="">ChronoSapient WorkPay</span>
+              <WorkPayLogo className="h-8 w-8 text-primary" />
+              <span className="">WorkPay</span>
             </Link>
             {mainNav.map(item => (
                 <Link

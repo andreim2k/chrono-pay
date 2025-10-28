@@ -6,7 +6,7 @@ import { ThemeProvider } from '@/components/layout/theme-provider';
 import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
-  title: 'ChronoSapient WorkPay',
+  title: 'WorkPay',
   description: 'Invoicing made easy',
 };
 
