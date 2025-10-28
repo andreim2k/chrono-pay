@@ -29,6 +29,7 @@ import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { Calendar } from '../ui/calendar';
 import { CalendarIcon } from 'lucide-react';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 
 const currencies = ['EUR', 'USD', 'GBP', 'RON'];
 const invoiceThemes: InvoiceTheme[] = [
@@ -49,9 +50,10 @@ const projectSchema = z.object({
   hasVat: z.boolean().default(false),
   maxExchangeRate: z.coerce.number().optional(),
   maxExchangeRateDate: z.date().optional(),
-  ratePerDay: z.coerce.number().optional(),
-  ratePerHour: z.coerce.number().optional(),
+  rate: z.coerce.number().optional(),
+  rateType: z.enum(['daily', 'hourly']).default('daily'),
 });
+
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
 
@@ -85,8 +87,8 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
       hasVat: project.hasVat || false,
       maxExchangeRate: project.maxExchangeRate || undefined,
       maxExchangeRateDate: project.maxExchangeRateDate ? parseISO(project.maxExchangeRateDate) : undefined,
-      ratePerDay: project.ratePerDay || undefined,
-      ratePerHour: project.ratePerHour || undefined,
+      rate: project.rate || undefined,
+      rateType: project.rateType || 'daily',
     },
   });
 
@@ -101,8 +103,8 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
             hasVat: project.hasVat || false,
             maxExchangeRate: project.maxExchangeRate || undefined,
             maxExchangeRateDate: project.maxExchangeRateDate ? parseISO(project.maxExchangeRateDate) : undefined,
-            ratePerDay: project.ratePerDay || undefined,
-            ratePerHour: project.ratePerHour || undefined,
+            rate: project.rate || undefined,
+            rateType: project.rateType || 'daily',
         });
     }
   }, [isOpen, project, form]);
@@ -114,6 +116,7 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
     const projectRef = doc(firestore, `users/${user.uid}/projects`, project.id);
     
     const dataToSave: any = {
+      ...project,
       ...data,
       clientName: client?.name
     };
@@ -185,34 +188,54 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
                 </FormItem>
               )}
             />
-             <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="ratePerDay"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Default Rate/Day</FormLabel>
+             <FormField
+              control={form.control}
+              name="rateType"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel>Default Rate</FormLabel>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="rate"
+                      render={({ field: rateField }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Input type="number" placeholder="e.g., 500" {...rateField} value={rateField.value ?? ''} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <FormControl>
-                      <Input type="number" placeholder="500" {...field} value={field.value ?? ''} />
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex items-center space-x-4"
+                      >
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="daily" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            per Day
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="hourly" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            per Hour
+                          </FormLabel>
+                        </FormItem>
+                      </RadioGroup>
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="ratePerHour"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Default Rate/Hour</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="65" {...field} value={field.value ?? ''} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
              <FormField
               control={form.control}
               name="invoiceTheme"

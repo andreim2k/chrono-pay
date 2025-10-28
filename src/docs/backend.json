@@ -67,9 +67,6 @@
                 "logoUrl": {
                     "type": "string"
                 },
-                "currency": {
-                    "type": "string"
-                },
                 "language": {
                     "type": "string",
                     "enum": ["English", "Romanian"],
@@ -80,22 +77,6 @@
                 },
                 "swift": {
                     "type": "string"
-                },
-                "invoiceNumberPrefix": {
-                    "type": "string"
-                },
-                "hasVat": {
-                    "type": "boolean",
-                    "description": "Indicates if VAT should be applied for this client."
-                },
-                "maxExchangeRate": {
-                    "type": "number",
-                    "description": "Maximum exchange rate cap in RON."
-                },
-                "maxExchangeRateDate": {
-                    "type": "string",
-                    "format": "date",
-                    "description": "Date the max exchange rate was set."
                 },
                 "order": {
                     "type": "number",
@@ -133,6 +114,34 @@
                 "order": {
                     "type": "number",
                     "description": "The display order of the project."
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "invoiceNumberPrefix": {
+                    "type": "string"
+                },
+                "hasVat": {
+                    "type": "boolean",
+                    "description": "Indicates if VAT should be applied for this project."
+                },
+                "maxExchangeRate": {
+                    "type": "number",
+                    "description": "Maximum exchange rate cap in RON."
+                },
+                "maxExchangeRateDate": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Date the max exchange rate was set."
+                },
+                "rate": {
+                    "type": "number",
+                    "description": "The billing rate for the project."
+                },
+                "rateType": {
+                    "type": "string",
+                    "enum": ["daily", "hourly"],
+                    "description": "Specifies if the rate is daily or hourly."
                 }
             },
             "required": [
@@ -140,6 +149,52 @@
                 "clientId",
                 "clientName"
             ]
+        },
+        "Timecard": {
+            "title": "Timecard",
+            "type": "object",
+            "description": "Represents a single time entry for hours worked on a project.",
+            "properties": {
+                "projectId": {
+                    "type": "string",
+                    "description": "The ID of the associated project."
+                },
+                "projectName": {
+                    "type": "string",
+                    "description": "The name of the associated project."
+                },
+                "clientId": {
+                    "type": "string",
+                    "description": "The ID of the associated client."
+                },
+                "clientName": {
+                    "type": "string",
+                    "description": "The name of the associated client."
+                },
+                "date": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "The date the work was performed."
+                },
+                "hours": {
+                    "type": "number",
+                    "description": "The number of hours worked."
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Optional notes about the work done."
+                },
+                "status": {
+                    "type": "string",
+                    "enum": ["Unbilled", "Billed"],
+                    "description": "The billing status of the timecard."
+                },
+                "invoiceId": {
+                    "type": "string",
+                    "description": "The ID of the invoice this timecard is associated with, once billed."
+                }
+            },
+            "required": ["projectId", "projectName", "clientId", "clientName", "date", "hours", "status"]
         },
         "Invoice": {
             "title": "Invoice",
@@ -261,6 +316,11 @@
                   "type": "string",
                   "enum": ["Classic", "Modern", "Sunset", "Ocean", "Monochrome", "Minty", "Velvet", "Corporate Blue", "Earthy Tones", "Creative"],
                   "description": "The visual theme of the invoice."
+                },
+                "billedTimecardIds": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "An array of Timecard IDs that have been billed on this invoice."
                 }
             },
             "required": [
@@ -304,6 +364,12 @@
                 "$ref": "#/entities/Invoice"
             },
             "description": "Stores invoice information for a specific user."
+        },
+        "/users/{userId}/timecards/{timecardId}": {
+            "schema": {
+                "$ref": "#/entities/Timecard"
+            },
+            "description": "Stores individual timecard entries for a user."
         }
     }
 }

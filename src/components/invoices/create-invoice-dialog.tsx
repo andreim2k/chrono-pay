@@ -67,10 +67,10 @@ export function CreateInvoiceDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [dailyRate, setDailyRate] = useState<number | ''>('');
+  const [rate, setRate] = useState<number | ''>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isFetchingRate, setIsFetchingRate] = useState(false);
-  const [daysWorked, setDaysWorked] = useState<number | ''>(0);
+  const [manualQuantity, setManualQuantity] = useState<number | ''>(0);
   const [currency, setCurrency] = useState('EUR');
   const [exchangeRate, setExchangeRate] = useState<number | undefined>();
   const [exchangeRateDate, setExchangeRateDate] = useState<string | undefined>();
@@ -167,7 +167,7 @@ export function CreateInvoiceDialog() {
     if (selectedProject) {
         setInvoiceTheme(selectedProject.invoiceTheme || 'Classic');
         setCurrency(selectedProject.currency || 'EUR');
-        setDailyRate(selectedProject.ratePerDay || '');
+        setRate(selectedProject.rate || '');
 
         if (selectedProject.maxExchangeRate && selectedProject.maxExchangeRateDate) {
           setExchangeRate(selectedProject.maxExchangeRate);
@@ -188,7 +188,7 @@ export function CreateInvoiceDialog() {
         setExchangeRate(undefined);
         setExchangeRateDate(undefined);
         setUsedMaxRate(false);
-        setDailyRate('');
+        setRate('');
     }
   }, [selectedProject, toast]);
 
@@ -249,7 +249,7 @@ export function CreateInvoiceDialog() {
   };
 
   const invoiceData: Omit<Invoice, 'id'> | null = useMemo(() => {
-    if (!selectedClient || !selectedProject || !myCompany || !invoices || (!dailyRate && !selectedProject.ratePerHour)) return null;
+    if (!selectedClient || !selectedProject || !myCompany || !invoices || !rate) return null;
 
     let items: Invoice['items'], subtotal: number, billedTimecardIds: string[] = [];
     const servicePeriod = new Date(invoicedYear, invoicedMonth);
@@ -259,27 +259,38 @@ export function CreateInvoiceDialog() {
         const totalHours = filteredTimecards.reduce((acc, tc) => selectedTimecards[tc.id] ? acc + tc.hours : acc, 0);
         billedTimecardIds = filteredTimecards.filter(tc => selectedTimecards[tc.id]).map(tc => tc.id);
         
-        const rate = selectedProject.ratePerHour || (dailyRate ? dailyRate / 8 : 0);
-        if (billedTimecardIds.length === 0 || rate === 0) return null;
+        const currentRate = selectedProject.rate || 0;
+        if (billedTimecardIds.length === 0 || currentRate === 0) return null;
         
-        subtotal = totalHours * rate;
+        let quantity: number;
+        let unit: string;
+        
+        if (selectedProject.rateType === 'hourly') {
+            quantity = totalHours;
+            unit = 'hours';
+            subtotal = totalHours * currentRate;
+        } else { // daily
+            quantity = totalHours / 8; // Assuming 8 hours/day
+            unit = 'days';
+            subtotal = quantity * currentRate;
+        }
         
         items = [{
           description,
-          quantity: totalHours,
-          unit: 'hours',
-          rate: rate,
+          quantity,
+          unit,
+          rate: currentRate,
           amount: subtotal,
         }];
 
     } else { // manual mode
-        if (!daysWorked || !dailyRate) return null;
-        subtotal = daysWorked * dailyRate;
+        if (!manualQuantity) return null;
+        subtotal = manualQuantity * rate;
         items = [{
           description,
-          quantity: daysWorked,
-          unit: 'days',
-          rate: dailyRate,
+          quantity: manualQuantity,
+          unit: selectedProject.rateType === 'hourly' ? 'hours' : 'days',
+          rate: rate,
           amount: subtotal,
         }];
     }
@@ -323,7 +334,7 @@ export function CreateInvoiceDialog() {
 
     return data;
   }, [
-      selectedClient, selectedProject, dailyRate, invoices, daysWorked, currency, exchangeRate, 
+      selectedClient, selectedProject, rate, invoices, manualQuantity, currency, exchangeRate, 
       exchangeRateDate, myCompany, invoicedMonth, invoicedYear, invoiceCreationDate, usedMaxRate, 
       invoiceTheme, generationMode, filteredTimecards, selectedTimecards
     ]);
@@ -417,8 +428,8 @@ export function CreateInvoiceDialog() {
     if (!isOpen) {
         setSelectedClientId(null);
         setSelectedProjectId(null);
-        setDaysWorked(0);
-        setDailyRate('');
+        setManualQuantity(0);
+        setRate('');
         setGenerationMode('manual');
         setSelectedTimecards({});
     }
@@ -553,46 +564,35 @@ export function CreateInvoiceDialog() {
 
                 {generationMode === 'manual' ? (
                   <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-                      <div className="space-y-2">
-                        <Label htmlFor="days-worked" className="mb-2 block">Days Worked</Label>
-                        <Input
-                          id="days-worked"
-                          type="number"
-                          value={daysWorked}
-                          onChange={(e) => setDaysWorked(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                          onBlur={(e) => {
-                            if (e.target.value === '') {
-                              setDaysWorked(0);
-                            }
-                          }}
-                          min="0"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="daily-rate" className="mb-2 block">Daily Rate</Label>
-                        <Input
-                          id="daily-rate"
-                          type="number"
-                          value={dailyRate}
-                          onChange={(e) => setDailyRate(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                          onBlur={(e) => {
-                            if (e.target.value === '') {
-                              setDailyRate('');
-                            }
-                          }}
-                          min="0"
-                          placeholder={selectedProject?.ratePerDay ? String(selectedProject.ratePerDay) : "e.g., 500"}
-                        />
-                      </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="manual-quantity" className="mb-2 block">
+                        Quantity ({selectedProject?.rateType === 'hourly' ? 'Hours' : 'Days'})
+                      </Label>
+                      <Input
+                        id="manual-quantity"
+                        type="number"
+                        value={manualQuantity}
+                        onChange={(e) => setManualQuantity(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                        onBlur={(e) => {
+                          if (e.target.value === '') {
+                            setManualQuantity(0);
+                          }
+                        }}
+                        min="0"
+                        placeholder={`e.g., 20 ${selectedProject?.rateType === 'hourly' ? 'hours' : 'days'}`}
+                      />
+                    </div>
+                    <div className='p-3 bg-muted/50 rounded-lg text-sm flex items-center justify-between'>
+                       <p className='text-muted-foreground'>Using rate from project settings: 
+                         {rate && <span className='font-bold text-foreground'> {rate} {selectedProject?.currency} / {selectedProject?.rateType === 'hourly' ? 'hour' : 'day'}</span>}
+                       </p>
                     </div>
                   </>
                 ) : (
                   <div className="space-y-4">
                     <div className='p-3 bg-muted/50 rounded-lg text-sm flex items-center justify-between'>
                        <p className='text-muted-foreground'>Using rate from project settings: 
-                         {selectedProject?.ratePerHour && <span className='font-bold text-foreground'> {selectedProject.ratePerHour}/{selectedProject.currency}/hour</span>}
-                         {(!selectedProject?.ratePerHour && dailyRate) && <span className='font-bold text-foreground'> {dailyRate}/{selectedProject?.currency}/day</span>}
+                         {rate && <span className='font-bold text-foreground'> {rate} {selectedProject?.currency} / {selectedProject?.rateType === 'hourly' ? 'hour' : 'day'}</span>}
                        </p>
                        <div className="p-3 bg-muted/50 rounded-lg text-sm flex items-center justify-between">
                         <div className='flex items-center'>

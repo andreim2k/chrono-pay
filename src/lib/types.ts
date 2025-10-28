@@ -56,8 +56,8 @@ export type Project = {
   maxExchangeRate?: number;
   maxExchangeRateDate?: string;
   // New project-specific rates
-  ratePerDay?: number;
-  ratePerHour?: number;
+  rate?: number;
+  rateType?: 'daily' | 'hourly';
 };
 
 export type Timecard = {

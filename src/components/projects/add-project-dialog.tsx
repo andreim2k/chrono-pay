@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -29,6 +29,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Calendar } from '../ui/calendar';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 
 const currencies = ['EUR', 'USD', 'GBP', 'RON'];
 const invoiceThemes: InvoiceTheme[] = [
@@ -49,8 +50,8 @@ const projectSchema = z.object({
   hasVat: z.boolean().default(false),
   maxExchangeRate: z.coerce.number().optional(),
   maxExchangeRateDate: z.date().optional(),
-  ratePerDay: z.coerce.number().optional(),
-  ratePerHour: z.coerce.number().optional(),
+  rate: z.coerce.number().optional(),
+  rateType: z.enum(['daily', 'hourly']).default('daily'),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -81,6 +82,7 @@ export function AddProjectDialog() {
       invoiceTheme: 'Classic',
       currency: 'EUR',
       hasVat: false,
+      rateType: 'daily',
     },
   });
 
@@ -168,34 +170,57 @@ export function AddProjectDialog() {
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="ratePerDay"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Default Rate/Day</FormLabel>
+            
+            <FormField
+              control={form.control}
+              name="rateType"
+              render={({ field }) => (
+                <FormItem className="space-y-3">
+                  <FormLabel>Default Rate</FormLabel>
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="rate"
+                      render={({ field: rateField }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Input type="number" placeholder="e.g., 500" {...rateField} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                     <FormControl>
-                      <Input type="number" placeholder="500" {...field} />
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex items-center space-x-4"
+                      >
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="daily" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            per Day
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-2 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="hourly" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            per Hour
+                          </FormLabel>
+                        </FormItem>
+                      </RadioGroup>
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="ratePerHour"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Default Rate/Hour</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="65" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+
              <FormField
               control={form.control}
               name="invoiceTheme"
