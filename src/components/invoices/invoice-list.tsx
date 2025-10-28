@@ -248,8 +248,8 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
             <div>
-                <CardTitle>All Invoices</CardTitle>
-                <CardDescription>A list of all your past and present invoices.</CardDescription>
+                <CardTitle>Filtered Invoices</CardTitle>
+                <CardDescription>A list of all your past and present invoices based on the filters.</CardDescription>
             </div>
             {selectedRowCount > 0 && (
                 <AlertDialog>
@@ -280,13 +280,14 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
               <TableRow>
                  <TableHead className="w-[50px]">
                     <Checkbox
-                        checked={selectedRowCount > 0 && selectedRowCount === invoices.length}
+                        checked={invoices.length > 0 && selectedRowCount === invoices.length}
                         onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
                         aria-label="Select all"
                     />
                 </TableHead>
                 <TableHead>Invoice #</TableHead>
                 <TableHead>Client</TableHead>
+                <TableHead>Project</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Subtotal</TableHead>
                 {showVatColumn && <TableHead>VAT</TableHead>}
@@ -296,7 +297,7 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {invoices.map((invoice) => (
+             {invoices.length > 0 ? invoices.map((invoice) => (
                 <TableRow key={invoice.id} data-state={selectedRows[invoice.id] && "selected"}>
                   <TableCell>
                      <Checkbox
@@ -307,6 +308,7 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
                   </TableCell>
                   <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
                   <TableCell>{invoice.clientName}</TableCell>
+                  <TableCell>{invoice.projectName}</TableCell>
                   <TableCell>{format(new Date(invoice.date), 'MMM d, yyyy')}</TableCell>
                   <TableCell>{currencySymbols[invoice.currency] || invoice.currency}{invoice.subtotal.toFixed(2)}</TableCell>
                   {showVatColumn && (
@@ -342,7 +344,13 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
-              ))}
+              )) : (
+                <TableRow>
+                  <TableCell colSpan={showVatColumn ? 10 : 9} className="h-24 text-center">
+                    No invoices match the current filters.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
