@@ -80,6 +80,8 @@ export function CreateInvoiceDialog() {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [generationMode, setGenerationMode] = useState<GenerationMode>('manual');
   const [selectedTimecards, setSelectedTimecards] = useState<Record<string, boolean>>({});
+  const [currency, setCurrency] = useState('EUR');
+  const [invoiceTheme, setInvoiceTheme] = useState<InvoiceTheme>('Classic');
 
   const previewRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -139,9 +141,6 @@ export function CreateInvoiceDialog() {
   const selectedProject = useMemo(() => {
     return projectsForClient?.find(p => p.id === selectedProjectId) || null;
   }, [selectedProjectId, projectsForClient]);
-
-  const currency = useMemo(() => selectedProject?.currency || 'EUR', [selectedProject]);
-  const invoiceTheme = useMemo(() => selectedProject?.invoiceTheme || 'Classic', [selectedProject]);
   
   const fetchExchangeRate = useCallback(async (currentCurrency: string) => {
     if (currentCurrency === 'RON' || !currentCurrency) {
@@ -185,38 +184,50 @@ export function CreateInvoiceDialog() {
       setIsFetchingRate(false);
     }
   }, [toast]);
-
-  // When project changes, reset relevant states
+  
+  // This is the main effect that reacts to project changes.
   useEffect(() => {
+    // 1. Find the selected project from the latest data.
+    const project = projectsForClient?.find(p => p.id === selectedProjectId);
+
+    // 2. Reset all relevant states whenever the project changes.
     setManualQuantity(0);
     setSelectedTimecards({});
     setExchangeRate(undefined);
     setExchangeRateDate(undefined);
     setUsedMaxRate(false);
-  }, [selectedProjectId]);
-
-  // Fetch exchange rate when currency or project changes
-  useEffect(() => {
-    if (selectedProject) {
-      if (selectedProject.maxExchangeRate && selectedProject.maxExchangeRateDate) {
-        setExchangeRate(selectedProject.maxExchangeRate);
-        setExchangeRateDate(selectedProject.maxExchangeRateDate);
-        setUsedMaxRate(true);
-        toast({
-            title: 'Fixed Exchange Rate Applied',
-            description: `Using fixed project exchange rate of ${selectedProject.maxExchangeRate.toFixed(4)} RON.`,
-        });
-      } else if (currency !== 'RON') {
-        fetchExchangeRate(currency);
-      } else {
-        setExchangeRate(1);
-        setExchangeRateDate(new Date().toISOString().split('T')[0]);
-      }
+    
+    // 3. If a project is selected, set its properties and fetch rates.
+    if (project) {
+        const projectCurrency = project.currency || 'EUR';
+        setCurrency(projectCurrency);
+        setInvoiceTheme(project.invoiceTheme || 'Classic');
+        
+        // 4. Handle exchange rate fetching logic.
+        if (project.maxExchangeRate && project.maxExchangeRateDate) {
+            setExchangeRate(project.maxExchangeRate);
+            setExchangeRateDate(project.maxExchangeRateDate);
+            setUsedMaxRate(true);
+            toast({
+                title: 'Fixed Exchange Rate Applied',
+                description: `Using fixed project exchange rate of ${project.maxExchangeRate.toFixed(4)} RON.`,
+            });
+        } else if (projectCurrency !== 'RON') {
+            fetchExchangeRate(projectCurrency);
+        } else { // RON case
+            setExchangeRate(1);
+            setExchangeRateDate(new Date().toISOString().split('T')[0]);
+        }
+    } else {
+        // No project selected, reset to defaults.
+        setCurrency('EUR');
+        setInvoiceTheme('Classic');
     }
-  }, [selectedProject, currency, toast, fetchExchangeRate]);
-  
+  }, [selectedProjectId, projectsForClient, fetchExchangeRate, toast]);
+
 
   useEffect(() => {
+    // Debounced toast for manual quantity entry
     if (typeof manualQuantity !== 'number' || manualQuantity <= 0 || !selectedProject?.rate) {
       return;
     }
@@ -233,7 +244,8 @@ export function CreateInvoiceDialog() {
   }, [manualQuantity, selectedProject, toast]);
 
   useEffect(() => {
-    setSelectedProjectId(null); // Reset project when client changes
+    // Reset project when client changes
+    setSelectedProjectId(null);
   }, [selectedClientId])
 
   
@@ -434,6 +446,7 @@ export function CreateInvoiceDialog() {
   }
 
   const handleCurrencyChange = (newCurrency: string) => {
+    setCurrency(newCurrency);
     if (selectedProject && !selectedProject.maxExchangeRate) {
         fetchExchangeRate(newCurrency);
     }
