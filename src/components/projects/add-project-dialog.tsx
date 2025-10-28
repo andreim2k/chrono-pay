@@ -220,45 +220,6 @@ export function AddProjectDialog() {
               )}
             />
 
-
-             <FormField
-              control={form.control}
-              name="invoiceTheme"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Default Invoice Theme</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                         <SelectValue>
-                            <div className="flex items-center gap-2">
-                                <div className="h-5 w-8 rounded-sm border flex overflow-hidden">
-                                    <div className="w-1/3" style={{ backgroundColor: themeStyles[field.value].accentColor }} />
-                                    <div className="w-2/3" style={{ backgroundColor: themeStyles[field.value].tableHeaderBgColor }} />
-                                </div>
-                                {field.value}
-                            </div>
-                        </SelectValue>
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {invoiceThemes.map(theme => (
-                        <SelectItem key={theme} value={theme}>
-                          <div className="flex items-center gap-3">
-                            <div className="h-5 w-8 rounded-sm border flex overflow-hidden">
-                                <div className="w-1/3" style={{ backgroundColor: themeStyles[theme].accentColor }} />
-                                <div className="w-2/3" style={{ backgroundColor: themeStyles[theme].tableHeaderBgColor }} />
-                            </div>
-                            {theme}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -376,6 +337,44 @@ export function AddProjectDialog() {
                         </FormControl>
                     </FormItem>
                 )}
+            />
+            <FormField
+              control={form.control}
+              name="invoiceTheme"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Default Invoice Theme</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                         <SelectValue>
+                            <div className="flex items-center gap-2">
+                                <div className="h-5 w-8 rounded-sm border flex overflow-hidden">
+                                    <div className="w-1/3" style={{ backgroundColor: themeStyles[field.value].accentColor }} />
+                                    <div className="w-2/3" style={{ backgroundColor: themeStyles[field.value].tableHeaderBgColor }} />
+                                </div>
+                                {field.value}
+                            </div>
+                        </SelectValue>
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {invoiceThemes.map(theme => (
+                        <SelectItem key={theme} value={theme}>
+                          <div className="flex items-center gap-3">
+                            <div className="h-5 w-8 rounded-sm border flex overflow-hidden">
+                                <div className="w-1/3" style={{ backgroundColor: themeStyles[theme].accentColor }} />
+                                <div className="w-2/3" style={{ backgroundColor: themeStyles[theme].tableHeaderBgColor }} />
+                            </div>
+                            {theme}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
