@@ -157,8 +157,7 @@ export function CreateInvoiceDialog() {
     setCurrentProject(null);
   }, [selectedClientId]);
 
-  // New state management: This effect watches for the project ID to change.
-  // When it does, it finds the full project object and sets it to a dedicated state.
+  // When project ID changes, find the full project object
   useEffect(() => {
     if (selectedProjectId && projectsForClient) {
       const project = projectsForClient.find(p => p.id === selectedProjectId);
@@ -172,7 +171,7 @@ export function CreateInvoiceDialog() {
   }, [selectedProjectId, projectsForClient]);
 
 
-  // This is the main controlling effect. It runs ONLY when the stable `currentProject` object changes.
+  // Effect to fetch rates and update config when the final `currentProject` object is stable.
   useEffect(() => {
     if (!currentProject) {
       // If no project, reset to a default config.
@@ -187,7 +186,6 @@ export function CreateInvoiceDialog() {
       return;
     }
 
-    // A project is selected, fetch its details and rates.
     const newCurrency = currentProject.currency || 'EUR';
     const newTheme = currentProject.invoiceTheme || 'Classic';
 
@@ -254,7 +252,7 @@ export function CreateInvoiceDialog() {
     };
 
     fetchRate();
-  }, [currentProject, toast]); // This effect correctly depends on the final project object.
+  }, [currentProject, toast]);
   
 
   useEffect(() => {
@@ -480,6 +478,7 @@ export function CreateInvoiceDialog() {
         setManualQuantity('');
         setGenerationMode('manual');
         setSelectedTimecards({});
+        setIsPreviewOpen(false);
     }
   }, [isOpen]);
 
@@ -815,5 +814,3 @@ export function CreateInvoiceDialog() {
     </>
   );
 }
-
-    
