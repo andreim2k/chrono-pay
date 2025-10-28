@@ -165,7 +165,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
               )}
             />
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 items-end">
                 <FormField
                 control={form.control}
                 name="date"
