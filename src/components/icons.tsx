@@ -19,9 +19,7 @@ export function WorkPayLogo(props: SVGProps<SVGSVGElement>) {
         </linearGradient>
       </defs>
       <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="url(#logoGradient)" />
-      <path d="M12 6v6l4 2" stroke="url(#logoGradient)" strokeWidth="1.5"/>
-      <path d="M15.5 9.5a2.5 2.5 0 0 0-5-2.5" stroke="currentColor" opacity="0.7" />
-      <path d="M8.5 14.5a2.5 2.5 0 0 0 5 2.5" stroke="currentColor" opacity="0.7" />
+      <path d="M9 12.75L11.25 15L15 9" stroke="url(#logoGradient)" strokeWidth="2"/>
     </svg>
   );
 }
