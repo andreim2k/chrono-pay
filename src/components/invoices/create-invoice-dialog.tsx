@@ -161,54 +161,7 @@ export function CreateInvoiceDialog() {
   const selectedProject = useMemo(() => {
     return projectsForClient?.find(p => p.id === selectedProjectId) || null;
   }, [selectedProjectId, projectsForClient]);
-
-  useEffect(() => {
-    setManualQuantity(0);
-    setSelectedTimecards({});
-    if (selectedProject) {
-        setInvoiceTheme(selectedProject.invoiceTheme || 'Classic');
-        setCurrency(selectedProject.currency || 'EUR');
-        
-        if (selectedProject.maxExchangeRate && selectedProject.maxExchangeRateDate) {
-          setExchangeRate(selectedProject.maxExchangeRate);
-          setExchangeRateDate(selectedProject.maxExchangeRateDate);
-          setUsedMaxRate(true);
-          toast({
-              title: 'Fixed Exchange Rate Applied',
-              description: `Using fixed project exchange rate of ${selectedProject.maxExchangeRate.toFixed(4)} RON.`,
-          });
-        } else if (selectedProject.currency !== 'RON') {
-          fetchExchangeRate(selectedProject.currency || 'EUR');
-        } else {
-          setExchangeRate(1);
-          setExchangeRateDate(new Date().toISOString().split('T')[0]);
-          setUsedMaxRate(false);
-        }
-    } else {
-        setExchangeRate(undefined);
-        setExchangeRateDate(undefined);
-        setUsedMaxRate(false);
-    }
-  }, [selectedProject, toast]);
-
-  // Debounced toast for rate
-  useEffect(() => {
-    if (typeof manualQuantity === 'number' && manualQuantity > 0 && selectedProject?.rate) {
-      const handler = setTimeout(() => {
-        toast({
-          title: 'Project Rate Applied',
-          description: `Using rate: ${selectedProject.rate} ${selectedProject.currency || 'EUR'} / ${selectedProject.rateType || 'day'}`,
-        });
-      }, 1000);
-
-      return () => {
-        clearTimeout(handler);
-      };
-    }
-  }, [manualQuantity, selectedProject, toast]);
-
-
-
+  
   const fetchExchangeRate = useCallback(async (currentCurrency: string) => {
     if (currentCurrency === 'RON' || !currentCurrency) {
       setExchangeRate(1);
@@ -253,8 +206,58 @@ export function CreateInvoiceDialog() {
   }, [toast]);
 
   useEffect(() => {
+    if (selectedProject) {
+        setInvoiceTheme(selectedProject.invoiceTheme || 'Classic');
+        setCurrency(selectedProject.currency || 'EUR');
+        
+        if (selectedProject.maxExchangeRate && selectedProject.maxExchangeRateDate) {
+          setExchangeRate(selectedProject.maxExchangeRate);
+          setExchangeRateDate(selectedProject.maxExchangeRateDate);
+          setUsedMaxRate(true);
+          toast({
+              title: 'Fixed Exchange Rate Applied',
+              description: `Using fixed project exchange rate of ${selectedProject.maxExchangeRate.toFixed(4)} RON.`,
+          });
+        } else if ((selectedProject.currency || 'EUR') !== 'RON') {
+          fetchExchangeRate(selectedProject.currency || 'EUR');
+        } else {
+          setExchangeRate(1);
+          setExchangeRateDate(new Date().toISOString().split('T')[0]);
+          setUsedMaxRate(false);
+        }
+    } else {
+        setExchangeRate(undefined);
+        setExchangeRateDate(undefined);
+        setUsedMaxRate(false);
+    }
+  }, [selectedProject, toast, fetchExchangeRate]);
+
+  // Debounced toast for rate
+  useEffect(() => {
+    if (typeof manualQuantity === 'number' && manualQuantity > 0 && selectedProject?.rate) {
+      const handler = setTimeout(() => {
+        toast({
+          title: 'Project Rate Applied',
+          description: `Using rate: ${selectedProject.rate} ${selectedProject.currency || 'EUR'} / ${selectedProject.rateType || 'day'}`,
+        });
+      }, 1000);
+
+      return () => {
+        clearTimeout(handler);
+      };
+    }
+  }, [manualQuantity, selectedProject, toast]);
+
+
+
+  useEffect(() => {
     setSelectedProjectId(null); // Reset project when client changes
   }, [selectedClientId])
+
+  useEffect(() => {
+    setManualQuantity(0); // Reset quantity when project changes
+    setSelectedTimecards({}); // Reset timecards when project changes
+  }, [selectedProjectId]);
   
   const generateInvoiceNumber = (project: Project, allInvoices: Invoice[]) => {
     const prefix = project.invoiceNumberPrefix || project.name.split(' ').map(word => word[0]).join('').toUpperCase();
@@ -301,7 +304,7 @@ export function CreateInvoiceDialog() {
 
     } else { // manual mode
         const projectRate = selectedProject.rate;
-        if (!manualQuantity || !projectRate) return null;
+        if (typeof manualQuantity !== 'number' || manualQuantity <= 0 || !projectRate) return null;
         subtotal = manualQuantity * projectRate;
         items = [{
           description,
