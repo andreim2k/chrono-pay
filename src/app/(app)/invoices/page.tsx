@@ -1,8 +1,7 @@
 
 'use client';
 
-import { useMemo, useCallback } from 'react';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { useMemo, useState } from 'react';
 import { InvoiceList } from '@/components/invoices/invoice-list';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { Invoice, Client, Project } from '@/lib/types';
@@ -17,13 +16,10 @@ import { Card, CardContent } from '@/components/ui/card';
 export default function InvoicesPage() {
   const firestore = useFirestore();
   const { user } = useUser();
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
 
-  const selectedClientId = searchParams.get('clientId') || 'all';
-  const selectedProjectId = searchParams.get('projectId') || 'all';
-  const selectedYear = searchParams.get('year') || 'all';
+  const [selectedClientId, setSelectedClientId] = useState('all');
+  const [selectedProjectId, setSelectedProjectId] = useState('all');
+  const [selectedYear, setSelectedYear] = useState('all');
 
   const invoicesQuery = useMemoFirebase(
     () => (firestore && user ? collection(firestore, `users/${user.uid}/invoices`) : null),
@@ -42,30 +38,12 @@ export default function InvoicesPage() {
     [firestore, user]
   );
   const { data: projects } = useCollection<Project>(projectsQuery, `users/${user?.uid}/projects`);
-  
-  const createQueryString = useCallback(
-    (paramsToUpdate: Record<string, string>) => {
-      const params = new URLSearchParams(searchParams.toString());
-      for (const [name, value] of Object.entries(paramsToUpdate)) {
-        if (value === 'all' || value === '') {
-          params.delete(name);
-        } else {
-          params.set(name, value);
-        }
-      }
-      return params.toString();
-    },
-    [searchParams]
-  );
 
-  const handleFilterChange = (filterName: string, value: string) => {
-    const paramsToUpdate: Record<string, string> = { [filterName]: value };
-    if (filterName === 'clientId') {
-      paramsToUpdate['projectId'] = 'all'; // Reset project when client changes
-    }
-    router.push(`${pathname}?${createQueryString(paramsToUpdate)}`);
+  const handleClientChange = (clientId: string) => {
+    setSelectedClientId(clientId);
+    setSelectedProjectId('all'); // Reset project when client changes
   };
-
+  
   const availableYears = useMemo(() => {
     if (!invoices) return [];
     const years = new Set(invoices.map(inv => getYear(parseISO(inv.date))));
@@ -121,21 +99,21 @@ export default function InvoicesPage() {
       <Card>
         <CardContent className='p-4'>
            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-              <Select value={selectedClientId} onValueChange={(value) => handleFilterChange('clientId', value)}>
+              <Select value={selectedClientId} onValueChange={handleClientChange}>
                 <SelectTrigger><SelectValue placeholder="Filter by Client" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Clients</SelectItem>
                   {clients?.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>
-               <Select value={selectedProjectId} onValueChange={(value) => handleFilterChange('projectId', value)} disabled={selectedClientId === 'all' && projectsForClient.length === 0}>
+               <Select value={selectedProjectId} onValueChange={setSelectedProjectId} disabled={selectedClientId === 'all' && projectsForClient.length === 0}>
                 <SelectTrigger><SelectValue placeholder="Filter by Project" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Projects</SelectItem>
                   {projectsForClient?.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Select value={selectedYear} onValueChange={(value) => handleFilterChange('year', value)}>
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
                 <SelectTrigger><SelectValue placeholder="Filter by Year" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Years</SelectItem>
