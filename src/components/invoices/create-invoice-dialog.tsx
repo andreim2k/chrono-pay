@@ -153,83 +153,22 @@ export function CreateInvoiceDialog() {
   const selectedProject = useMemo(() => {
     return projectsForClient?.find(p => p.id === selectedProjectId) || null;
   }, [selectedProjectId, projectsForClient]);
-  
+
+  // Effect to reset project-specific fields when client changes
   useEffect(() => {
-    // This is the main controlling effect.
-    // It runs whenever the project ID changes.
+    setSelectedProjectId(null);
+  }, [selectedClientId]);
+
+  // Effect to reset quantity and timecards when project changes
+  useEffect(() => {
     setManualQuantity('');
     setSelectedTimecards({});
-    
-    if (selectedProject) {
-      const newBaseConfig = {
-        currency: selectedProject.currency || 'EUR',
-        invoiceTheme: selectedProject.invoiceTheme || 'Classic',
-      };
+  }, [selectedProjectId]);
 
-      const fetchRate = async () => {
-        setInvoiceConfig(prev => ({
-            ...prev,
-            ...newBaseConfig,
-            exchangeRate: undefined,
-            exchangeRateDate: undefined,
-            usedMaxRate: false,
-            isFetchingRate: true,
-        }));
-
-        if (newBaseConfig.currency === 'RON') {
-          setInvoiceConfig(prev => ({
-            ...prev,
-            exchangeRate: 1,
-            exchangeRateDate: new Date().toISOString().split('T')[0],
-            isFetchingRate: false,
-          }));
-          return;
-        }
-
-        if (selectedProject.maxExchangeRate && selectedProject.maxExchangeRateDate) {
-          setInvoiceConfig(prev => ({
-            ...prev,
-            exchangeRate: selectedProject.maxExchangeRate,
-            exchangeRateDate: selectedProject.maxExchangeRateDate,
-            usedMaxRate: true,
-            isFetchingRate: false,
-          }));
-          toast({
-            title: 'Fixed Exchange Rate Applied',
-            description: `Using fixed project exchange rate of ${selectedProject.maxExchangeRate.toFixed(4)} RON.`,
-          });
-          return;
-        }
-
-        try {
-          const result = await getExchangeRate({ currency: newBaseConfig.currency });
-          if (result.rate && result.date) {
-            setInvoiceConfig(prev => ({
-              ...prev,
-              exchangeRate: result.rate,
-              exchangeRateDate: result.date,
-              isFetchingRate: false,
-            }));
-            toast({
-              title: 'Exchange Rate Fetched',
-              description: `BNR rate for ${formatDateWithOrdinal(result.date)}: 1 ${newBaseConfig.currency} = ${result.rate.toFixed(4)} RON.`,
-            });
-          } else {
-            throw new Error('Rate not found');
-          }
-        } catch (error) {
-          setInvoiceConfig(prev => ({ ...prev, isFetchingRate: false }));
-          toast({
-            variant: 'destructive',
-            title: 'Error Fetching Rate',
-            description: 'Could not fetch the exchange rate from BNR.',
-          });
-        }
-      };
-
-      fetchRate();
-    } else {
-        // Reset if no project is selected
+  // This is the main controlling effect. It runs ONLY when the selectedProject object is available.
+  useEffect(() => {
+    if (!selectedProject) {
+        // If no project is selected (e.g., client changed), reset to default.
         setInvoiceConfig({
             currency: 'EUR',
             invoiceTheme: 'Classic',
@@ -238,9 +177,78 @@ export function CreateInvoiceDialog() {
             usedMaxRate: false,
             isFetchingRate: false,
         });
+        return;
     }
-  }, [selectedProjectId, selectedProject, toast]);
+    
+    // A project is selected, fetch its details and rates.
+    const newCurrency = selectedProject.currency || 'EUR';
+    const newTheme = selectedProject.invoiceTheme || 'Classic';
 
+    const fetchRate = async () => {
+      // Start fetching, update config immediately with known values.
+      setInvoiceConfig({
+        currency: newCurrency,
+        invoiceTheme: newTheme,
+        exchangeRate: undefined,
+        exchangeRateDate: undefined,
+        usedMaxRate: false,
+        isFetchingRate: true,
+      });
+
+      if (newCurrency === 'RON') {
+        setInvoiceConfig(prev => ({
+          ...prev,
+          exchangeRate: 1,
+          exchangeRateDate: new Date().toISOString().split('T')[0],
+          isFetchingRate: false,
+        }));
+        return;
+      }
+
+      if (selectedProject.maxExchangeRate && selectedProject.maxExchangeRateDate) {
+        setInvoiceConfig(prev => ({
+          ...prev,
+          exchangeRate: selectedProject.maxExchangeRate,
+          exchangeRateDate: selectedProject.maxExchangeRateDate,
+          usedMaxRate: true,
+          isFetchingRate: false,
+        }));
+        toast({
+          title: 'Fixed Exchange Rate Applied',
+          description: `Using fixed project exchange rate of ${selectedProject.maxExchangeRate.toFixed(4)} RON.`,
+        });
+        return;
+      }
+
+      try {
+        const result = await getExchangeRate({ currency: newCurrency });
+        if (result.rate && result.date) {
+          setInvoiceConfig(prev => ({
+            ...prev,
+            exchangeRate: result.rate,
+            exchangeRateDate: result.date,
+            isFetchingRate: false,
+          }));
+          toast({
+            title: 'Exchange Rate Fetched',
+            description: `BNR rate for ${formatDateWithOrdinal(result.date)}: 1 ${newCurrency} = ${result.rate.toFixed(4)} RON.`,
+          });
+        } else {
+          throw new Error('Rate not found');
+        }
+      } catch (error) {
+        setInvoiceConfig(prev => ({ ...prev, isFetchingRate: false }));
+        toast({
+          variant: 'destructive',
+          title: 'Error Fetching Rate',
+          description: 'Could not fetch the exchange rate from BNR.',
+        });
+      }
+    };
+
+    fetchRate();
+  }, [selectedProject, toast]); // This effect now correctly depends on the final project object.
+  
 
   useEffect(() => {
     // Debounced toast for manual quantity entry
@@ -250,20 +258,14 @@ export function CreateInvoiceDialog() {
     const handler = setTimeout(() => {
         toast({
             title: 'Project Rate Applied',
-            description: `Using rate: ${selectedProject.rate} ${selectedProject.currency || 'EUR'} / ${selectedProject.rateType || 'day'}`,
+            description: `Using rate: ${selectedProject.rate} ${invoiceConfig.currency} / ${selectedProject.rateType || 'day'}`,
         });
     }, 1000);
 
     return () => {
         clearTimeout(handler);
     };
-  }, [manualQuantity, selectedProject, toast]);
-
-  useEffect(() => {
-    // Reset project when client changes
-    setSelectedProjectId(null);
-  }, [selectedClientId])
-
+  }, [manualQuantity, selectedProject, invoiceConfig.currency, toast]);
   
   const generateInvoiceNumber = (project: Project, allInvoices: Invoice[]) => {
     const prefix = project.invoiceNumberPrefix || project.name.split(' ').map(word => word[0]).join('').toUpperCase();
