@@ -21,6 +21,7 @@ import { Switch } from '../ui/switch';
 import { ScrollArea } from '../ui/scroll-area';
 import { Badge } from '../ui/badge';
 import { Checkbox } from '../ui/checkbox';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const currencies = ['EUR', 'USD', 'GBP', 'RON'];
 const invoiceThemes: InvoiceTheme[] = [
@@ -799,3 +800,5 @@ export function CreateInvoiceDialog() {
     </>
   );
 }
+
+    
