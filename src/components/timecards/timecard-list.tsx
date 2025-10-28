@@ -66,11 +66,19 @@ export function TimecardList({ timecards }: TimecardListProps) {
   const handleStatusChange = (timecard: Timecard, newStatus: Timecard['status']) => {
     if (!firestore || !user) return;
     const timecardRef = doc(firestore, `users/${user.uid}/timecards`, timecard.id);
-    updateDocumentNonBlocking(timecardRef, { 
-      status: newStatus,
-      // If un-billing, clear the invoiceId
-      invoiceId: newStatus === 'Unbilled' ? '' : timecard.invoiceId 
-    });
+    
+    const updateData: { status: Timecard['status'], invoiceId?: string } = { status: newStatus };
+
+    if (newStatus === 'Unbilled') {
+      updateData.invoiceId = '';
+    } else if (newStatus === 'Billed') {
+      // When manually marking as billed, we don't have an invoice ID.
+      // Set to empty string if it's currently undefined to avoid Firestore error.
+      updateData.invoiceId = timecard.invoiceId || '';
+    }
+
+    updateDocumentNonBlocking(timecardRef, updateData);
+
     toast({
         title: 'Timecard Updated',
         description: `Time entry has been marked as ${newStatus}.`
