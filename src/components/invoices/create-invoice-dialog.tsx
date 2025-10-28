@@ -205,7 +205,15 @@ export function CreateInvoiceDialog() {
     }
   }, [toast]);
 
+  // When project changes, reset relevant states and fetch rates/themes.
   useEffect(() => {
+    // Reset dependant state
+    setManualQuantity(0);
+    setSelectedTimecards({});
+    setExchangeRate(undefined);
+    setExchangeRateDate(undefined);
+    setUsedMaxRate(false);
+    
     if (selectedProject) {
         setInvoiceTheme(selectedProject.invoiceTheme || 'Classic');
         setCurrency(selectedProject.currency || 'EUR');
@@ -223,18 +231,13 @@ export function CreateInvoiceDialog() {
         } else {
           setExchangeRate(1);
           setExchangeRateDate(new Date().toISOString().split('T')[0]);
-          setUsedMaxRate(false);
         }
-    } else {
-        setExchangeRate(undefined);
-        setExchangeRateDate(undefined);
-        setUsedMaxRate(false);
     }
   }, [selectedProject, toast, fetchExchangeRate]);
+  
 
-  // Debounced toast for rate
   useEffect(() => {
-    if (typeof manualQuantity === 'number' && manualQuantity > 0 && selectedProject?.rate) {
+    if (typeof manualQuantity === 'number' && manualQuantity > 0 && selectedProject?.rate !== undefined) {
         const handler = setTimeout(() => {
             toast({
                 title: 'Project Rate Applied',
@@ -246,21 +249,12 @@ export function CreateInvoiceDialog() {
             clearTimeout(handler);
         };
     }
-}, [manualQuantity, selectedProject, toast]);
-
-
+  }, [manualQuantity, selectedProject, toast]);
 
   useEffect(() => {
     setSelectedProjectId(null); // Reset project when client changes
   }, [selectedClientId])
 
-  useEffect(() => {
-    // This effect runs when selectedProjectId changes.
-    // We reset the manual quantity and timecard selections
-    // to ensure a clean state for the new project context.
-    setManualQuantity(0);
-    setSelectedTimecards({});
-  }, [selectedProjectId]);
   
   const generateInvoiceNumber = (project: Project, allInvoices: Invoice[]) => {
     const prefix = project.invoiceNumberPrefix || project.name.split(' ').map(word => word[0]).join('').toUpperCase();
@@ -282,7 +276,7 @@ export function CreateInvoiceDialog() {
         billedTimecardIds = filteredTimecards.filter(tc => selectedTimecards[tc.id]).map(tc => tc.id);
         
         const currentRate = selectedProject.rate;
-        if (billedTimecardIds.length === 0 || !currentRate) return null;
+        if (billedTimecardIds.length === 0 || typeof currentRate !== 'number') return null;
         
         let quantity: number;
         let unit: string;
@@ -307,7 +301,7 @@ export function CreateInvoiceDialog() {
 
     } else { // manual mode
         const projectRate = selectedProject.rate;
-        if (typeof manualQuantity !== 'number' || manualQuantity <= 0 || !projectRate) return null;
+        if (typeof manualQuantity !== 'number' || manualQuantity <= 0 || typeof projectRate !== 'number') return null;
         subtotal = manualQuantity * projectRate;
         items = [{
           description,
