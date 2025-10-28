@@ -76,7 +76,7 @@ export function CreateInvoiceDialog() {
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [manualQuantity, setManualQuantity] = useState<number | ''>(0);
+  const [manualQuantity, setManualQuantity] = useState<number | ''>('');
   const lastMonth = subMonths(new Date(), 1);
   const [invoicedMonth, setInvoicedMonth] = useState<number>(lastMonth.getMonth());
   const [invoicedYear, setInvoicedYear] = useState<number>(lastMonth.getFullYear());
@@ -157,34 +157,28 @@ export function CreateInvoiceDialog() {
   useEffect(() => {
     // This is the main controlling effect.
     // It runs whenever the project ID changes.
-    
-    // 1. Reset all dependent state immediately.
-    setManualQuantity(0);
+    setManualQuantity('');
     setSelectedTimecards({});
-    setInvoiceConfig({
-      currency: 'EUR',
-      invoiceTheme: 'Classic',
-      exchangeRate: undefined,
-      exchangeRateDate: undefined,
-      usedMaxRate: false,
-      isFetchingRate: false,
-    });
     
     if (selectedProject) {
-      // 2. Once we have a selected project, derive its config.
-      const newConfig: Omit<InvoiceConfig, 'isFetchingRate'> = {
+      const newBaseConfig = {
         currency: selectedProject.currency || 'EUR',
         invoiceTheme: selectedProject.invoiceTheme || 'Classic',
-        exchangeRate: undefined,
-        exchangeRateDate: undefined,
-        usedMaxRate: false,
       };
 
       const fetchRate = async () => {
-        if (newConfig.currency === 'RON') {
+        setInvoiceConfig(prev => ({
+            ...prev,
+            ...newBaseConfig,
+            exchangeRate: undefined,
+            exchangeRateDate: undefined,
+            usedMaxRate: false,
+            isFetchingRate: true,
+        }));
+
+        if (newBaseConfig.currency === 'RON') {
           setInvoiceConfig(prev => ({
             ...prev,
-            ...newConfig,
             exchangeRate: 1,
             exchangeRateDate: new Date().toISOString().split('T')[0],
             isFetchingRate: false,
@@ -195,7 +189,6 @@ export function CreateInvoiceDialog() {
         if (selectedProject.maxExchangeRate && selectedProject.maxExchangeRateDate) {
           setInvoiceConfig(prev => ({
             ...prev,
-            ...newConfig,
             exchangeRate: selectedProject.maxExchangeRate,
             exchangeRateDate: selectedProject.maxExchangeRateDate,
             usedMaxRate: true,
@@ -208,26 +201,24 @@ export function CreateInvoiceDialog() {
           return;
         }
 
-        setInvoiceConfig(prev => ({ ...prev, ...newConfig, isFetchingRate: true }));
         try {
-          const result = await getExchangeRate({ currency: newConfig.currency });
+          const result = await getExchangeRate({ currency: newBaseConfig.currency });
           if (result.rate && result.date) {
             setInvoiceConfig(prev => ({
               ...prev,
-              ...newConfig,
               exchangeRate: result.rate,
               exchangeRateDate: result.date,
               isFetchingRate: false,
             }));
             toast({
               title: 'Exchange Rate Fetched',
-              description: `BNR rate for ${formatDateWithOrdinal(result.date)}: 1 ${newConfig.currency} = ${result.rate.toFixed(4)} RON.`,
+              description: `BNR rate for ${formatDateWithOrdinal(result.date)}: 1 ${newBaseConfig.currency} = ${result.rate.toFixed(4)} RON.`,
             });
           } else {
             throw new Error('Rate not found');
           }
         } catch (error) {
-          setInvoiceConfig(prev => ({ ...prev, ...newConfig, isFetchingRate: false }));
+          setInvoiceConfig(prev => ({ ...prev, isFetchingRate: false }));
           toast({
             variant: 'destructive',
             title: 'Error Fetching Rate',
@@ -237,6 +228,16 @@ export function CreateInvoiceDialog() {
       };
 
       fetchRate();
+    } else {
+        // Reset if no project is selected
+        setInvoiceConfig({
+            currency: 'EUR',
+            invoiceTheme: 'Classic',
+            exchangeRate: undefined,
+            exchangeRateDate: undefined,
+            usedMaxRate: false,
+            isFetchingRate: false,
+        });
     }
   }, [selectedProjectId, selectedProject, toast]);
 
@@ -465,7 +466,7 @@ export function CreateInvoiceDialog() {
     if (!isOpen) {
         setSelectedClientId(null);
         setSelectedProjectId(null);
-        setManualQuantity(0);
+        setManualQuantity('');
         setGenerationMode('manual');
         setSelectedTimecards({});
     }
@@ -611,7 +612,7 @@ export function CreateInvoiceDialog() {
                         onChange={(e) => setManualQuantity(e.target.value === '' ? '' : parseFloat(e.target.value))}
                         onBlur={(e) => {
                           if (e.target.value === '') {
-                            setManualQuantity(0);
+                            setManualQuantity('');
                           }
                         }}
                         min="0"
@@ -803,3 +804,5 @@ export function CreateInvoiceDialog() {
     </>
   );
 }
+
+    
