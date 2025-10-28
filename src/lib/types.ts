@@ -56,6 +56,19 @@ export type Project = {
   order?: number;
 };
 
+export type Timecard = {
+    id: string;
+    projectId: string;
+    projectName: string;
+    clientId: string;
+    clientName: string;
+    date: string; // YYYY-MM-DD
+    hours: number;
+    description?: string;
+    status: 'Unbilled' | 'Billed';
+    invoiceId?: string; // ID of the invoice this timecard is billed on
+}
+
 export type Invoice = {
   id: string;
   invoiceNumber: string;

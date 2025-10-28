@@ -15,7 +15,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ThemeToggle } from './theme-toggle';
-import { LogOut, Menu, LayoutDashboard, FileText, BarChart, Settings as SettingsIcon } from 'lucide-react';
+import { LogOut, Menu, LayoutDashboard, FileText, BarChart, Settings as SettingsIcon, Clock } from 'lucide-react';
 import { ChronoSapientPayLogo } from '../icons';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { MainNav } from './main-nav';
@@ -26,6 +26,7 @@ import { useRouter } from 'next/navigation';
 const mainNav = [
     { name: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard /> },
     { name: 'Invoices', href: '/invoices', icon: <FileText /> },
+    { name: 'Timecards', href: '/timecards', icon: <Clock /> },
     { name: 'Reports', href: '/reports', icon: <BarChart /> },
     { name: 'Settings', href: '/settings', icon: <SettingsIcon /> },
 ];
