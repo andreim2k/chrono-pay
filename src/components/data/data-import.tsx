@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Label } from '../ui/label';
+import type { Timecard } from '@/lib/types';
 
 interface DataImportProps {
   allowedCollections?: string[];
@@ -29,7 +30,7 @@ interface DataImportProps {
 }
 
 export function DataImport({ 
-  allowedCollections = ['clients', 'projects', 'invoices', 'myCompany'], 
+  allowedCollections = ['clients', 'projects', 'invoices', 'timecards', 'myCompany'], 
   buttonLabel = 'Import Data',
   defaultImportMode = 'overwrite',
   existingData,
@@ -48,10 +49,12 @@ export function DataImport({
   const clientsQuery = useMemoFirebase(() => (firestore && user && allowedCollections.includes('clients') ? collection(firestore, `users/${user.uid}/clients`) : null), [firestore, user, allowedCollections]);
   const projectsQuery = useMemoFirebase(() => (firestore && user && allowedCollections.includes('projects') ? collection(firestore, `users/${user.uid}/projects`) : null), [firestore, user, allowedCollections]);
   const invoicesQuery = useMemoFirebase(() => (firestore && user && allowedCollections.includes('invoices') ? collection(firestore, `users/${user.uid}/invoices`) : null), [firestore, user, allowedCollections]);
+  const timecardsQuery = useMemoFirebase(() => (firestore && user && allowedCollections.includes('timecards') ? collection(firestore, `users/${user.uid}/timecards`) : null), [firestore, user, allowedCollections]);
 
   const { data: existingClients } = useCollection(clientsQuery);
   const { data: existingProjects } = useCollection(projectsQuery);
   const { data: existingInvoicesForOverwrite } = useCollection(invoicesQuery);
+  const { data: existingTimecards } = useCollection<Timecard>(timecardsQuery);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -94,6 +97,9 @@ export function DataImport({
         if (allowedCollections.includes('clients') && existingClients) {
           existingClients.forEach(client => batch.delete(doc(firestore, `users/${user.uid}/clients`, client.id)));
         }
+        if (allowedCollections.includes('timecards') && existingTimecards) {
+          existingTimecards.forEach(tc => batch.delete(doc(firestore, `users/${user.uid}/timecards`, tc.id)));
+        }
       }
       
       if (allowedCollections.includes('myCompany') && dataToImport.myCompany) {
@@ -102,15 +108,19 @@ export function DataImport({
         if(selectedImportMode === 'merge') importCount++;
       }
 
-      const collectionsToImport = ['clients', 'projects', 'invoices'];
+      const collectionsToImport = ['clients', 'projects', 'invoices', 'timecards'];
       for (const collectionName of collectionsToImport) {
         if (allowedCollections.includes(collectionName) && Array.isArray(dataToImport[collectionName])) {
           let docsToProcess = dataToImport[collectionName];
 
-          if (selectedImportMode === 'merge' && collectionName === 'invoices' && existingData?.invoices) {
-            const existingInvoiceNumbers = new Set(existingData.invoices.map(inv => inv.invoiceNumber));
-            docsToProcess = docsToProcess.filter((docData: any) => !existingInvoiceNumbers.has(docData.invoiceNumber));
+          if (selectedImportMode === 'merge') {
+            if (collectionName === 'invoices' && existingData?.invoices) {
+                const existingInvoiceNumbers = new Set(existingData.invoices.map(inv => inv.invoiceNumber));
+                docsToProcess = docsToProcess.filter((docData: any) => !existingInvoiceNumbers.has(docData.invoiceNumber));
+            }
+             // Add merge logic for other collections if needed (e.g., check for duplicate timecards)
           }
+
 
           docsToProcess.forEach((docData: any) => {
             const newDocRef = doc(collection(firestore, `users/${user.uid}/${collectionName}`));
@@ -132,9 +142,9 @@ export function DataImport({
 
       await batch.commit();
       
-      const countForToast = selectedImportMode === 'overwrite' ? Object.values(dataToImport).reduce((acc, val) => acc + (Array.isArray(val) ? val.length : 1), 0) : importCount;
+      const countForToast = selectedImportMode === 'overwrite' ? Object.values(dataToImport).flat().length : importCount;
       const successTitle = selectedImportMode === 'overwrite' ? 'Import Successful' : 'Merge Successful';
-      const successDescription = selectedImportMode === 'overwrite' 
+      const successDescription = selectedImport-mode === 'overwrite' 
         ? `Successfully cleared relevant data and imported ${countForToast} records. The page will now refresh.`
         : `Successfully merged ${countForToast} new records. The page will now refresh.`;
 
@@ -168,7 +178,7 @@ export function DataImport({
     let description = '';
 
     if (allowModeSelection && selectedImportMode === 'merge') {
-      return "This will add all invoices from the selected file that do not already exist in your current data. It will not delete anything. Are you sure you want to continue?";
+      return "This will add all records from the selected file that do not already exist in your current data. It will not delete anything. Are you sure you want to continue?";
     }
 
     const collectionsToWipe = allowedCollections.filter(c => c !== 'myCompany');
@@ -217,13 +227,13 @@ export function DataImport({
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="merge" id="r-merge" />
                             <Label htmlFor="r-merge" className='font-normal'>
-                                <span className='font-semibold text-foreground'>Merge:</span> Add new invoices from the file. Existing invoices will not be affected.
+                                <span className='font-semibold text-foreground'>Merge:</span> Add new records from the file. Existing data will not be affected.
                             </Label>
                         </div>
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="overwrite" id="r-overwrite" />
                             <Label htmlFor="r-overwrite" className='font-normal'>
-                                <span className='font-semibold text-foreground'>Overwrite:</span> Delete all current invoices and replace them with invoices from the file.
+                                <span className='font-semibold text-foreground'>Overwrite:</span> Delete all current data and replace it with data from the file.
                             </Label>
                         </div>
                     </RadioGroup>

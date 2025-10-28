@@ -11,6 +11,7 @@ interface DataManagementProps {
         clients: any[];
         projects: any[];
         invoices: any[];
+        timecards: any[];
     }
 }
 
@@ -25,7 +26,7 @@ export function DataManagement({ data }: DataManagementProps) {
       </CardHeader>
       <CardContent className="flex items-center gap-4">
         <DataExport data={data} />
-        <DataImport allowedCollections={['clients', 'projects', 'invoices', 'myCompany']} defaultImportMode='overwrite' />
+        <DataImport allowedCollections={['clients', 'projects', 'invoices', 'timecards', 'myCompany']} defaultImportMode='overwrite' />
       </CardContent>
     </Card>
   );
