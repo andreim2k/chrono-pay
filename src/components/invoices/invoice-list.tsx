@@ -7,12 +7,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Download, Eye, Loader2, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Download, Eye, Loader2, Trash2, RotateCcw } from 'lucide-react';
 import type { Invoice } from '@/lib/types';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, updateDocumentNonBlocking, deleteDocumentNonBlocking, useUser } from '@/firebase';
-import { doc, writeBatch } from 'firebase/firestore';
+import { doc, writeBatch, collection } from 'firebase/firestore';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { InvoiceHtmlPreview } from './invoice-html-preview';
@@ -155,14 +155,37 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
     setIsAlertOpen(true);
   }
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!firestore || !invoiceToDelete || !user) return;
+    
+    const batch = writeBatch(firestore);
+
+    // Delete the invoice
     const invoiceRef = doc(firestore, `users/${user.uid}/invoices`, invoiceToDelete.id);
-    deleteDocumentNonBlocking(invoiceRef);
-    toast({
-      title: 'Invoice Deleted',
-      description: `Invoice ${invoiceToDelete.invoiceNumber} has been deleted.`,
-    });
+    batch.delete(invoiceRef);
+
+    // Un-bill associated timecards
+    if (invoiceToDelete.billedTimecardIds && invoiceToDelete.billedTimecardIds.length > 0) {
+        invoiceToDelete.billedTimecardIds.forEach(tcId => {
+            const timecardRef = doc(firestore, `users/${user.uid}/timecards`, tcId);
+            batch.update(timecardRef, { status: 'Unbilled', invoiceId: '' });
+        });
+    }
+
+    try {
+        await batch.commit();
+        toast({
+        title: 'Invoice Deleted',
+        description: `Invoice ${invoiceToDelete.invoiceNumber} has been deleted and associated timecards are now unbilled.`,
+        });
+    } catch (error) {
+         toast({
+            variant: 'destructive',
+            title: 'Error Deleting Invoice',
+            description: 'Could not delete the invoice. Please try again.',
+        });
+    }
+
     setInvoiceToDelete(null);
     setIsAlertOpen(false);
   };
@@ -188,6 +211,14 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
     idsToDelete.forEach(id => {
         const invoiceRef = doc(firestore, `users/${user.uid}/invoices`, id);
         batch.delete(invoiceRef);
+
+        const invoice = invoices.find(inv => inv.id === id);
+        if (invoice?.billedTimecardIds) {
+            invoice.billedTimecardIds.forEach(tcId => {
+                const timecardRef = doc(firestore, `users/${user.uid}/timecards`, tcId);
+                batch.update(timecardRef, { status: 'Unbilled', invoiceId: '' });
+            });
+        }
     });
 
     try {
@@ -232,7 +263,7 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
                         <AlertDialogHeader>
                             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                             <AlertDialogDescription>
-                                This will permanently delete {selectedRowCount} selected invoice(s). This action cannot be undone.
+                                This will permanently delete {selectedRowCount} selected invoice(s) and mark their associated timecards as 'Unbilled'. This action cannot be undone.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -303,6 +334,7 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
                         </DropdownMenuItem>
                         {invoice.status === 'Created' && <DropdownMenuItem onSelect={() => handleStatusChange(invoice, 'Sent')}>Mark as Sent</DropdownMenuItem>}
                         {invoice.status === 'Sent' && <DropdownMenuItem onSelect={() => handleStatusChange(invoice, 'Paid')}>Mark as Paid</DropdownMenuItem>}
+                        {invoice.status === 'Paid' && <DropdownMenuItem onSelect={() => handleStatusChange(invoice, 'Sent')}><RotateCcw className="mr-2 h-4 w-4" />Revert to Sent</DropdownMenuItem>}
                         <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => openDeleteDialog(invoice)}>
                           <Trash2 className="mr-2 h-4 w-4" /> Delete
                         </DropdownMenuItem>
@@ -355,9 +387,7 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete invoice
-              <span className="font-semibold"> {invoiceToDelete?.invoiceNumber}</span> for 
-              <span className="font-semibold"> {invoiceToDelete?.clientName}</span>.
+              This will permanently delete invoice <span className="font-semibold">{invoiceToDelete?.invoiceNumber}</span>. Associated timecards will be marked as 'Unbilled'. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -2,22 +2,25 @@
 'use client';
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { format, getDate, subMonths } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Download, Save, Loader2, RefreshCw, Eye, PlusCircle } from 'lucide-react';
+import { Download, Save, Loader2, RefreshCw, Eye, PlusCircle, Hourglass } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import type { Client, Invoice, Project, InvoiceTheme, User } from '@/lib/types';
+import type { Client, Invoice, Project, InvoiceTheme, User, Timecard } from '@/lib/types';
 import { getExchangeRate } from '@/ai/flows/get-exchange-rate';
-import { useCollection, useFirestore, addDocumentNonBlocking, useMemoFirebase, useUser, useDoc } from '@/firebase';
-import { collection, query, where, doc } from 'firebase/firestore';
+import { useCollection, useFirestore, addDocumentNonBlocking, useMemoFirebase, useUser, useDoc, updateDocumentNonBlocking } from '@/firebase';
+import { collection, query, where, doc, writeBatch } from 'firebase/firestore';
 import { InvoiceHtmlPreview, themeStyles } from '@/components/invoices/invoice-html-preview';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Switch } from '../ui/switch';
+import { ScrollArea } from '../ui/scroll-area';
+import { Badge } from '../ui/badge';
+import { Checkbox } from '../ui/checkbox';
 
 const currencies = ['EUR', 'USD', 'GBP', 'RON'];
 const invoiceThemes: InvoiceTheme[] = [
@@ -57,6 +60,8 @@ const formatDateWithOrdinal = (dateString: string | undefined) => {
     return `${dayWithOrdinal} of ${format(adjustedDate, 'MMMM, yyyy')}`;
 }
 
+type GenerationMode = 'manual' | 'timecards';
+
 export function CreateInvoiceDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
@@ -75,7 +80,9 @@ export function CreateInvoiceDialog() {
   const [previewImage, setPreviewImage] = useState<string>('');
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [invoiceTheme, setInvoiceTheme] = useState<InvoiceTheme>('Classic');
-  
+  const [generationMode, setGenerationMode] = useState<GenerationMode>('manual');
+  const [selectedTimecards, setSelectedTimecards] = useState<Record<string, boolean>>({});
+
   const previewRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -109,6 +116,15 @@ export function CreateInvoiceDialog() {
   );
   const { data: projectsForClient } = useCollection<Project>(projectsForClientQuery, `users/${user?.uid}/projects`);
 
+  const unbilledTimecardsQuery = useMemoFirebase(() => {
+    if (!firestore || !user || !selectedProjectId) return null;
+    return query(
+        collection(firestore, `users/${user.uid}/timecards`),
+        where('projectId', '==', selectedProjectId),
+        where('status', '==', 'Unbilled')
+    );
+  }, [firestore, user, selectedProjectId]);
+  const { data: unbilledTimecards } = useCollection<Timecard>(unbilledTimecardsQuery, `users/${user?.uid}/timecards`);
 
   const handleDownloadPdf = async () => {
     if (!previewRef.current || !invoiceData) return;
@@ -224,16 +240,74 @@ export function CreateInvoiceDialog() {
     const paddedNumber = String(nextInvoiceNum).padStart(3, '0');
     return `${prefix}${paddedNumber}`;
   };
+  
+    const invoiceItemsFromTimecards = useMemo(() => {
+        if (generationMode !== 'timecards' || !unbilledTimecards) return [];
+        const items: Record<string, { description: string; quantity: number; unit: string; rate: number; amount: number; timecardIds: string[] }> = {};
+        
+        unbilledTimecards.forEach(tc => {
+            if (!selectedTimecards[tc.id]) return;
+
+            const rate = dailyRate ? dailyRate / 8 : 0; // Assuming 8-hour day
+            const itemKey = `${tc.date}-${rate}`; // Group by date and rate
+
+            if (!items[itemKey]) {
+                items[itemKey] = {
+                    description: `Consultancy services on ${format(new Date(tc.date), 'MMMM d, yyyy')}`,
+                    quantity: 0,
+                    unit: 'hours',
+                    rate: rate,
+                    amount: 0,
+                    timecardIds: [],
+                };
+            }
+            items[itemKey].quantity += tc.hours;
+            items[itemKey].amount += tc.hours * rate;
+            items[itemKey].timecardIds.push(tc.id);
+        });
+
+        // Sum up descriptions for items on the same day if they have descriptions
+        Object.values(items).forEach(item => {
+            const notes = unbilledTimecards
+                .filter(tc => item.timecardIds.includes(tc.id) && tc.description)
+                .map(tc => tc.description)
+                .join('; ');
+            if (notes) {
+                item.description += ` - ${notes}`;
+            }
+        });
+        
+        return Object.values(items);
+    }, [generationMode, unbilledTimecards, selectedTimecards, dailyRate]);
+
 
   const invoiceData: Omit<Invoice, 'id'> | null = useMemo(() => {
-    if (!selectedClient || !selectedProject || !daysWorked || !dailyRate || !myCompany || !invoices) return null;
+    if (!selectedClient || !selectedProject || !myCompany || !invoices || (!dailyRate && generationMode !== 'manual')) return null;
 
-    const subtotal = daysWorked * dailyRate;
+    let items, subtotal: number, billedTimecardIds: string[] = [];
+
+    if (generationMode === 'timecards') {
+        items = invoiceItemsFromTimecards;
+        subtotal = items.reduce((acc, item) => acc + item.amount, 0);
+        billedTimecardIds = items.flatMap(item => item.timecardIds);
+        if (billedTimecardIds.length === 0) return null;
+    } else {
+        if (!daysWorked || !dailyRate) return null;
+        subtotal = daysWorked * dailyRate;
+        const servicePeriod = new Date(invoicedYear, invoicedMonth);
+        items = [{
+          description: `${selectedProject.name}: Consultancy services for ${format(servicePeriod, 'MMMM yyyy')}`,
+          quantity: daysWorked,
+          unit: 'days',
+          rate: dailyRate,
+          amount: subtotal,
+        }];
+    }
+
     const vatAmount = selectedClient.hasVat ? subtotal * (myCompany?.companyVatRate || 0) : 0;
     const total = subtotal + vatAmount;
     const totalRon = exchangeRate ? total * exchangeRate : undefined;
-    const servicePeriod = new Date(invoicedYear, invoicedMonth);
-
+    
     const data: Omit<Invoice, 'id'> & { vatRate?: number } = {
       invoiceNumber: generateInvoiceNumber(selectedClient, invoices),
       companyName: myCompany.companyName!,
@@ -250,15 +324,7 @@ export function CreateInvoiceDialog() {
       date: format(invoiceCreationDate, 'yyyy-MM-dd'),
       currency,
       language: selectedClient.language || 'English',
-      items: [
-        {
-          description: `${selectedProject.name}: Consultancy services for ${format(servicePeriod, 'MMMM yyyy')}`,
-          quantity: daysWorked,
-          unit: 'days',
-          rate: dailyRate,
-          amount: subtotal,
-        },
-      ],
+      items: items.map(({timecardIds, ...item}) => item), // remove timecardIds from final items
       subtotal: subtotal,
       vatAmount: vatAmount,
       total,
@@ -268,6 +334,7 @@ export function CreateInvoiceDialog() {
       exchangeRateDate,
       usedMaxExchangeRate: usedMaxRate,
       theme: invoiceTheme,
+      billedTimecardIds,
     };
     
     if (selectedClient.hasVat && myCompany.companyVatRate) {
@@ -275,7 +342,11 @@ export function CreateInvoiceDialog() {
     }
 
     return data;
-  }, [selectedClient, selectedProject, dailyRate, invoices, daysWorked, currency, exchangeRate, exchangeRateDate, myCompany, invoicedMonth, invoicedYear, invoiceCreationDate, usedMaxRate, invoiceTheme]);
+  }, [
+      selectedClient, selectedProject, dailyRate, invoices, daysWorked, currency, exchangeRate, 
+      exchangeRateDate, myCompany, invoicedMonth, invoicedYear, invoiceCreationDate, usedMaxRate, 
+      invoiceTheme, generationMode, invoiceItemsFromTimecards
+    ]);
   
   const generatePreview = useCallback(async () => {
     if (!invoiceData || !previewRef.current) {
@@ -310,21 +381,48 @@ export function CreateInvoiceDialog() {
     }
   }, [isPreviewOpen, generatePreview]);
 
-  const handleSaveInvoice = () => {
+  const handleSaveInvoice = async () => {
     if (!invoiceData || !firestore || !user) return;
-    const invoicesCol = collection(firestore, `users/${user.uid}/invoices`);
 
+    setIsGenerating(true);
+    const batch = writeBatch(firestore);
+
+    // 1. Add the new invoice
+    const newInvoiceRef = doc(collection(firestore, `users/${user.uid}/invoices`));
     const dataToSave = { ...invoiceData };
     if (dataToSave.vatRate === undefined) {
       delete (dataToSave as Partial<typeof dataToSave>).vatRate;
     }
+    batch.set(newInvoiceRef, dataToSave);
 
-    addDocumentNonBlocking(invoicesCol, dataToSave);
-    toast({
-      title: 'Invoice Saved',
-      description: `Invoice ${invoiceData.invoiceNumber} has been saved.`,
-    });
-    setIsOpen(false);
+    // 2. Update status of billed timecards
+    if (invoiceData.billedTimecardIds && invoiceData.billedTimecardIds.length > 0) {
+      invoiceData.billedTimecardIds.forEach(timecardId => {
+        const timecardRef = doc(firestore, `users/${user.uid}/timecards`, timecardId);
+        batch.update(timecardRef, {
+          status: 'Billed',
+          invoiceId: newInvoiceRef.id,
+        });
+      });
+    }
+    
+    try {
+      await batch.commit();
+      toast({
+        title: 'Invoice Saved',
+        description: `Invoice ${invoiceData.invoiceNumber} has been saved.`,
+      });
+      setIsOpen(false);
+    } catch (error) {
+      console.error("Error saving invoice and updating timecards: ", error);
+      toast({
+        variant: 'destructive',
+        title: 'Save Failed',
+        description: 'Could not save the invoice. Please try again.',
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleCurrencyChange = (newCurrency: string) => {
@@ -334,9 +432,36 @@ export function CreateInvoiceDialog() {
         fetchExchangeRate(newCurrency);
     }
   }
+  
+  // Reset state when dialog is closed
+  useEffect(() => {
+    if (!isOpen) {
+        setSelectedClientId(null);
+        setSelectedProjectId(null);
+        setDaysWorked(0);
+        setDailyRate(500);
+        setGenerationMode('manual');
+        setSelectedTimecards({});
+    }
+  }, [isOpen]);
+
+  const handleSelectAllTimecards = (check: boolean) => {
+    if (!unbilledTimecards) return;
+    const newSelection: Record<string, boolean> = {};
+    if (check) {
+      unbilledTimecards.forEach(tc => newSelection[tc.id] = true);
+    }
+    setSelectedTimecards(newSelection);
+  }
 
   const buttonsDisabled = !invoiceData || isGenerating || isFetchingRate;
   const availableClients = clients || [];
+  
+  const totalHoursFromTimecards = useMemo(() => {
+    if (generationMode !== 'timecards' || !unbilledTimecards) return 0;
+    return unbilledTimecards.reduce((acc, tc) => selectedTimecards[tc.id] ? acc + tc.hours : acc, 0);
+  }, [generationMode, unbilledTimecards, selectedTimecards]);
+
 
   const totalRonDisplay = useMemo(() => {
     if (invoiceData?.total && exchangeRate && currency !== 'RON') {
@@ -394,7 +519,7 @@ export function CreateInvoiceDialog() {
                                 <Select onValueChange={setSelectedProjectId} value={selectedProjectId || ''} >
                                     <SelectTrigger id="project-select">
                                         <SelectValue placeholder="Select a project" />
-                                    </SelectTrigger>
+                                    </Trigger>
                                     <SelectContent>
                                         {projectsForClient?.map(project => (
                                             <SelectItem key={project.id} value={project.id}>
@@ -409,76 +534,143 @@ export function CreateInvoiceDialog() {
 
                     {selectedClientId && selectedProjectId && (
                     <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                                <Label htmlFor="invoice-month" className="mb-2 block">Service Month</Label>
-                                <Select
-                                value={String(invoicedMonth)}
-                                onValueChange={(value) => setInvoicedMonth(Number(value))}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select month" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {months.map(month => (
-                                            <SelectItem key={month.value} value={String(month.value)}>
-                                                {month.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                        <div className="flex items-center space-x-2 rounded-lg border p-3 shadow-sm">
+                            <Switch id="generation-mode" checked={generationMode === 'timecards'} onCheckedChange={(checked) => setGenerationMode(checked ? 'timecards' : 'manual')} />
+                            <Label htmlFor="generation-mode">Generate from Unbilled Timecards</Label>
                         </div>
-                        <div className="space-y-2">
-                                <Label htmlFor="invoice-year" className="mb-2 block">Service Year</Label>
-                                <Select
-                                value={String(invoicedYear)}
-                                onValueChange={(value) => setInvoicedYear(Number(value))}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select year" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {years.map(year => (
-                                            <SelectItem key={year} value={String(year)}>
-                                                {year}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                        </div>
-                        </div>
+
+                        {generationMode === 'manual' ? (
+                            <>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                        <Label htmlFor="invoice-month" className="mb-2 block">Service Month</Label>
+                                        <Select
+                                        value={String(invoicedMonth)}
+                                        onValueChange={(value) => setInvoicedMonth(Number(value))}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select month" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {months.map(month => (
+                                                    <SelectItem key={month.value} value={String(month.value)}>
+                                                        {month.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                </div>
+                                <div className="space-y-2">
+                                        <Label htmlFor="invoice-year" className="mb-2 block">Service Year</Label>
+                                        <Select
+                                        value={String(invoicedYear)}
+                                        onValueChange={(value) => setInvoicedYear(Number(value))}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select year" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {years.map(year => (
+                                                    <SelectItem key={year} value={String(year)}>
+                                                        {year}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="days-worked" className="mb-2 block">Days Worked</Label>
+                                        <Input
+                                        id="days-worked"
+                                        type="number"
+                                        value={daysWorked}
+                                        onChange={(e) => setDaysWorked(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                        onBlur={(e) => {
+                                            if (e.target.value === '') {
+                                                setDaysWorked(0);
+                                            }
+                                        }}
+                                        min="0"
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="daily-rate" className="mb-2 block">Daily Rate</Label>
+                                        <Input
+                                        id="daily-rate"
+                                        type="number"
+                                        value={dailyRate}
+                                        onChange={(e) => setDailyRate(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                        onBlur={(e) => {
+                                            if (e.target.value === '') {
+                                                setDailyRate(0);
+                                            }
+                                        }}
+                                        min="0"
+                                        />
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="daily-rate-timecards" className="mb-2 block">Daily Rate (for time conversion)</Label>
+                                        <Input
+                                        id="daily-rate-timecards"
+                                        type="number"
+                                        value={dailyRate}
+                                        onChange={(e) => setDailyRate(e.target.value === '' ? '' : parseFloat(e.target.value))}
+                                        min="0"
+                                        />
+                                    </div>
+                                    <div className="p-3 bg-muted/50 rounded-lg text-sm flex items-center justify-between">
+                                        <div className='flex items-center'>
+                                            <Hourglass className="h-4 w-4 mr-2 text-muted-foreground" />
+                                            <span className="text-muted-foreground">Total Hours Selected:</span>
+                                        </div>
+                                        <span className='font-bold text-foreground'>{totalHoursFromTimecards.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                                <Card>
+                                    <CardHeader className='flex-row items-center justify-between py-3 px-4'>
+                                        <CardTitle className='text-base'>Unbilled Timecards</CardTitle>
+                                        <div className='flex items-center space-x-2'>
+                                            <Label htmlFor='select-all-timecards' className='text-sm font-normal'>Select All</Label>
+                                            <Checkbox id='select-all-timecards' onCheckedChange={handleSelectAllTimecards} />
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent className='p-0'>
+                                        <ScrollArea className="h-48">
+                                            <div className='p-4 space-y-3'>
+                                                {unbilledTimecards && unbilledTimecards.length > 0 ? (
+                                                    unbilledTimecards.map(tc => (
+                                                        <div key={tc.id} className='flex items-center justify-between text-sm p-2 rounded-md bg-background hover:bg-muted/50'>
+                                                            <div className='flex items-center gap-3'>
+                                                                <Checkbox id={`tc-${tc.id}`} checked={!!selectedTimecards[tc.id]} onCheckedChange={(checked) => setSelectedTimecards(prev => ({...prev, [tc.id]: !!checked}))}/>
+                                                                <div>
+                                                                    <p className='font-medium'>{format(new Date(tc.date), 'MMM d, yyyy')}</p>
+                                                                    <p className='text-xs text-muted-foreground'>{tc.description || 'No description'}</p>
+                                                                </div>
+                                                            </div>
+                                                            <Badge variant='outline'>{tc.hours}h</Badge>
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <div className='text-center text-sm text-muted-foreground py-10'>
+                                                        No unbilled time for this project.
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </ScrollArea>
+                                    </CardContent>
+                                </Card>
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                        <div className="space-y-2">
-                            <Label htmlFor="days-worked" className="mb-2 block">Days Worked</Label>
-                            <Input
-                            id="days-worked"
-                            type="number"
-                            value={daysWorked}
-                            onChange={(e) => setDaysWorked(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                            onBlur={(e) => {
-                                if (e.target.value === '') {
-                                    setDaysWorked(0);
-                                }
-                            }}
-                            min="0"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="daily-rate" className="mb-2 block">Daily Rate</Label>
-                            <Input
-                            id="daily-rate"
-                            type="number"
-                            value={dailyRate}
-                            onChange={(e) => setDailyRate(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                            onBlur={(e) => {
-                                if (e.target.value === '') {
-                                    setDailyRate(0);
-                                }
-                            }}
-                            min="0"
-                            />
-                        </div>
-                        <div className="space-y-2">
+                        <div className="space-y-2 md:col-span-1">
                             <Label htmlFor="currency-select" className="mb-2 block">Currency</Label>
                             <div className="flex items-center gap-2">
                                 <Select value={currency} onValueChange={handleCurrencyChange} disabled={!!selectedClient?.maxExchangeRate}>
@@ -498,9 +690,7 @@ export function CreateInvoiceDialog() {
                                 </Button>
                             </div>
                         </div>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="space-y-2 md:col-span-1">
+                        <div className="space-y-2 md:col-span-2">
                                 <Label htmlFor="theme-select" className="mb-2 block">Invoice Theme</Label>
                                 <Select value={invoiceTheme} onValueChange={(value) => setInvoiceTheme(value as InvoiceTheme)}>
                                     <SelectTrigger id="theme-select">
@@ -602,7 +792,7 @@ export function CreateInvoiceDialog() {
                                     Download PDF
                                 </Button>
                                 <Button disabled={buttonsDisabled} onClick={handleSaveInvoice}>
-                                    <Save className="mr-2 h-4 w-4" />
+                                    {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                     Save Invoice
                                 </Button>
                             </DialogFooter>

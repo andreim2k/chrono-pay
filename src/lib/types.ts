@@ -40,7 +40,7 @@ export type Company = {
   name: string;
   address: string;
   vat: string;
-  iban: string;
+iban: string;
   bankName: string;
   swift: string;
   vatRate: number;
@@ -103,6 +103,7 @@ export type Invoice = {
   exchangeRateDate?: string;
   usedMaxExchangeRate?: boolean;
   theme?: InvoiceTheme;
+  billedTimecardIds?: string[];
 };
 
 export type InvoiceTheme = 'Classic' | 'Modern' | 'Sunset' | 'Ocean' | 'Monochrome' | 'Minty' | 'Velvet' | 'Corporate Blue' | 'Earthy Tones' | 'Creative' | 'Slate Gray' | 'Dark Charcoal' | 'Navy Blue' | 'Forest Green' | 'Burgundy' | 'Teal' | 'Coral' | 'Lavender' | 'Golden' | 'Steel Blue' | 'Light Blue' | 'Sky Blue' | 'Mint Green' | 'Lime' | 'Peach' | 'Rose' | 'Lilac' | 'Sand' | 'Olive' | 'Maroon' | 'Deep Purple' | 'Turquoise' | 'Charcoal' | 'Crimson' | 'Sapphire';

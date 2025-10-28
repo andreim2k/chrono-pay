@@ -307,6 +307,11 @@
                   "type": "string",
                   "enum": ["Classic", "Modern", "Sunset", "Ocean", "Monochrome", "Minty", "Velvet", "Corporate Blue", "Earthy Tones", "Creative"],
                   "description": "The visual theme of the invoice."
+                },
+                "billedTimecardIds": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "An array of Timecard IDs that have been billed on this invoice."
                 }
             },
             "required": [
