@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PlusCircle, CalendarIcon } from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -85,6 +85,18 @@ export function AddProjectDialog() {
       rateType: 'daily',
     },
   });
+
+  const watchedClientId = useWatch({ control: form.control, name: 'clientId' });
+  const watchedProjectName = useWatch({ control: form.control, name: 'name' });
+
+  const suggestedPrefix = useMemo(() => {
+    const client = clients?.find(c => c.id === watchedClientId);
+    if (!client || !watchedProjectName) return '';
+    const clientInitial = client.name.charAt(0).toUpperCase();
+    const projectInitial = watchedProjectName.charAt(0).toUpperCase();
+    return `${clientInitial}${projectInitial}-`;
+  }, [clients, watchedClientId, watchedProjectName]);
+
 
   const onSubmit = (data: ProjectFormValues) => {
     if (!firestore || !user) return;
@@ -252,7 +264,7 @@ export function AddProjectDialog() {
                     <FormItem>
                       <FormLabel>Invoice Number Prefix</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. PHX-" {...field} />
+                        <Input placeholder={suggestedPrefix ? `e.g., ${suggestedPrefix}` : 'e.g. CP-'} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

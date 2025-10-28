@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -22,7 +22,6 @@ import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebas
 import { collection, doc, setDoc } from 'firebase/firestore';
 import type { Client, Project, InvoiceTheme } from '@/lib/types';
 import { themeStyles } from '../invoices/invoice-html-preview';
-import { useMemo } from 'react';
 import { Switch } from '../ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { cn } from '@/lib/utils';
@@ -91,6 +90,18 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
       rateType: project.rateType || 'daily',
     },
   });
+  
+  const watchedClientId = useWatch({ control: form.control, name: 'clientId' });
+  const watchedProjectName = useWatch({ control: form.control, name: 'name' });
+
+  const suggestedPrefix = useMemo(() => {
+    const client = clients?.find(c => c.id === watchedClientId);
+    if (!client || !watchedProjectName) return '';
+    const clientInitial = client.name.charAt(0).toUpperCase();
+    const projectInitial = watchedProjectName.charAt(0).toUpperCase();
+    return `${clientInitial}${projectInitial}-`;
+  }, [clients, watchedClientId, watchedProjectName]);
+
 
   useEffect(() => {
     if (isOpen) {
@@ -268,7 +279,7 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
                     <FormItem>
                       <FormLabel>Invoice Number Prefix</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. PHX-" {...field} value={field.value ?? ''} />
+                        <Input placeholder={suggestedPrefix ? `e.g., ${suggestedPrefix}` : 'e.g. CP-'} {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
