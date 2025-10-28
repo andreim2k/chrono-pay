@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +12,7 @@ import type { Timecard, Project, Client } from '@/lib/types';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, deleteDocumentNonBlocking, useUser, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
-import { doc, collection } from 'firebase/firestore';
+import { doc, collection, writeBatch } from 'firebase/firestore';
 import { AddTimecardDialog } from './add-timecard-dialog';
 import {
   AlertDialog,
@@ -23,7 +23,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Checkbox } from '../ui/checkbox';
 
 interface TimecardListProps {
   timecards: Timecard[];
@@ -38,6 +40,7 @@ export function TimecardList({ timecards }: TimecardListProps) {
   const [timecardToDelete, setTimecardToDelete] = useState<Timecard | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
 
   const projectsQuery = useMemoFirebase(
     () => (firestore && user ? collection(firestore, `users/${user.uid}/projects`) : null),
@@ -50,6 +53,12 @@ export function TimecardList({ timecards }: TimecardListProps) {
     [firestore, user]
   );
   const { data: clients } = useCollection<Client>(clientsQuery, `users/${user?.uid}/clients`);
+
+  const selectedRowCount = useMemo(() => Object.values(selectedRows).filter(Boolean).length, [selectedRows]);
+
+  useEffect(() => {
+    setSelectedRows({});
+  }, [timecards]);
 
 
   const getBadgeVariant = (status: Timecard['status']) => {
@@ -72,8 +81,6 @@ export function TimecardList({ timecards }: TimecardListProps) {
     if (newStatus === 'Unbilled') {
       updateData.invoiceId = '';
     } else if (newStatus === 'Billed') {
-      // When manually marking as billed, we don't have an invoice ID.
-      // Set to empty string if it's currently undefined to avoid Firestore error.
       updateData.invoiceId = timecard.invoiceId || '';
     }
 
@@ -106,6 +113,48 @@ export function TimecardList({ timecards }: TimecardListProps) {
     setTimecardToDelete(null);
     setIsAlertOpen(false);
   };
+  
+  const handleSelectAll = (checked: boolean) => {
+    const newSelectedRows: Record<string, boolean> = {};
+    if (checked) {
+      timecards.forEach(tc => {
+        if(tc.status === 'Unbilled') newSelectedRows[tc.id] = true
+      });
+    }
+    setSelectedRows(newSelectedRows);
+  };
+
+  const handleRowSelect = (timecardId: string, checked: boolean) => {
+    setSelectedRows(prev => ({ ...prev, [timecardId]: checked }));
+  };
+
+  const handleDeleteSelected = async () => {
+    if (!firestore || selectedRowCount === 0 || !user) return;
+    
+    const batch = writeBatch(firestore);
+    const idsToDelete = Object.keys(selectedRows).filter(id => selectedRows[id]);
+    
+    idsToDelete.forEach(id => {
+        const timecardRef = doc(firestore, `users/${user.uid}/timecards`, id);
+        batch.delete(timecardRef);
+    });
+
+    try {
+        await batch.commit();
+        toast({
+            title: 'Timecards Deleted',
+            description: `${idsToDelete.length} time entries have been successfully deleted.`,
+        });
+        setSelectedRows({});
+    } catch (error) {
+        toast({
+            variant: 'destructive',
+            title: 'Error Deleting Timecards',
+            description: 'Could not delete the selected time entries. Please try again.',
+        });
+    }
+  };
+
 
   return (
     <>
@@ -113,25 +162,59 @@ export function TimecardList({ timecards }: TimecardListProps) {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>All Time Entries</CardTitle>
-            <CardDescription>A list of all your logged work hours.</CardDescription>
+            <CardDescription>
+                Displaying {timecards.length} time entries.
+                {selectedRowCount > 0 && ` (${selectedRowCount} selected)`}
+            </CardDescription>
           </div>
-          <AddTimecardDialog
-            projects={projects || []}
-            clients={clients || []}
-            timecardToEdit={timecardToEdit}
-            isOpen={isEditOpen}
-            onOpenChange={(open) => {
-              setIsEditOpen(open);
-              if (!open) {
-                setTimecardToEdit(null);
-              }
-            }}
-          />
+           <div className="flex items-center gap-2">
+            {selectedRowCount > 0 && (
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete Selected ({selectedRowCount})
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will permanently delete {selectedRowCount} selected time entries. This action cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleDeleteSelected}>Delete Entries</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
+            <AddTimecardDialog
+                projects={projects || []}
+                clients={clients || []}
+                timecardToEdit={timecardToEdit}
+                isOpen={isEditOpen}
+                onOpenChange={(open) => {
+                setIsEditOpen(open);
+                if (!open) {
+                    setTimecardToEdit(null);
+                }
+                }}
+            />
+           </div>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[50px]">
+                    <Checkbox
+                        checked={timecards.filter(t => t.status === 'Unbilled').length > 0 && selectedRowCount === timecards.filter(t => t.status === 'Unbilled').length}
+                        onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
+                        aria-label="Select all unbilled"
+                    />
+                </TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Client</TableHead>
                 <TableHead>Project</TableHead>
@@ -143,7 +226,15 @@ export function TimecardList({ timecards }: TimecardListProps) {
             </TableHeader>
             <TableBody>
               {timecards.map((timecard) => (
-                <TableRow key={timecard.id}>
+                <TableRow key={timecard.id} data-state={selectedRows[timecard.id] && "selected"}>
+                  <TableCell>
+                     <Checkbox
+                        checked={selectedRows[timecard.id] || false}
+                        onCheckedChange={(checked) => handleRowSelect(timecard.id, Boolean(checked))}
+                        aria-label={`Select timecard on ${timecard.date}`}
+                        disabled={timecard.status === 'Billed'}
+                      />
+                  </TableCell>
                   <TableCell className="font-medium">{format(new Date(timecard.date), 'MMM d, yyyy')}</TableCell>
                   <TableCell>{timecard.clientName}</TableCell>
                   <TableCell>{timecard.projectName}</TableCell>
@@ -165,7 +256,7 @@ export function TimecardList({ timecards }: TimecardListProps) {
                                 <CheckCircle className="mr-2 h-4 w-4" /> Mark as Billed
                             </DropdownMenuItem>
                         )}
-                        {timecard.status === 'Billed' && (
+                        {timecard.status === 'Billed' && !timecard.invoiceId && (
                             <DropdownMenuItem onSelect={() => handleStatusChange(timecard, 'Unbilled')}>
                                 <XCircle className="mr-2 h-4 w-4" /> Mark as Unbilled
                             </DropdownMenuItem>

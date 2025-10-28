@@ -249,7 +249,10 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
         <CardHeader className="flex flex-row items-center justify-between">
             <div>
                 <CardTitle>Filtered Invoices</CardTitle>
-                <CardDescription>A list of all your past and present invoices based on the filters.</CardDescription>
+                <CardDescription>
+                  Displaying {invoices.length} invoice(s).
+                  {selectedRowCount > 0 && ` (${selectedRowCount} selected)`}
+                </CardDescription>
             </div>
             {selectedRowCount > 0 && (
                 <AlertDialog>
