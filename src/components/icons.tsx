@@ -1,3 +1,4 @@
+
 import type { SVGProps } from "react";
 
 export function WorkPayLogo(props: SVGProps<SVGSVGElement>) {
@@ -7,22 +8,20 @@ export function WorkPayLogo(props: SVGProps<SVGSVGElement>) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="1.5"
+      strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
       {...props}
     >
-      <defs>
+       <defs>
         <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" style={{ stopColor: 'hsl(var(--primary))', stopOpacity: 1 }} />
           <stop offset="100%" style={{ stopColor: 'hsl(var(--accent))', stopOpacity: 1 }} />
         </linearGradient>
       </defs>
       <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="url(#logoGradient)" />
-      <path d="M12 6v12" stroke="url(#logoGradient)" strokeWidth="2" />
-      <path d="M17 9.5a2.5 2.5 0 0 0 -5 0" stroke="url(#logoGradient)" strokeWidth="2" />
-      <path d="M7 14.5a2.5 2.5 0 0 1 5 0" stroke="url(#logoGradient)" strokeWidth="2" />
-      <path d="M8 12l2 2 4-4" stroke="url(#logoGradient)" strokeWidth="2.5" />
+      <path d="M12 17V7M15 10H9" stroke="url(#logoGradient)" strokeWidth="2.5" />
+      <path d="M9 14l3 3 6-6" stroke="url(#logoGradient)" strokeWidth="3" />
     </svg>
   );
 }
