@@ -8,20 +8,20 @@ export function WorkPayLogo(props: SVGProps<SVGSVGElement>) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2"
+      strokeWidth="2.5"
       strokeLinecap="round"
       strokeLinejoin="round"
       {...props}
     >
-       <defs>
+      <defs>
         <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" style={{ stopColor: 'hsl(var(--primary))', stopOpacity: 1 }} />
           <stop offset="100%" style={{ stopColor: 'hsl(var(--accent))', stopOpacity: 1 }} />
         </linearGradient>
       </defs>
-      <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="url(#logoGradient)" />
-      <path d="M12 17V7M15 10H9" stroke="url(#logoGradient)" strokeWidth="2.5" />
-      <path d="M9 14l3 3 6-6" stroke="url(#logoGradient)" strokeWidth="3" />
+      <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z" stroke="url(#logoGradient)" />
+      <path d="M16 8a4 4 0 0 1-4 4h-1a4 4 0 1 0 0 8" stroke="url(#logoGradient)" />
+      <path d="m9 12 2 2 4-4" stroke="url(#logoGradient)" />
     </svg>
   );
 }
