@@ -167,14 +167,22 @@ export function CreateInvoiceDialog() {
     if (selectedProject) {
         setInvoiceTheme(selectedProject.invoiceTheme || 'Classic');
         setCurrency(selectedProject.currency || 'EUR');
-        setRate(selectedProject.rate || '');
+        const projectRate = selectedProject.rate || '';
+        setRate(projectRate);
+        
+        if (projectRate) {
+            toast({
+                title: 'Project Rate Applied',
+                description: `Using project rate: ${projectRate} ${selectedProject.currency || 'EUR'} / ${selectedProject.rateType || 'day'}`,
+            });
+        }
 
         if (selectedProject.maxExchangeRate && selectedProject.maxExchangeRateDate) {
           setExchangeRate(selectedProject.maxExchangeRate);
           setExchangeRateDate(selectedProject.maxExchangeRateDate);
           setUsedMaxRate(true);
           toast({
-              title: 'Project Rate Applied',
+              title: 'Fixed Exchange Rate Applied',
               description: `Using fixed project exchange rate of ${selectedProject.maxExchangeRate.toFixed(4)} RON.`,
           });
         } else if (selectedProject.currency !== 'RON') {
@@ -563,7 +571,7 @@ export function CreateInvoiceDialog() {
                 </div>
 
                 {generationMode === 'manual' ? (
-                  <div className="grid grid-cols-2 gap-4 items-end">
+                  <div className="grid grid-cols-1 gap-4 items-end">
                     <div className="space-y-2">
                       <Label htmlFor="manual-quantity" className="mb-2 block">
                         Quantity ({selectedProject?.rateType === 'hourly' ? 'Hours' : 'Days'})
@@ -582,27 +590,15 @@ export function CreateInvoiceDialog() {
                         placeholder={`e.g., 20 ${selectedProject?.rateType === 'hourly' ? 'hours' : 'days'}`}
                       />
                     </div>
-                     <div className='p-3 bg-muted/50 rounded-lg text-sm'>
-                       <p className='text-muted-foreground'>Using rate from project settings: 
-                         {rate && <span className='font-bold text-foreground'> {rate} {selectedProject?.currency} / {selectedProject?.rateType === 'hourly' ? 'hour' : 'day'}</span>}
-                       </p>
-                    </div>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <div className='grid grid-cols-2 gap-4'>
-                       <div className='p-3 bg-muted/50 rounded-lg text-sm flex items-center justify-between'>
-                         <p className='text-muted-foreground'>Using rate: 
-                           {rate && <span className='font-bold text-foreground'> {rate} {selectedProject?.currency} / {selectedProject?.rateType === 'hourly' ? 'hour' : 'day'}</span>}
-                         </p>
-                       </div>
-                       <div className="p-3 bg-muted/50 rounded-lg text-sm flex items-center justify-between">
-                        <div className='flex items-center'>
-                          <Hourglass className="h-4 w-4 mr-2 text-muted-foreground" />
-                          <span className="text-muted-foreground">Total Hours Selected:</span>
-                        </div>
-                        <span className='font-bold text-foreground'>{totalHoursFromTimecards.toFixed(2)}</span>
+                    <div className="p-3 bg-muted/50 rounded-lg text-sm flex items-center justify-between">
+                      <div className='flex items-center'>
+                        <Hourglass className="h-4 w-4 mr-2 text-muted-foreground" />
+                        <span className="text-muted-foreground">Total Hours Selected:</span>
                       </div>
+                      <span className='font-bold text-foreground'>{totalHoursFromTimecards.toFixed(2)}</span>
                     </div>
                     
                     <Card>
