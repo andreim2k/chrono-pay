@@ -84,23 +84,16 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
     const invoiceRef = doc(firestore, `users/${user.uid}/invoices`, invoice.id);
     batch.update(invoiceRef, { status: newStatus });
 
-    if (invoice.billedTimecardIds && invoice.billedTimecardIds.length > 0) {
-        // If the invoice is being marked as PAID, mark timecards as Billed.
-        if (newStatus === 'Paid') {
-            invoice.billedTimecardIds.forEach(tcId => {
-                const timecardRef = doc(firestore, `users/${user.uid}/timecards`, tcId);
-                batch.update(timecardRef, { status: 'Billed' });
-            });
-        } 
-        // If a PAID invoice is being reverted to something else, mark timecards as Unbilled.
-        else if (invoice.status === 'Paid' && newStatus !== 'Paid') {
-            invoice.billedTimecardIds.forEach(tcId => {
-                const timecardRef = doc(firestore, `users/${user.uid}/timecards`, tcId);
-                batch.update(timecardRef, { status: 'Unbilled' });
-            });
-        }
-    }
+    const hasTimecards = invoice.billedTimecardIds && invoice.billedTimecardIds.length > 0;
 
+    if (hasTimecards) {
+        const newTimecardStatus = newStatus === 'Paid' ? 'Billed' : 'Unbilled';
+        
+        invoice.billedTimecardIds.forEach(tcId => {
+            const timecardRef = doc(firestore, `users/${user.uid}/timecards`, tcId);
+            batch.update(timecardRef, { status: newTimecardStatus });
+        });
+    }
 
     batch.commit().then(() => {
       toast({
@@ -440,3 +433,5 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
     </>
   );
 }
+
+    
