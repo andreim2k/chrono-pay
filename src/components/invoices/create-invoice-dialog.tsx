@@ -163,6 +163,8 @@ export function CreateInvoiceDialog() {
   }, [selectedProjectId, projectsForClient]);
 
   useEffect(() => {
+    setManualQuantity(0);
+    setSelectedTimecards({});
     if (selectedProject) {
         setInvoiceTheme(selectedProject.invoiceTheme || 'Classic');
         setCurrency(selectedProject.currency || 'EUR');
@@ -273,8 +275,8 @@ export function CreateInvoiceDialog() {
         const totalHours = filteredTimecards.reduce((acc, tc) => selectedTimecards[tc.id] ? acc + tc.hours : acc, 0);
         billedTimecardIds = filteredTimecards.filter(tc => selectedTimecards[tc.id]).map(tc => tc.id);
         
-        const currentRate = selectedProject.rate || 0;
-        if (billedTimecardIds.length === 0 || currentRate === 0) return null;
+        const currentRate = selectedProject.rate;
+        if (billedTimecardIds.length === 0 || !currentRate) return null;
         
         let quantity: number;
         let unit: string;
@@ -298,7 +300,7 @@ export function CreateInvoiceDialog() {
         }];
 
     } else { // manual mode
-        const projectRate = selectedProject.rate ?? 0;
+        const projectRate = selectedProject.rate;
         if (!manualQuantity || !projectRate) return null;
         subtotal = manualQuantity * projectRate;
         items = [{
@@ -781,5 +783,3 @@ export function CreateInvoiceDialog() {
     </>
   );
 }
-
-    
