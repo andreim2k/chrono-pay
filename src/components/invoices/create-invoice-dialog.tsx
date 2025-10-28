@@ -70,7 +70,6 @@ export function CreateInvoiceDialog() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isFetchingRate, setIsFetchingRate] = useState(false);
   const [manualQuantity, setManualQuantity] = useState<number | ''>(0);
-  const [currency, setCurrency] = useState('EUR');
   const [exchangeRate, setExchangeRate] = useState<number | undefined>();
   const [exchangeRateDate, setExchangeRateDate] = useState<string | undefined>();
   const [usedMaxRate, setUsedMaxRate] = useState(false);
@@ -79,7 +78,6 @@ export function CreateInvoiceDialog() {
   const [invoicedYear, setInvoicedYear] = useState<number>(lastMonth.getFullYear());
   const [previewImage, setPreviewImage] = useState<string>('');
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [invoiceTheme, setInvoiceTheme] = useState<InvoiceTheme>('Classic');
   const [generationMode, setGenerationMode] = useState<GenerationMode>('manual');
   const [selectedTimecards, setSelectedTimecards] = useState<Record<string, boolean>>({});
 
@@ -134,26 +132,6 @@ export function CreateInvoiceDialog() {
     });
   }, [unbilledTimecards, invoicedYear, invoicedMonth]);
 
-
-  const handleDownloadPdf = async () => {
-    if (!previewRef.current || !invoiceData) return;
-
-    setIsGenerating(true);
-    const canvas = await html2canvas(previewRef.current, {
-        scale: 4, // Higher scale for better resolution
-        useCORS: true,
-        backgroundColor: '#ffffff',
-    });
-    const imgData = canvas.toDataURL('image/png');
-
-    const doc = new jsPDF('p', 'mm', 'a4');
-    const pdfWidth = doc.internal.pageSize.getWidth();
-    const pdfHeight = doc.internal.pageSize.getHeight();
-    doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, '', 'FAST');
-    doc.save(`invoice-${invoiceData.invoiceNumber}.pdf`);
-    setIsGenerating(false);
-  }
-
   const selectedClient = useMemo(() => {
     return clients?.find(c => c.id === selectedClientId) || null;
   }, [selectedClientId, clients]);
@@ -161,6 +139,9 @@ export function CreateInvoiceDialog() {
   const selectedProject = useMemo(() => {
     return projectsForClient?.find(p => p.id === selectedProjectId) || null;
   }, [selectedProjectId, projectsForClient]);
+
+  const currency = useMemo(() => selectedProject?.currency || 'EUR', [selectedProject]);
+  const invoiceTheme = useMemo(() => selectedProject?.invoiceTheme || 'Classic', [selectedProject]);
   
   const fetchExchangeRate = useCallback(async (currentCurrency: string) => {
     if (currentCurrency === 'RON' || !currentCurrency) {
@@ -205,50 +186,50 @@ export function CreateInvoiceDialog() {
     }
   }, [toast]);
 
-  // When project changes, reset relevant states and fetch rates/themes.
+  // When project changes, reset relevant states
   useEffect(() => {
-    // Reset dependant state
     setManualQuantity(0);
     setSelectedTimecards({});
     setExchangeRate(undefined);
     setExchangeRateDate(undefined);
     setUsedMaxRate(false);
-    
+  }, [selectedProjectId]);
+
+  // Fetch exchange rate when currency or project changes
+  useEffect(() => {
     if (selectedProject) {
-        setInvoiceTheme(selectedProject.invoiceTheme || 'Classic');
-        setCurrency(selectedProject.currency || 'EUR');
-        
-        if (selectedProject.maxExchangeRate && selectedProject.maxExchangeRateDate) {
-          setExchangeRate(selectedProject.maxExchangeRate);
-          setExchangeRateDate(selectedProject.maxExchangeRateDate);
-          setUsedMaxRate(true);
-          toast({
-              title: 'Fixed Exchange Rate Applied',
-              description: `Using fixed project exchange rate of ${selectedProject.maxExchangeRate.toFixed(4)} RON.`,
-          });
-        } else if ((selectedProject.currency || 'EUR') !== 'RON') {
-          fetchExchangeRate(selectedProject.currency || 'EUR');
-        } else {
-          setExchangeRate(1);
-          setExchangeRateDate(new Date().toISOString().split('T')[0]);
-        }
+      if (selectedProject.maxExchangeRate && selectedProject.maxExchangeRateDate) {
+        setExchangeRate(selectedProject.maxExchangeRate);
+        setExchangeRateDate(selectedProject.maxExchangeRateDate);
+        setUsedMaxRate(true);
+        toast({
+            title: 'Fixed Exchange Rate Applied',
+            description: `Using fixed project exchange rate of ${selectedProject.maxExchangeRate.toFixed(4)} RON.`,
+        });
+      } else if (currency !== 'RON') {
+        fetchExchangeRate(currency);
+      } else {
+        setExchangeRate(1);
+        setExchangeRateDate(new Date().toISOString().split('T')[0]);
+      }
     }
-  }, [selectedProject, toast, fetchExchangeRate]);
+  }, [selectedProject, currency, toast, fetchExchangeRate]);
   
 
   useEffect(() => {
-    if (typeof manualQuantity === 'number' && manualQuantity > 0 && selectedProject?.rate !== undefined) {
-        const handler = setTimeout(() => {
-            toast({
-                title: 'Project Rate Applied',
-                description: `Using rate: ${selectedProject.rate} ${selectedProject.currency || 'EUR'} / ${selectedProject.rateType || 'day'}`,
-            });
-        }, 1000);
-
-        return () => {
-            clearTimeout(handler);
-        };
+    if (typeof manualQuantity !== 'number' || manualQuantity <= 0 || !selectedProject?.rate) {
+      return;
     }
+    const handler = setTimeout(() => {
+        toast({
+            title: 'Project Rate Applied',
+            description: `Using rate: ${selectedProject.rate} ${selectedProject.currency || 'EUR'} / ${selectedProject.rateType || 'day'}`,
+        });
+    }, 1000);
+
+    return () => {
+        clearTimeout(handler);
+    };
   }, [manualQuantity, selectedProject, toast]);
 
   useEffect(() => {
@@ -433,8 +414,26 @@ export function CreateInvoiceDialog() {
     }
   };
 
+  const handleDownloadPdf = async () => {
+    if (!previewRef.current || !invoiceData) return;
+
+    setIsGenerating(true);
+    const canvas = await html2canvas(previewRef.current, {
+        scale: 4, // Higher scale for better resolution
+        useCORS: true,
+        backgroundColor: '#ffffff',
+    });
+    const imgData = canvas.toDataURL('image/png');
+
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = doc.internal.pageSize.getWidth();
+    const pdfHeight = doc.internal.pageSize.getHeight();
+    doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, '', 'FAST');
+    doc.save(`invoice-${invoiceData.invoiceNumber}.pdf`);
+    setIsGenerating(false);
+  }
+
   const handleCurrencyChange = (newCurrency: string) => {
-    setCurrency(newCurrency);
     if (selectedProject && !selectedProject.maxExchangeRate) {
         fetchExchangeRate(newCurrency);
     }
@@ -783,5 +782,3 @@ export function CreateInvoiceDialog() {
     </>
   );
 }
-
-    
