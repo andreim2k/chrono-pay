@@ -7,11 +7,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Trash2, Edit, CheckCircle, XCircle } from 'lucide-react';
+import { MoreHorizontal, Trash2, Edit } from 'lucide-react';
 import type { Timecard, Project, Client } from '@/lib/types';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, deleteDocumentNonBlocking, useUser, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
+import { useFirestore, deleteDocumentNonBlocking, useUser, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, collection, writeBatch } from 'firebase/firestore';
 import { AddTimecardDialog } from './add-timecard-dialog';
 import {
@@ -71,26 +71,6 @@ export function TimecardList({ timecards }: TimecardListProps) {
         return 'outline';
     }
   };
-
-  const handleStatusChange = (timecard: Timecard, newStatus: Timecard['status']) => {
-    if (!firestore || !user) return;
-    const timecardRef = doc(firestore, `users/${user.uid}/timecards`, timecard.id);
-    
-    const updateData: { status: Timecard['status'], invoiceId?: string } = { status: newStatus };
-
-    if (newStatus === 'Unbilled') {
-      updateData.invoiceId = '';
-    } else if (newStatus === 'Billed') {
-      updateData.invoiceId = timecard.invoiceId || '';
-    }
-
-    updateDocumentNonBlocking(timecardRef, updateData);
-
-    toast({
-        title: 'Timecard Updated',
-        description: `Time entry has been marked as ${newStatus}.`
-    });
-  }
 
   const openEditDialog = (timecard: Timecard) => {
     setTimecardToEdit(timecard);
@@ -251,16 +231,6 @@ export function TimecardList({ timecards }: TimecardListProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
-                        {timecard.status === 'Unbilled' && (
-                            <DropdownMenuItem onSelect={() => handleStatusChange(timecard, 'Billed')}>
-                                <CheckCircle className="mr-2 h-4 w-4" /> Mark as Billed
-                            </DropdownMenuItem>
-                        )}
-                        {timecard.status === 'Billed' && !timecard.invoiceId && (
-                            <DropdownMenuItem onSelect={() => handleStatusChange(timecard, 'Unbilled')}>
-                                <XCircle className="mr-2 h-4 w-4" /> Mark as Unbilled
-                            </DropdownMenuItem>
-                        )}
                         <DropdownMenuItem onSelect={() => openEditDialog(timecard)} disabled={timecard.status === 'Billed'}>
                           <Edit className="mr-2 h-4 w-4" /> Edit
                         </DropdownMenuItem>

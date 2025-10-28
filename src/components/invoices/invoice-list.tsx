@@ -11,7 +11,7 @@ import { MoreHorizontal, Download, Eye, Loader2, Trash2, RotateCcw } from 'lucid
 import type { Invoice } from '@/lib/types';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, updateDocumentNonBlocking, deleteDocumentNonBlocking, useUser } from '@/firebase';
+import { useFirestore, deleteDocumentNonBlocking, useUser } from '@/firebase';
 import { doc, writeBatch, collection } from 'firebase/firestore';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -79,11 +79,32 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
 
   const handleStatusChange = (invoice: Invoice, newStatus: Invoice['status']) => {
     if (!firestore || !user) return;
+
+    const batch = writeBatch(firestore);
     const invoiceRef = doc(firestore, `users/${user.uid}/invoices`, invoice.id);
-    updateDocumentNonBlocking(invoiceRef, { status: newStatus });
-    toast({
+    batch.update(invoiceRef, { status: newStatus });
+
+    // Update associated timecards status
+    if (invoice.billedTimecardIds && invoice.billedTimecardIds.length > 0) {
+      const timecardStatus = newStatus === 'Paid' ? 'Billed' : 'Unbilled';
+      invoice.billedTimecardIds.forEach(tcId => {
+        const timecardRef = doc(firestore, `users/${user.uid}/timecards`, tcId);
+        batch.update(timecardRef, { status: timecardStatus });
+      });
+    }
+
+    batch.commit().then(() => {
+      toast({
         title: 'Invoice Updated',
-        description: `Invoice ${invoice.invoiceNumber} has been marked as ${newStatus}.`
+        description: `Invoice ${invoice.invoiceNumber} marked as ${newStatus}. Associated timecards updated.`,
+      });
+    }).catch(error => {
+      console.error("Error updating invoice and timecard statuses: ", error);
+      toast({
+        variant: 'destructive',
+        title: 'Update Failed',
+        description: 'Could not update the invoice status. Please try again.',
+      });
     });
   }
 
