@@ -161,8 +161,6 @@ export function CreateInvoiceDialog() {
   const selectedProject = useMemo(() => {
     return projectsForClient?.find(p => p.id === selectedProjectId) || null;
   }, [selectedProjectId, projectsForClient]);
-  
-  const projectRate = selectedProject?.rate || 0;
 
   useEffect(() => {
     if (selectedProject) {
@@ -193,6 +191,7 @@ export function CreateInvoiceDialog() {
 
   // Debounced toast for rate
   useEffect(() => {
+    const projectRate = selectedProject?.rate;
     if (manualQuantity && projectRate) {
         const handler = setTimeout(() => {
             toast({
@@ -205,7 +204,7 @@ export function CreateInvoiceDialog() {
             clearTimeout(handler);
         };
     }
-  }, [manualQuantity, projectRate, selectedProject?.currency, selectedProject?.rateType, toast]);
+  }, [manualQuantity, selectedProject, toast]);
 
 
   const fetchExchangeRate = useCallback(async (currentCurrency: string) => {
@@ -299,6 +298,7 @@ export function CreateInvoiceDialog() {
         }];
 
     } else { // manual mode
+        const projectRate = selectedProject.rate || 0;
         if (!manualQuantity || !projectRate) return null;
         subtotal = manualQuantity * projectRate;
         items = [{
@@ -349,7 +349,7 @@ export function CreateInvoiceDialog() {
 
     return data;
   }, [
-      selectedClient, selectedProject, projectRate, invoices, manualQuantity, currency, exchangeRate, 
+      selectedClient, selectedProject, invoices, manualQuantity, currency, exchangeRate, 
       exchangeRateDate, myCompany, invoicedMonth, invoicedYear, invoiceCreationDate, usedMaxRate, 
       invoiceTheme, generationMode, filteredTimecards, selectedTimecards
     ]);
