@@ -5,7 +5,7 @@ import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { format, getDate, subMonths } from 'date-fns';
+import { format, getDate, subMonths, getYear, getMonth } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Download, Save, Loader2, RefreshCw, Eye, PlusCircle, Hourglass } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -127,6 +127,15 @@ export function CreateInvoiceDialog() {
   }, [firestore, user, selectedProjectId]);
   const { data: unbilledTimecards } = useCollection<Timecard>(unbilledTimecardsQuery, `users/${user?.uid}/timecards`);
 
+  const filteredTimecards = useMemo(() => {
+    if (!unbilledTimecards) return [];
+    return unbilledTimecards.filter(tc => {
+        const tcDate = new Date(tc.date);
+        return getYear(tcDate) === invoicedYear && getMonth(tcDate) === invoicedMonth;
+    });
+  }, [unbilledTimecards, invoicedYear, invoicedMonth]);
+
+
   const handleDownloadPdf = async () => {
     if (!previewRef.current || !invoiceData) return;
 
@@ -241,63 +250,36 @@ export function CreateInvoiceDialog() {
     const paddedNumber = String(nextInvoiceNum).padStart(3, '0');
     return `${prefix}${paddedNumber}`;
   };
-  
-    const invoiceItemsFromTimecards = useMemo(() => {
-        if (generationMode !== 'timecards' || !unbilledTimecards) return [];
-        const items: Record<string, { description: string; quantity: number; unit: string; rate: number; amount: number; timecardIds: string[] }> = {};
-        
-        unbilledTimecards.forEach(tc => {
-            if (!selectedTimecards[tc.id]) return;
-
-            const rate = dailyRate ? dailyRate / 8 : 0; // Assuming 8-hour day
-            const itemKey = `${tc.date}-${rate}`; // Group by date and rate
-
-            if (!items[itemKey]) {
-                items[itemKey] = {
-                    description: `Consultancy services on ${format(new Date(tc.date), 'MMMM d, yyyy')}`,
-                    quantity: 0,
-                    unit: 'hours',
-                    rate: rate,
-                    amount: 0,
-                    timecardIds: [],
-                };
-            }
-            items[itemKey].quantity += tc.hours;
-            items[itemKey].amount += tc.hours * rate;
-            items[itemKey].timecardIds.push(tc.id);
-        });
-
-        // Sum up descriptions for items on the same day if they have descriptions
-        Object.values(items).forEach(item => {
-            const notes = unbilledTimecards
-                .filter(tc => item.timecardIds.includes(tc.id) && tc.description)
-                .map(tc => tc.description)
-                .join('; ');
-            if (notes) {
-                item.description += ` - ${notes}`;
-            }
-        });
-        
-        return Object.values(items);
-    }, [generationMode, unbilledTimecards, selectedTimecards, dailyRate]);
-
 
   const invoiceData: Omit<Invoice, 'id'> | null = useMemo(() => {
-    if (!selectedClient || !selectedProject || !myCompany || !invoices || (!dailyRate && generationMode !== 'manual')) return null;
+    if (!selectedClient || !selectedProject || !myCompany || !invoices || (!dailyRate && generationMode === 'manual')) return null;
 
-    let items, subtotal: number, billedTimecardIds: string[] = [];
+    let items: Invoice['items'], subtotal: number, billedTimecardIds: string[] = [];
+    const servicePeriod = new Date(invoicedYear, invoicedMonth);
+    const description = `${selectedProject.name}: Consultancy services for ${format(servicePeriod, 'MMMM yyyy')}`;
 
     if (generationMode === 'timecards') {
-        items = invoiceItemsFromTimecards;
-        subtotal = items.reduce((acc, item) => acc + item.amount, 0);
-        billedTimecardIds = items.flatMap(item => item.timecardIds);
-        if (billedTimecardIds.length === 0) return null;
-    } else {
+        const totalHours = filteredTimecards.reduce((acc, tc) => selectedTimecards[tc.id] ? acc + tc.hours : acc, 0);
+        billedTimecardIds = filteredTimecards.filter(tc => selectedTimecards[tc.id]).map(tc => tc.id);
+        
+        if (billedTimecardIds.length === 0 || !dailyRate) return null;
+        
+        const rate = dailyRate / 8; // Assuming 8-hour day
+        subtotal = totalHours * rate;
+        
+        items = [{
+          description,
+          quantity: totalHours,
+          unit: 'hours',
+          rate: rate,
+          amount: subtotal,
+        }];
+
+    } else { // manual mode
         if (!daysWorked || !dailyRate) return null;
         subtotal = daysWorked * dailyRate;
-        const servicePeriod = new Date(invoicedYear, invoicedMonth);
         items = [{
-          description: `${selectedProject.name}: Consultancy services for ${format(servicePeriod, 'MMMM yyyy')}`,
+          description,
           quantity: daysWorked,
           unit: 'days',
           rate: dailyRate,
@@ -325,9 +307,9 @@ export function CreateInvoiceDialog() {
       date: format(invoiceCreationDate, 'yyyy-MM-dd'),
       currency,
       language: selectedClient.language || 'English',
-      items: items.map(({timecardIds, ...item}) => item), // remove timecardIds from final items
-      subtotal: subtotal,
-      vatAmount: vatAmount,
+      items,
+      subtotal,
+      vatAmount,
       total,
       status: 'Created' as const,
       totalRon,
@@ -346,7 +328,7 @@ export function CreateInvoiceDialog() {
   }, [
       selectedClient, selectedProject, dailyRate, invoices, daysWorked, currency, exchangeRate, 
       exchangeRateDate, myCompany, invoicedMonth, invoicedYear, invoiceCreationDate, usedMaxRate, 
-      invoiceTheme, generationMode, invoiceItemsFromTimecards
+      invoiceTheme, generationMode, filteredTimecards, selectedTimecards
     ]);
   
   const generatePreview = useCallback(async () => {
@@ -447,10 +429,10 @@ export function CreateInvoiceDialog() {
   }, [isOpen]);
 
   const handleSelectAllTimecards = (check: boolean) => {
-    if (!unbilledTimecards) return;
+    if (!filteredTimecards) return;
     const newSelection: Record<string, boolean> = {};
     if (check) {
-      unbilledTimecards.forEach(tc => newSelection[tc.id] = true);
+      filteredTimecards.forEach(tc => newSelection[tc.id] = true);
     }
     setSelectedTimecards(newSelection);
   }
@@ -459,9 +441,9 @@ export function CreateInvoiceDialog() {
   const availableClients = clients || [];
   
   const totalHoursFromTimecards = useMemo(() => {
-    if (generationMode !== 'timecards' || !unbilledTimecards) return 0;
-    return unbilledTimecards.reduce((acc, tc) => selectedTimecards[tc.id] ? acc + tc.hours : acc, 0);
-  }, [generationMode, unbilledTimecards, selectedTimecards]);
+    if (generationMode !== 'timecards' || !filteredTimecards) return 0;
+    return filteredTimecards.reduce((acc, tc) => selectedTimecards[tc.id] ? acc + tc.hours : acc, 0);
+  }, [generationMode, filteredTimecards, selectedTimecards]);
 
 
   const totalRonDisplay = useMemo(() => {
@@ -530,14 +512,7 @@ export function CreateInvoiceDialog() {
 
             {selectedClientId && selectedProjectId && (
               <>
-                <div className="flex items-center space-x-2 rounded-lg border p-3 shadow-sm">
-                  <Switch id="generation-mode" checked={generationMode === 'timecards'} onCheckedChange={(checked) => setGenerationMode(checked ? 'timecards' : 'manual')} />
-                  <Label htmlFor="generation-mode">Generate from Unbilled Timecards</Label>
-                </div>
-
-                {generationMode === 'manual' ? (
-                  <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="invoice-month" className="mb-2 block">Service Month</Label>
                         <Select
@@ -575,6 +550,13 @@ export function CreateInvoiceDialog() {
                         </Select>
                       </div>
                     </div>
+                <div className="flex items-center space-x-2 rounded-lg border p-3 shadow-sm">
+                  <Switch id="generation-mode" checked={generationMode === 'timecards'} onCheckedChange={(checked) => setGenerationMode(checked ? 'timecards' : 'manual')} />
+                  <Label htmlFor="generation-mode">Generate from Unbilled Timecards</Label>
+                </div>
+
+                {generationMode === 'manual' ? (
+                  <>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                       <div className="space-y-2">
                         <Label htmlFor="days-worked" className="mb-2 block">Days Worked</Label>
@@ -640,8 +622,8 @@ export function CreateInvoiceDialog() {
                       <CardContent className='p-0'>
                         <ScrollArea className="h-48">
                           <div className='p-4 space-y-3'>
-                            {unbilledTimecards && unbilledTimecards.length > 0 ? (
-                              unbilledTimecards.map(tc => (
+                            {filteredTimecards && filteredTimecards.length > 0 ? (
+                              filteredTimecards.map(tc => (
                                 <div key={tc.id} className='flex items-center justify-between text-sm p-2 rounded-md bg-background hover:bg-muted/50'>
                                   <div className='flex items-center gap-3'>
                                     <Checkbox id={`tc-${tc.id}`} checked={!!selectedTimecards[tc.id]} onCheckedChange={(checked) => setSelectedTimecards(prev => ({ ...prev, [tc.id]: !!checked }))} />
@@ -655,7 +637,7 @@ export function CreateInvoiceDialog() {
                               ))
                             ) : (
                               <div className='text-center text-sm text-muted-foreground py-10'>
-                                No unbilled time for this project.
+                                No unbilled time for this project in {months[invoicedMonth].label} {invoicedYear}.
                               </div>
                             )}
                           </div>
@@ -801,4 +783,5 @@ export function CreateInvoiceDialog() {
   );
 }
 
+    
     
