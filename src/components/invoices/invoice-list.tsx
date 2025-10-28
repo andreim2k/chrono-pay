@@ -11,8 +11,8 @@ import { MoreHorizontal, Download, Eye, Loader2, Trash2, RotateCcw } from 'lucid
 import type { Invoice } from '@/lib/types';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, deleteDocumentNonBlocking, useUser } from '@/firebase';
-import { doc, writeBatch, collection } from 'firebase/firestore';
+import { useFirestore, useUser } from '@/firebase';
+import { doc, writeBatch } from 'firebase/firestore';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { InvoiceHtmlPreview } from './invoice-html-preview';
@@ -84,24 +84,23 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
     const invoiceRef = doc(firestore, `users/${user.uid}/invoices`, invoice.id);
     batch.update(invoiceRef, { status: newStatus });
 
-    // When an invoice is reverted from Paid, timecards become unbilled.
-    // When it becomes Paid, they are billed.
-    // When moving between Created/Sent, timecard status doesn't change from its 'Billed' (but pending) state.
     if (invoice.billedTimecardIds && invoice.billedTimecardIds.length > 0) {
-        if (newStatus !== 'Paid' && invoice.status === 'Paid') {
-            // Reverting from Paid to Sent/Created
-            invoice.billedTimecardIds.forEach(tcId => {
-                const timecardRef = doc(firestore, `users/${user.uid}/timecards`, tcId);
-                batch.update(timecardRef, { status: 'Unbilled' });
-            });
-        } else if (newStatus === 'Paid') {
-            // Moving to Paid status
+        // If the invoice is being marked as PAID, mark timecards as Billed.
+        if (newStatus === 'Paid') {
             invoice.billedTimecardIds.forEach(tcId => {
                 const timecardRef = doc(firestore, `users/${user.uid}/timecards`, tcId);
                 batch.update(timecardRef, { status: 'Billed' });
             });
+        } 
+        // If a PAID invoice is being reverted to something else, mark timecards as Unbilled.
+        else if (invoice.status === 'Paid' && newStatus !== 'Paid') {
+            invoice.billedTimecardIds.forEach(tcId => {
+                const timecardRef = doc(firestore, `users/${user.uid}/timecards`, tcId);
+                batch.update(timecardRef, { status: 'Unbilled' });
+            });
         }
     }
+
 
     batch.commit().then(() => {
       toast({
