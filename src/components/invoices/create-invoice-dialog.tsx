@@ -165,10 +165,10 @@ export function CreateInvoiceDialog() {
     setSelectedTimecards({});
   }, [selectedProjectId]);
 
-  // This is the main controlling effect. It runs ONLY when the selectedProject object is available.
+  // This is the main controlling effect. It runs ONLY when the selectedProject object becomes available or changes.
   useEffect(() => {
     if (!selectedProject) {
-        // If no project is selected (e.g., client changed), reset to default.
+        // If no project is selected (e.g., client changed, or initial state), reset to a default config.
         setInvoiceConfig({
             currency: 'EUR',
             invoiceTheme: 'Classic',
@@ -185,7 +185,7 @@ export function CreateInvoiceDialog() {
     const newTheme = selectedProject.invoiceTheme || 'Classic';
 
     const fetchRate = async () => {
-      // Start fetching, update config immediately with known values.
+      // Start fetching, update config immediately with known values and loading state.
       setInvoiceConfig({
         currency: newCurrency,
         invoiceTheme: newTheme,
@@ -247,7 +247,8 @@ export function CreateInvoiceDialog() {
     };
 
     fetchRate();
-  }, [selectedProject, toast]); // This effect now correctly depends on the final project object.
+  // This effect correctly depends on the final project object.
+  }, [selectedProject, toast]); 
   
 
   useEffect(() => {
@@ -256,10 +257,12 @@ export function CreateInvoiceDialog() {
       return;
     }
     const handler = setTimeout(() => {
-        toast({
-            title: 'Project Rate Applied',
-            description: `Using rate: ${selectedProject.rate} ${invoiceConfig.currency} / ${selectedProject.rateType || 'day'}`,
-        });
+        if(selectedProject?.rate) { // Extra check to ensure project data is available
+            toast({
+                title: 'Project Rate Applied',
+                description: `Using rate: ${selectedProject.rate} ${invoiceConfig.currency} / ${selectedProject.rateType || 'day'}`,
+            });
+        }
     }, 1000);
 
     return () => {
@@ -281,13 +284,13 @@ export function CreateInvoiceDialog() {
     let items: Invoice['items'], subtotal: number, billedTimecardIds: string[] = [];
     const servicePeriod = new Date(invoicedYear, invoicedMonth);
     const description = `${selectedProject.name}: Consultancy services for ${format(servicePeriod, 'MMMM yyyy')}`;
+    const projectRate = selectedProject.rate;
 
     if (generationMode === 'timecards') {
         const totalHours = filteredTimecards.reduce((acc, tc) => selectedTimecards[tc.id] ? acc + tc.hours : acc, 0);
         billedTimecardIds = filteredTimecards.filter(tc => selectedTimecards[tc.id]).map(tc => tc.id);
         
-        const currentRate = selectedProject.rate;
-        if (billedTimecardIds.length === 0 || typeof currentRate !== 'number') return null;
+        if (billedTimecardIds.length === 0 || typeof projectRate !== 'number') return null;
         
         let quantity: number;
         let unit: string;
@@ -295,23 +298,22 @@ export function CreateInvoiceDialog() {
         if (selectedProject.rateType === 'hourly') {
             quantity = totalHours;
             unit = 'hours';
-            subtotal = totalHours * currentRate;
+            subtotal = totalHours * projectRate;
         } else { // daily
             quantity = totalHours / 8; // Assuming 8 hours/day
             unit = 'days';
-            subtotal = quantity * currentRate;
+            subtotal = quantity * projectRate;
         }
         
         items = [{
           description,
           quantity,
           unit,
-          rate: currentRate,
+          rate: projectRate,
           amount: subtotal,
         }];
 
     } else { // manual mode
-        const projectRate = selectedProject.rate;
         if (typeof manualQuantity !== 'number' || manualQuantity <= 0 || typeof projectRate !== 'number') return null;
         subtotal = manualQuantity * projectRate;
         items = [{
@@ -806,5 +808,7 @@ export function CreateInvoiceDialog() {
     </>
   );
 }
+
+    
 
     
