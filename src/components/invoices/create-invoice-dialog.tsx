@@ -563,7 +563,7 @@ export function CreateInvoiceDialog() {
                 </div>
 
                 {generationMode === 'manual' ? (
-                  <>
+                  <div className="grid grid-cols-2 gap-4 items-end">
                     <div className="space-y-2">
                       <Label htmlFor="manual-quantity" className="mb-2 block">
                         Quantity ({selectedProject?.rateType === 'hourly' ? 'Hours' : 'Days'})
@@ -582,18 +582,20 @@ export function CreateInvoiceDialog() {
                         placeholder={`e.g., 20 ${selectedProject?.rateType === 'hourly' ? 'hours' : 'days'}`}
                       />
                     </div>
-                    <div className='p-3 bg-muted/50 rounded-lg text-sm flex items-center justify-between'>
+                     <div className='p-3 bg-muted/50 rounded-lg text-sm'>
                        <p className='text-muted-foreground'>Using rate from project settings: 
                          {rate && <span className='font-bold text-foreground'> {rate} {selectedProject?.currency} / {selectedProject?.rateType === 'hourly' ? 'hour' : 'day'}</span>}
                        </p>
                     </div>
-                  </>
+                  </div>
                 ) : (
                   <div className="space-y-4">
-                    <div className='p-3 bg-muted/50 rounded-lg text-sm flex items-center justify-between'>
-                       <p className='text-muted-foreground'>Using rate from project settings: 
-                         {rate && <span className='font-bold text-foreground'> {rate} {selectedProject?.currency} / {selectedProject?.rateType === 'hourly' ? 'hour' : 'day'}</span>}
-                       </p>
+                    <div className='grid grid-cols-2 gap-4'>
+                       <div className='p-3 bg-muted/50 rounded-lg text-sm flex items-center justify-between'>
+                         <p className='text-muted-foreground'>Using rate: 
+                           {rate && <span className='font-bold text-foreground'> {rate} {selectedProject?.currency} / {selectedProject?.rateType === 'hourly' ? 'hour' : 'day'}</span>}
+                         </p>
+                       </div>
                        <div className="p-3 bg-muted/50 rounded-lg text-sm flex items-center justify-between">
                         <div className='flex items-center'>
                           <Hourglass className="h-4 w-4 mr-2 text-muted-foreground" />
