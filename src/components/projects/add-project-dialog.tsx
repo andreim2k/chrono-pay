@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, CalendarIcon } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -24,7 +24,13 @@ import { useCollection, useFirestore, addDocumentNonBlocking, useMemoFirebase, u
 import { collection, query } from 'firebase/firestore';
 import type { Client, InvoiceTheme, Project } from '@/lib/types';
 import { themeStyles } from '../invoices/invoice-html-preview';
+import { Switch } from '../ui/switch';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { Calendar } from '../ui/calendar';
 
+const currencies = ['EUR', 'USD', 'GBP', 'RON'];
 const invoiceThemes: InvoiceTheme[] = [
   'Classic', 'Modern', 'Sunset', 'Ocean', 'Monochrome', 'Minty', 'Velvet',
   'Corporate Blue', 'Earthy Tones', 'Creative', 'Slate Gray', 'Dark Charcoal',
@@ -38,6 +44,13 @@ const projectSchema = z.object({
   name: z.string().min(1, 'Project name is required'),
   clientId: z.string().min(1, 'Please select a client'),
   invoiceTheme: z.string().min(1, 'Please select a theme') as z.ZodType<InvoiceTheme>,
+  currency: z.string().min(1, 'Currency is required'),
+  invoiceNumberPrefix: z.string().optional(),
+  hasVat: z.boolean().default(false),
+  maxExchangeRate: z.coerce.number().optional(),
+  maxExchangeRateDate: z.date().optional(),
+  ratePerDay: z.coerce.number().optional(),
+  ratePerHour: z.coerce.number().optional(),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -66,6 +79,8 @@ export function AddProjectDialog() {
       name: '',
       clientId: '',
       invoiceTheme: 'Classic',
+      currency: 'EUR',
+      hasVat: false,
     },
   });
 
@@ -74,11 +89,23 @@ export function AddProjectDialog() {
     const client = clients?.find(c => c.id === data.clientId);
     const projectsCollection = collection(firestore, `users/${user.uid}/projects`);
     
-    addDocumentNonBlocking(projectsCollection, { 
-      ...data, 
+    const dataToSave: any = {
+      ...data,
       clientName: client?.name,
       order: projects?.length || 0,
+    };
+
+    if (data.maxExchangeRateDate) {
+      dataToSave.maxExchangeRateDate = format(data.maxExchangeRateDate, 'yyyy-MM-dd');
+    }
+
+    Object.keys(dataToSave).forEach(key => {
+      if (dataToSave[key] === undefined) {
+        delete dataToSave[key];
+      }
     });
+
+    addDocumentNonBlocking(projectsCollection, dataToSave);
 
     toast({
       title: 'Project Added',
@@ -95,7 +122,7 @@ export function AddProjectDialog() {
           <PlusCircle className="mr-2 h-4 w-4" /> Add Project
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Add New Project</DialogTitle>
           <DialogDescription>
@@ -141,6 +168,34 @@ export function AddProjectDialog() {
                 </FormItem>
               )}
             />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="ratePerDay"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Default Rate/Day</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="500" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="ratePerHour"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Default Rate/Hour</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="65" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
              <FormField
               control={form.control}
               name="invoiceTheme"
@@ -179,6 +234,124 @@ export function AddProjectDialog() {
                 </FormItem>
               )}
             />
+            <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="currency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Default Currency</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select currency" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {currencies.map(currency => (
+                            <SelectItem key={currency} value={currency}>
+                              {currency}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="invoiceNumberPrefix"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Invoice Number Prefix</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. PHX-" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
+             <div className="space-y-2 rounded-lg border p-3 shadow-sm">
+                <div className="grid grid-cols-2 items-end gap-4">
+                     <FormField
+                        control={form.control}
+                        name="maxExchangeRate"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Fixed Exchange Rate (RON)</FormLabel>
+                            <FormControl>
+                                <Input type="number" placeholder="e.g., 5.0" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    <FormField
+                        control={form.control}
+                        name="maxExchangeRateDate"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-col">
+                            <FormLabel>Date of Rate</FormLabel>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-full pl-3 text-left font-normal",
+                                        !field.value && "text-muted-foreground"
+                                    )}
+                                    >
+                                    {field.value ? (
+                                        format(field.value, "PPP")
+                                    ) : (
+                                        <span>Pick a date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    disabled={(date) =>
+                                    date > new Date() || date < new Date("1900-01-01")
+                                    }
+                                    initialFocus
+                                />
+                                </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                 </div>
+                 <p className="text-xs text-muted-foreground px-1">If set, this rate will always be used for this project's invoices.</p>
+            </div>
+            <FormField
+                control={form.control}
+                name="hasVat"
+                render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                            <FormLabel>Apply VAT</FormLabel>
+                            <p className="text-xs text-muted-foreground">
+                                If checked, VAT will be added to this project's invoices.
+                            </p>
+                        </div>
+                        <FormControl>
+                            <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                            />
+                        </FormControl>
+                    </FormItem>
+                )}
+            />
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
                 Cancel
@@ -191,5 +364,3 @@ export function AddProjectDialog() {
     </Dialog>
   );
 }
-
-    

@@ -24,13 +24,8 @@ export type Client = {
   vat: string;
   iban: string;
   logoUrl?: string;
-  currency?: string;
   bankName?: string;
   swift?: string;
-  invoiceNumberPrefix?: string;
-  hasVat?: boolean;
-  maxExchangeRate?: number;
-  maxExchangeRateDate?: string;
   language?: 'English' | 'Romanian';
   order?: number;
 };
@@ -54,6 +49,15 @@ export type Project = {
   clientName: string;
   invoiceTheme?: InvoiceTheme;
   order?: number;
+  // Moved from client
+  currency?: string;
+  invoiceNumberPrefix?: string;
+  hasVat?: boolean;
+  maxExchangeRate?: number;
+  maxExchangeRateDate?: string;
+  // New project-specific rates
+  ratePerDay?: number;
+  ratePerHour?: number;
 };
 
 export type Timecard = {

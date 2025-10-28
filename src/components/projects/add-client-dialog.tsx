@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CalendarIcon, PlusCircle } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,14 +22,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFirestore, addDocumentNonBlocking, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
-import { Switch } from '../ui/switch';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
-import { Calendar } from '../ui/calendar';
 import type { Client } from '@/lib/types';
 
-const currencies = ['EUR', 'USD', 'GBP', 'RON'];
 const languages = ['English', 'Romanian'];
 
 const clientSchema = z.object({
@@ -39,12 +33,7 @@ const clientSchema = z.object({
   iban: z.string().min(1, 'IBAN is required'),
   bankName: z.string().min(1, 'Bank name is required'),
   swift: z.string().min(1, 'SWIFT/BIC is required'),
-  currency: z.string().min(1, 'Currency is required'),
   language: z.string().min(1, 'Language is required'),
-  invoiceNumberPrefix: z.string().optional(),
-  hasVat: z.boolean().default(false),
-  maxExchangeRate: z.coerce.number().optional(),
-  maxExchangeRateDate: z.date().optional(),
 });
 
 type ClientFormValues = z.infer<typeof clientSchema>;
@@ -70,10 +59,7 @@ export function AddClientDialog() {
       iban: '',
       bankName: '',
       swift: '',
-      currency: 'EUR',
       language: 'English',
-      invoiceNumberPrefix: '',
-      hasVat: false,
     },
   });
 
@@ -86,18 +72,7 @@ export function AddClientDialog() {
       logoUrl: `https://picsum.photos/seed/${data.name}/40/40`,
       order: clients?.length || 0,
     };
-
-    if (data.maxExchangeRateDate) {
-      dataToSave.maxExchangeRateDate = format(data.maxExchangeRateDate, 'yyyy-MM-dd');
-    }
     
-    // Remove undefined fields to prevent Firestore errors
-    Object.keys(dataToSave).forEach(key => {
-      if (dataToSave[key] === undefined) {
-        delete dataToSave[key];
-      }
-    });
-
     addDocumentNonBlocking(clientsCollection, dataToSave);
     
     toast({
@@ -164,22 +139,22 @@ export function AddClientDialog() {
                   </FormItem>
                 )}
               />
-               <FormField
+              <FormField
                 control={form.control}
-                name="currency"
+                name="language"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Default Currency</FormLabel>
+                    <FormLabel>Invoice Language</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select currency" />
+                          <SelectValue placeholder="Select language" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {currencies.map(currency => (
-                          <SelectItem key={currency} value={currency}>
-                            {currency}
+                        {languages.map(lang => (
+                          <SelectItem key={lang} value={lang}>
+                            {lang}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -217,139 +192,18 @@ export function AddClientDialog() {
                 )}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-                <FormField
-                control={form.control}
-                name="iban"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>IBAN</FormLabel>
-                    <FormControl>
-                        <Input placeholder="DE89370400440532013000" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                 <FormField
-                control={form.control}
-                name="language"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Invoice Language</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select language" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {languages.map(lang => (
-                          <SelectItem key={lang} value={lang}>
-                            {lang}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
             <FormField
               control={form.control}
-              name="invoiceNumberPrefix"
+              name="iban"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Invoice Number Prefix</FormLabel>
+                  <FormLabel>IBAN</FormLabel>
                   <FormControl>
-                    <Input placeholder="INV-" {...field} />
+                    <Input placeholder="DE89370400440532013000" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
-            />
-
-            <div className="space-y-2 rounded-lg border p-3 shadow-sm">
-                <div className="grid grid-cols-2 items-end gap-4">
-                     <FormField
-                        control={form.control}
-                        name="maxExchangeRate"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Fixed Exchange Rate (RON)</FormLabel>
-                            <FormControl>
-                                <Input type="number" placeholder="e.g., 5.0" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                    <FormField
-                        control={form.control}
-                        name="maxExchangeRateDate"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                            <FormLabel>Date of Rate</FormLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-full pl-3 text-left font-normal",
-                                        !field.value && "text-muted-foreground"
-                                    )}
-                                    >
-                                    {field.value ? (
-                                        format(field.value, "PPP")
-                                    ) : (
-                                        <span>Pick a date</span>
-                                    )}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={(date) =>
-                                    date > new Date() || date < new Date("1900-01-01")
-                                    }
-                                    initialFocus
-                                />
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                 </div>
-                 <p className="text-xs text-muted-foreground px-1">If set, this rate will always be used for this client's invoices.</p>
-            </div>
-
-            <FormField
-                control={form.control}
-                name="hasVat"
-                render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                            <FormLabel>Apply VAT</FormLabel>
-                            <p className="text-xs text-muted-foreground">
-                                If checked, VAT will be added to this client's invoices based on your company's VAT rate.
-                            </p>
-                        </div>
-                        <FormControl>
-                            <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                            />
-                        </FormControl>
-                    </FormItem>
-                )}
             />
             
             <DialogFooter>
@@ -364,5 +218,3 @@ export function AddClientDialog() {
     </Dialog>
   );
 }
-
-    

@@ -67,7 +67,7 @@ export function CreateInvoiceDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const [dailyRate, setDailyRate] = useState<number | ''>(500);
+  const [dailyRate, setDailyRate] = useState<number | ''>('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isFetchingRate, setIsFetchingRate] = useState(false);
   const [daysWorked, setDaysWorked] = useState<number | ''>(0);
@@ -166,8 +166,31 @@ export function CreateInvoiceDialog() {
   useEffect(() => {
     if (selectedProject) {
         setInvoiceTheme(selectedProject.invoiceTheme || 'Classic');
+        setCurrency(selectedProject.currency || 'EUR');
+        setDailyRate(selectedProject.ratePerDay || '');
+
+        if (selectedProject.maxExchangeRate && selectedProject.maxExchangeRateDate) {
+          setExchangeRate(selectedProject.maxExchangeRate);
+          setExchangeRateDate(selectedProject.maxExchangeRateDate);
+          setUsedMaxRate(true);
+          toast({
+              title: 'Project Rate Applied',
+              description: `Using fixed project exchange rate of ${selectedProject.maxExchangeRate.toFixed(4)} RON.`,
+          });
+        } else if (selectedProject.currency !== 'RON') {
+          fetchExchangeRate(selectedProject.currency || 'EUR');
+        } else {
+          setExchangeRate(1);
+          setExchangeRateDate(new Date().toISOString().split('T')[0]);
+          setUsedMaxRate(false);
+        }
+    } else {
+        setExchangeRate(undefined);
+        setExchangeRateDate(undefined);
+        setUsedMaxRate(false);
+        setDailyRate('');
     }
-  }, [selectedProject]);
+  }, [selectedProject, toast]);
 
 
   const fetchExchangeRate = useCallback(async (currentCurrency: string) => {
@@ -216,43 +239,17 @@ export function CreateInvoiceDialog() {
   useEffect(() => {
     setSelectedProjectId(null); // Reset project when client changes
   }, [selectedClientId])
-
-  useEffect(() => {
-    if (selectedClient) {
-      setCurrency(selectedClient.currency || 'EUR');
-      
-      if (selectedClient.maxExchangeRate && selectedClient.maxExchangeRateDate) {
-        setExchangeRate(selectedClient.maxExchangeRate);
-        setExchangeRateDate(selectedClient.maxExchangeRateDate);
-        setUsedMaxRate(true);
-        toast({
-            title: 'Client Rate Applied',
-            description: `Using fixed client exchange rate of ${selectedClient.maxExchangeRate.toFixed(4)} RON.`,
-        });
-      } else if (selectedClient.currency !== 'RON') {
-        fetchExchangeRate(selectedClient.currency || 'EUR');
-      } else {
-        setExchangeRate(1);
-        setExchangeRateDate(new Date().toISOString().split('T')[0]);
-        setUsedMaxRate(false);
-      }
-    } else {
-        setExchangeRate(undefined);
-        setExchangeRateDate(undefined);
-        setUsedMaxRate(false);
-    }
-  }, [selectedClient, fetchExchangeRate, toast]);
   
-  const generateInvoiceNumber = (client: Client, allInvoices: Invoice[]) => {
-    const prefix = client.invoiceNumberPrefix || client.name.split(' ').map(word => word[0]).join('').toUpperCase();
-    const clientInvoicesWithPrefix = allInvoices.filter(inv => inv.clientName === client.name && inv.invoiceNumber.startsWith(prefix));
-    const nextInvoiceNum = clientInvoicesWithPrefix.length + 1;
+  const generateInvoiceNumber = (project: Project, allInvoices: Invoice[]) => {
+    const prefix = project.invoiceNumberPrefix || project.name.split(' ').map(word => word[0]).join('').toUpperCase();
+    const projectInvoicesWithPrefix = allInvoices.filter(inv => inv.projectId === project.id && inv.invoiceNumber.startsWith(prefix));
+    const nextInvoiceNum = projectInvoicesWithPrefix.length + 1;
     const paddedNumber = String(nextInvoiceNum).padStart(3, '0');
     return `${prefix}${paddedNumber}`;
   };
 
   const invoiceData: Omit<Invoice, 'id'> | null = useMemo(() => {
-    if (!selectedClient || !selectedProject || !myCompany || !invoices || (!dailyRate && generationMode === 'manual')) return null;
+    if (!selectedClient || !selectedProject || !myCompany || !invoices || (!dailyRate && !selectedProject.ratePerHour)) return null;
 
     let items: Invoice['items'], subtotal: number, billedTimecardIds: string[] = [];
     const servicePeriod = new Date(invoicedYear, invoicedMonth);
@@ -262,9 +259,9 @@ export function CreateInvoiceDialog() {
         const totalHours = filteredTimecards.reduce((acc, tc) => selectedTimecards[tc.id] ? acc + tc.hours : acc, 0);
         billedTimecardIds = filteredTimecards.filter(tc => selectedTimecards[tc.id]).map(tc => tc.id);
         
-        if (billedTimecardIds.length === 0 || !dailyRate) return null;
+        const rate = selectedProject.ratePerHour || (dailyRate ? dailyRate / 8 : 0);
+        if (billedTimecardIds.length === 0 || rate === 0) return null;
         
-        const rate = dailyRate / 8; // Assuming 8-hour day
         subtotal = totalHours * rate;
         
         items = [{
@@ -287,12 +284,12 @@ export function CreateInvoiceDialog() {
         }];
     }
 
-    const vatAmount = selectedClient.hasVat ? subtotal * (myCompany?.companyVatRate || 0) : 0;
+    const vatAmount = selectedProject.hasVat ? subtotal * (myCompany?.companyVatRate || 0) : 0;
     const total = subtotal + vatAmount;
     const totalRon = exchangeRate ? total * exchangeRate : undefined;
     
     const data: Omit<Invoice, 'id'> & { vatRate?: number } = {
-      invoiceNumber: generateInvoiceNumber(selectedClient, invoices),
+      invoiceNumber: generateInvoiceNumber(selectedProject, invoices),
       companyName: myCompany.companyName!,
       companyAddress: myCompany.companyAddress!,
       companyVat: myCompany.companyVat!,
@@ -320,7 +317,7 @@ export function CreateInvoiceDialog() {
       billedTimecardIds,
     };
     
-    if (selectedClient.hasVat && myCompany.companyVatRate) {
+    if (selectedProject.hasVat && myCompany.companyVatRate) {
         data.vatRate = myCompany.companyVatRate;
     }
 
@@ -410,8 +407,7 @@ export function CreateInvoiceDialog() {
 
   const handleCurrencyChange = (newCurrency: string) => {
     setCurrency(newCurrency);
-    // Don't auto-fetch if client has a fixed rate
-    if (selectedClient && !selectedClient.maxExchangeRate) {
+    if (selectedProject && !selectedProject.maxExchangeRate) {
         fetchExchangeRate(newCurrency);
     }
   }
@@ -422,7 +418,7 @@ export function CreateInvoiceDialog() {
         setSelectedClientId(null);
         setSelectedProjectId(null);
         setDaysWorked(0);
-        setDailyRate(500);
+        setDailyRate('');
         setGenerationMode('manual');
         setSelectedTimecards({});
     }
@@ -582,28 +578,23 @@ export function CreateInvoiceDialog() {
                           onChange={(e) => setDailyRate(e.target.value === '' ? '' : parseFloat(e.target.value))}
                           onBlur={(e) => {
                             if (e.target.value === '') {
-                              setDailyRate(0);
+                              setDailyRate('');
                             }
                           }}
                           min="0"
+                          placeholder={selectedProject?.ratePerDay ? String(selectedProject.ratePerDay) : "e.g., 500"}
                         />
                       </div>
                     </div>
                   </>
                 ) : (
                   <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-                      <div className="space-y-2">
-                        <Label htmlFor="daily-rate-timecards" className="mb-2 block">Daily Rate (for time conversion)</Label>
-                        <Input
-                          id="daily-rate-timecards"
-                          type="number"
-                          value={dailyRate}
-                          onChange={(e) => setDailyRate(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                          min="0"
-                        />
-                      </div>
-                      <div className="p-3 bg-muted/50 rounded-lg text-sm flex items-center justify-between">
+                    <div className='p-3 bg-muted/50 rounded-lg text-sm flex items-center justify-between'>
+                       <p className='text-muted-foreground'>Using rate from project settings: 
+                         {selectedProject?.ratePerHour && <span className='font-bold text-foreground'> {selectedProject.ratePerHour}/{selectedProject.currency}/hour</span>}
+                         {(!selectedProject?.ratePerHour && dailyRate) && <span className='font-bold text-foreground'> {dailyRate}/{selectedProject?.currency}/day</span>}
+                       </p>
+                       <div className="p-3 bg-muted/50 rounded-lg text-sm flex items-center justify-between">
                         <div className='flex items-center'>
                           <Hourglass className="h-4 w-4 mr-2 text-muted-foreground" />
                           <span className="text-muted-foreground">Total Hours Selected:</span>
@@ -611,6 +602,7 @@ export function CreateInvoiceDialog() {
                         <span className='font-bold text-foreground'>{totalHoursFromTimecards.toFixed(2)}</span>
                       </div>
                     </div>
+                    
                     <Card>
                       <CardHeader className='flex-row items-center justify-between py-3 px-4'>
                         <CardTitle className='text-base'>Unbilled Timecards</CardTitle>
@@ -651,7 +643,7 @@ export function CreateInvoiceDialog() {
                   <div className="space-y-2 md:col-span-1">
                     <Label htmlFor="currency-select" className="mb-2 block">Currency</Label>
                     <div className="flex items-center gap-2">
-                      <Select value={currency} onValueChange={handleCurrencyChange} disabled={!!selectedClient?.maxExchangeRate}>
+                      <Select value={currency} onValueChange={handleCurrencyChange} disabled={!!selectedProject?.maxExchangeRate}>
                         <SelectTrigger id="currency-select">
                           <SelectValue placeholder="Select currency" />
                         </SelectTrigger>
@@ -663,7 +655,7 @@ export function CreateInvoiceDialog() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <Button variant="ghost" size="icon" onClick={() => fetchExchangeRate(currency)} disabled={isFetchingRate || currency === 'RON' || !!selectedClient?.maxExchangeRate}>
+                      <Button variant="ghost" size="icon" onClick={() => fetchExchangeRate(currency)} disabled={isFetchingRate || currency === 'RON' || !!selectedProject?.maxExchangeRate}>
                         {isFetchingRate ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                       </Button>
                     </div>
@@ -719,7 +711,7 @@ export function CreateInvoiceDialog() {
                       <div className='pt-2 mt-2 border-t'>
                         <p className="text-muted-foreground">Total in RON (approx.): <span className='font-bold text-foreground'>{totalRonDisplay} RON</span></p>
                         {exchangeRateDate && <p className="text-xs text-muted-foreground mt-1">
-                          {usedMaxRate ? `Using fixed client rate set on ${formatDateWithOrdinal(exchangeRateDate)}` : `Based on BNR rate from ${formatDateWithOrdinal(exchangeRateDate)}`}: 1 {currency} = {exchangeRate?.toFixed(4)} RON
+                          {usedMaxRate ? `Using fixed project rate set on ${formatDateWithOrdinal(exchangeRateDate)}` : `Based on BNR rate from ${formatDateWithOrdinal(exchangeRateDate)}`}: 1 {currency} = {exchangeRate?.toFixed(4)} RON
                         </p>
                         }
                       </div>
@@ -731,9 +723,12 @@ export function CreateInvoiceDialog() {
           </div>
 
           <DialogFooter>
+            <Button variant="outline" onClick={() => setIsOpen(false)}>
+              Close
+            </Button>
             <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" disabled={!invoiceData}>
+                <Button variant="outline" disabled={buttonsDisabled}>
                   <Eye className="mr-2 h-4 w-4" />
                   Preview & Save
                 </Button>
@@ -782,6 +777,3 @@ export function CreateInvoiceDialog() {
     </>
   );
 }
-
-    
-    

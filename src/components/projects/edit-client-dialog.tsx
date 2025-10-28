@@ -20,16 +20,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { Client } from '@/lib/types';
 import { useFirestore, useUser } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
-import { Switch } from '../ui/switch';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { cn } from '@/lib/utils';
-import { format, parseISO } from 'date-fns';
-import { Calendar } from '../ui/calendar';
-import { CalendarIcon } from 'lucide-react';
 import { useEffect } from 'react';
 
-
-const currencies = ['EUR', 'USD', 'GBP', 'RON'];
 const languages = ['English', 'Romanian'];
 
 const clientSchema = z.object({
@@ -39,12 +31,7 @@ const clientSchema = z.object({
   iban: z.string().min(1, 'IBAN is required'),
   bankName: z.string().min(1, 'Bank name is required'),
   swift: z.string().min(1, 'SWIFT/BIC is required'),
-  currency: z.string().min(1, 'Currency is required'),
   language: z.string().min(1, 'Language is required'),
-  invoiceNumberPrefix: z.string().optional(),
-  hasVat: z.boolean().default(false),
-  maxExchangeRate: z.coerce.number().optional(),
-  maxExchangeRateDate: z.date().optional(),
 });
 
 type ClientFormValues = z.infer<typeof clientSchema>;
@@ -69,12 +56,7 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
       iban: client.iban,
       bankName: client.bankName,
       swift: client.swift,
-      currency: client.currency || 'EUR',
       language: client.language || 'English',
-      invoiceNumberPrefix: client.invoiceNumberPrefix || '',
-      hasVat: client.hasVat || false,
-      maxExchangeRate: client.maxExchangeRate || undefined,
-      maxExchangeRateDate: client.maxExchangeRateDate ? parseISO(client.maxExchangeRateDate) : undefined,
     },
   });
 
@@ -87,12 +69,7 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
             iban: client.iban,
             bankName: client.bankName,
             swift: client.swift,
-            currency: client.currency || 'EUR',
             language: client.language || 'English',
-            invoiceNumberPrefix: client.invoiceNumberPrefix || '',
-            hasVat: client.hasVat || false,
-            maxExchangeRate: client.maxExchangeRate || undefined,
-            maxExchangeRateDate: client.maxExchangeRateDate ? parseISO(client.maxExchangeRateDate) : undefined,
         });
     }
   }, [isOpen, client, form]);
@@ -105,10 +82,6 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
       ...client, // Preserve existing fields like order, logoUrl
       ...data,
     };
-
-    if (data.maxExchangeRateDate) {
-      dataToSave.maxExchangeRateDate = format(data.maxExchangeRateDate, 'yyyy-MM-dd');
-    }
 
     // Remove undefined fields to prevent Firestore errors
     Object.keys(dataToSave).forEach(key => {
@@ -179,20 +152,20 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
                 />
                  <FormField
                     control={form.control}
-                    name="currency"
+                    name="language"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Default Currency</FormLabel>
+                        <FormLabel>Invoice Language</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                             <SelectTrigger>
-                            <SelectValue placeholder="Select currency" />
+                            <SelectValue placeholder="Select language" />
                             </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            {currencies.map(currency => (
-                            <SelectItem key={currency} value={currency}>
-                                {currency}
+                            {languages.map(lang => (
+                            <SelectItem key={lang} value={lang}>
+                                {lang}
                             </SelectItem>
                             ))}
                         </SelectContent>
@@ -200,7 +173,7 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
                         <FormMessage />
                     </FormItem>
                     )}
-              />
+                />
             </div>
              <div className="grid grid-cols-2 gap-4">
                 <FormField
@@ -230,141 +203,20 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
                     )}
                 />
             </div>
-             <div className="grid grid-cols-2 gap-4">
-                <FormField
-                control={form.control}
-                name="iban"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>IBAN</FormLabel>
-                    <FormControl>
-                        <Input placeholder="DE89370400440532013000" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                 <FormField
-                control={form.control}
-                name="language"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Invoice Language</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select language" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {languages.map(lang => (
-                          <SelectItem key={lang} value={lang}>
-                            {lang}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="invoiceNumberPrefix"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Invoice Number Prefix</FormLabel>
-                    <FormControl>
-                      <Input placeholder="INV-" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="space-y-2 rounded-lg border p-3 shadow-sm">
-                 <div className="grid grid-cols-2 items-end gap-4">
-                     <FormField
-                        control={form.control}
-                        name="maxExchangeRate"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Fixed Exchange Rate (RON)</FormLabel>
-                            <FormControl>
-                                <Input type="number" placeholder="e.g., 5.0" {...field} value={field.value ?? ''} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                    <FormField
-                        control={form.control}
-                        name="maxExchangeRateDate"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                            <FormLabel>Date of Rate</FormLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-full pl-3 text-left font-normal",
-                                        !field.value && "text-muted-foreground"
-                                    )}
-                                    >
-                                    {field.value ? (
-                                        format(field.value, "PPP")
-                                    ) : (
-                                        <span>Pick a date</span>
-                                    )}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={(date) =>
-                                    date > new Date() || date < new Date("1900-01-01")
-                                    }
-                                    initialFocus
-                                />
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                 </div>
-                 <p className="text-xs text-muted-foreground px-1">If set, this rate will always be used for this client's invoices.</p>
-            </div>
-
-             <FormField
-                control={form.control}
-                name="hasVat"
-                render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                            <FormLabel>Apply VAT</FormLabel>
-                            <p className="text-xs text-muted-foreground">
-                               If checked, VAT will be added to this client's invoices based on your company's VAT rate.
-                            </p>
-                        </div>
-                        <FormControl>
-                            <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                            />
-                        </FormControl>
-                    </FormItem>
-                )}
+            <FormField
+            control={form.control}
+            name="iban"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>IBAN</FormLabel>
+                <FormControl>
+                    <Input placeholder="DE89370400440532013000" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
             />
+            
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
