@@ -84,19 +84,29 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
     const invoiceRef = doc(firestore, `users/${user.uid}/invoices`, invoice.id);
     batch.update(invoiceRef, { status: newStatus });
 
-    // Update associated timecards status
+    // When an invoice is reverted from Paid, timecards become unbilled.
+    // When it becomes Paid, they are billed.
+    // When moving between Created/Sent, timecard status doesn't change from its 'Billed' (but pending) state.
     if (invoice.billedTimecardIds && invoice.billedTimecardIds.length > 0) {
-      const timecardStatus = newStatus === 'Paid' ? 'Billed' : 'Unbilled';
-      invoice.billedTimecardIds.forEach(tcId => {
-        const timecardRef = doc(firestore, `users/${user.uid}/timecards`, tcId);
-        batch.update(timecardRef, { status: timecardStatus });
-      });
+        if (newStatus !== 'Paid' && invoice.status === 'Paid') {
+            // Reverting from Paid to Sent/Created
+            invoice.billedTimecardIds.forEach(tcId => {
+                const timecardRef = doc(firestore, `users/${user.uid}/timecards`, tcId);
+                batch.update(timecardRef, { status: 'Unbilled' });
+            });
+        } else if (newStatus === 'Paid') {
+            // Moving to Paid status
+            invoice.billedTimecardIds.forEach(tcId => {
+                const timecardRef = doc(firestore, `users/${user.uid}/timecards`, tcId);
+                batch.update(timecardRef, { status: 'Billed' });
+            });
+        }
     }
 
     batch.commit().then(() => {
       toast({
         title: 'Invoice Updated',
-        description: `Invoice ${invoice.invoiceNumber} marked as ${newStatus}. Associated timecards updated.`,
+        description: `Invoice ${invoice.invoiceNumber} marked as ${newStatus}. Associated timecards updated if applicable.`,
       });
     }).catch(error => {
       console.error("Error updating invoice and timecard statuses: ", error);
