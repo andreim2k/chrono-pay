@@ -7,14 +7,15 @@ import { InvoicesPerClientChart } from '@/components/reports/invoices-per-client
 import { InvoicesPerProjectChart } from '@/components/reports/invoices-per-project-chart';
 import { UnpaidByClientChart } from '@/components/reports/unpaid-by-client-chart';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { Invoice, Project } from '@/lib/types';
-import { collection } from 'firebase/firestore';
+import { Invoice, Project, Timecard } from '@/lib/types';
+import { collection, query } from 'firebase/firestore';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { Banknote, Landmark } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
 import { VatChart } from '@/components/reports/vat-chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getYear, parseISO } from 'date-fns';
+import { HoursPerProjectChart } from '@/components/reports/hours-per-project-chart';
 
 export default function ReportsPage() {
   const firestore = useFirestore();
@@ -31,11 +32,20 @@ export default function ReportsPage() {
   );
   const { data: projects } = useCollection<Project>(projectsQuery, `users/${user?.uid}/projects`);
 
+  const timecardsQuery = useMemoFirebase(
+    () => (firestore && user ? query(collection(firestore, `users/${user.uid}/timecards`)) : null),
+    [firestore, user]
+  );
+  const { data: timecards } = useCollection<Timecard>(timecardsQuery, `users/${user?.uid}/timecards`);
+
+  const allInvoices = invoices || [];
+  const allTimecards = timecards || [];
+
   const availableYears = useMemo(() => {
-    if (!invoices) return [];
-    const years = new Set(invoices.map(inv => getYear(parseISO(inv.date))));
+    if (allInvoices.length === 0) return [];
+    const years = new Set(allInvoices.map(inv => getYear(parseISO(inv.date))));
     return Array.from(years).sort((a, b) => b - a);
-  }, [invoices]);
+  }, [allInvoices]);
 
   const [selectedYear, setSelectedYear] = useState<number | 'all'>('all');
 
@@ -46,10 +56,16 @@ export default function ReportsPage() {
   }, [availableYears, selectedYear]);
 
   const filteredInvoices = useMemo(() => {
-    if (!invoices) return [];
-    if (selectedYear === 'all') return invoices;
-    return invoices.filter(inv => getYear(parseISO(inv.date)) === selectedYear);
-  }, [invoices, selectedYear]);
+    if (allInvoices.length === 0) return [];
+    if (selectedYear === 'all') return allInvoices;
+    return allInvoices.filter(inv => getYear(parseISO(inv.date)) === selectedYear);
+  }, [allInvoices, selectedYear]);
+
+  const filteredTimecards = useMemo(() => {
+    if (allTimecards.length === 0) return [];
+    if (selectedYear === 'all') return allTimecards;
+    return allTimecards.filter(tc => getYear(parseISO(tc.date)) === selectedYear);
+  }, [allTimecards, selectedYear]);
 
 
   const vatStats = useMemo(() => {
@@ -129,6 +145,7 @@ export default function ReportsPage() {
         <RevenueChart invoices={filteredInvoices || []} />
         <VatChart invoices={filteredInvoices || []} selectedYear={selectedYear} />
         <InvoiceStatusChart invoices={filteredInvoices || []} />
+        <HoursPerProjectChart timecards={filteredTimecards || []} />
         <InvoicesPerClientChart invoices={filteredInvoices || []} />
         <InvoicesPerProjectChart invoices={filteredInvoices || []} projects={projects || []} />
         <UnpaidByClientChart invoices={filteredInvoices || []} />

@@ -4,11 +4,11 @@
 import { StatCard } from '@/components/dashboard/stat-card';
 import { RecentInvoices } from '@/components/dashboard/recent-invoices';
 import { useCollection, useUser } from '@/firebase';
-import { DollarSign, Users, Clock, Banknote, Landmark, Briefcase } from 'lucide-react';
-import type { Invoice, Project } from '@/lib/types';
+import { DollarSign, Users, Clock, Banknote, Landmark, Briefcase, Hourglass } from 'lucide-react';
+import type { Invoice, Project, Timecard } from '@/lib/types';
 import { useMemo } from 'react';
 import { useFirestore, useMemoFirebase } from '@/firebase/provider';
-import { collection } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 
 export default function DashboardPage() {
   const firestore = useFirestore();
@@ -32,8 +32,14 @@ export default function DashboardPage() {
   );
   const { data: projects } = useCollection<Project>(projectsQuery, `users/${user?.uid}/projects`);
 
+  const timecardsQuery = useMemoFirebase(
+    () => (firestore && user ? collection(firestore, `users/${user.uid}/timecards`) : null),
+    [firestore, user]
+  );
+  const { data: timecards } = useCollection<Timecard>(timecardsQuery, `users/${user?.uid}/timecards`);
+
   const dashboardStats = useMemo(() => {
-    if (!invoices || !clients || !projects) {
+    if (!invoices || !clients || !projects || !timecards) {
       return {
         totalRevenue: '€0.00',
         unpaidAmount: '€0.00',
@@ -44,6 +50,7 @@ export default function DashboardPage() {
         totalVatCollected: '€0.00',
         outstandingVat: '€0.00',
         outstandingVatTotal: 0,
+        unbilledHours: '0.00',
       };
     }
 
@@ -59,6 +66,8 @@ export default function DashboardPage() {
     const totalVatCollected = paidInvoices.reduce((acc, inv) => acc + (inv.vatAmount || 0), 0);
     const outstandingVatTotal = unpaidInvoices.reduce((acc, inv) => acc + (inv.vatAmount || 0), 0);
     
+    const unbilledHours = timecards.filter(tc => tc.status === 'Unbilled').reduce((acc, tc) => acc + tc.hours, 0);
+
     // Assuming EUR as the primary currency for dashboard summary, mirroring reports page.
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(amount);
@@ -74,8 +83,9 @@ export default function DashboardPage() {
       totalVatCollected: formatCurrency(totalVatCollected),
       outstandingVat: formatCurrency(outstandingVatTotal),
       outstandingVatTotal,
+      unbilledHours: unbilledHours.toFixed(2),
     };
-  }, [invoices, clients, projects]);
+  }, [invoices, clients, projects, timecards]);
 
   const recentInvoices = useMemo(() => {
      if (!invoices) return [];
@@ -114,7 +124,7 @@ export default function DashboardPage() {
           description="Total number of projects"
         />
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Paid Invoices"
           value={String(dashboardStats.paidCount)}
@@ -133,6 +143,13 @@ export default function DashboardPage() {
           icon={<Landmark className="h-4 w-4 text-muted-foreground" />}
           description="From created & sent invoices"
           valueClassName={dashboardStats.outstandingVatTotal > 0 ? 'text-amber-600 dark:text-amber-500' : ''}
+        />
+        <StatCard
+          title="Unbilled Hours"
+          value={dashboardStats.unbilledHours}
+          icon={<Hourglass className="h-4 w-4 text-muted-foreground" />}
+          description="Ready to be invoiced"
+          valueClassName={parseFloat(dashboardStats.unbilledHours) > 0 ? 'text-amber-600 dark:text-amber-500' : ''}
         />
       </div>
 
