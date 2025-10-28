@@ -4,7 +4,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { format, getDate, subMonths, getYear, getMonth } from 'date-fns';
+import { format, getDate, subMonths } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Download, Save, Loader2, RefreshCw, Eye, PlusCircle, Hourglass } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -59,7 +59,6 @@ const formatDateWithOrdinal = (dateString: string | undefined) => {
     return `${dayWithOrdinal} of ${format(adjustedDate, 'MMMM, yyyy')}`;
 }
 
-type GenerationMode = 'manual' | 'timecards';
 interface InvoiceConfig {
     currency: string;
     invoiceTheme: InvoiceTheme;
@@ -80,7 +79,6 @@ export function CreateInvoiceDialog() {
   const [invoicedYear, setInvoicedYear] = useState<number>(lastMonth.getFullYear());
   const [previewImage, setPreviewImage] = useState<string>('');
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [generationMode, setGenerationMode] = useState<GenerationMode>('timecards');
   const [selectedTimecards, setSelectedTimecards] = useState<Record<string, boolean>>({});
   
   const [invoiceConfig, setInvoiceConfig] = useState<InvoiceConfig>({
@@ -139,10 +137,8 @@ export function CreateInvoiceDialog() {
   const filteredTimecards = useMemo(() => {
     if (!unbilledTimecards) return [];
     return unbilledTimecards.filter(tc => {
-        // Parse date as YYYY-MM-DD to avoid timezone issues
-        const [year, month] = tc.date.split('-').map(Number);
-        // getMonth() is 0-indexed, but the month from split is 1-indexed
-        return year === invoicedYear && (month - 1) === invoicedMonth;
+        const tcDate = new Date(tc.date.replace(/-/g, '/'));
+        return tcDate.getFullYear() === invoicedYear && tcDate.getMonth() === invoicedMonth;
     });
   }, [unbilledTimecards, invoicedYear, invoicedMonth]);
 
@@ -327,7 +323,7 @@ export function CreateInvoiceDialog() {
   }, [
       selectedClient, currentProject, invoices, invoiceConfig,
       myCompany, invoicedMonth, invoicedYear, invoiceCreationDate, 
-      generationMode, filteredTimecards, selectedTimecards
+      filteredTimecards, selectedTimecards
     ]);
   
   const generatePreview = useCallback(async () => {
@@ -432,7 +428,6 @@ export function CreateInvoiceDialog() {
         setSelectedClientId(null);
         setSelectedProjectId(null);
         setCurrentProject(null);
-        setGenerationMode('timecards');
         setSelectedTimecards({});
         setIsPreviewOpen(false);
     }
