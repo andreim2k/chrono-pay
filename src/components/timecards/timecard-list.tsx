@@ -38,6 +38,7 @@ export function TimecardList({ timecards }: TimecardListProps) {
   
   const [timecardToEdit, setTimecardToEdit] = useState<Timecard | null>(null);
   const [timecardToDelete, setTimecardToDelete] = useState<Timecard | null>(null);
+  const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
@@ -88,7 +89,7 @@ export function TimecardList({ timecards }: TimecardListProps) {
     deleteDocumentNonBlocking(timecardRef);
     toast({
       title: 'Timecard Deleted',
-      description: `The time entry for ${format(new Date(timecardToDelete.date), 'MMM d, yyyy')} has been deleted.`,
+      description: `The time entry for ${format(new Date(timecardToDelete.date.replace(/-/g, '/')), 'MMM d, yyyy')} has been deleted.`,
     });
     setTimecardToDelete(null);
     setIsAlertOpen(false);
@@ -173,14 +174,8 @@ export function TimecardList({ timecards }: TimecardListProps) {
             <AddTimecardDialog
                 projects={projects || []}
                 clients={clients || []}
-                timecardToEdit={timecardToEdit}
-                isOpen={isEditOpen}
-                onOpenChange={(open) => {
-                setIsEditOpen(open);
-                if (!open) {
-                    setTimecardToEdit(null);
-                }
-                }}
+                isOpen={isAddOpen}
+                onOpenChange={setIsAddOpen}
             />
            </div>
         </CardHeader>
@@ -215,7 +210,7 @@ export function TimecardList({ timecards }: TimecardListProps) {
                         disabled={timecard.status === 'Billed'}
                       />
                   </TableCell>
-                  <TableCell className="font-medium">{format(new Date(timecard.date), 'MMM d, yyyy')}</TableCell>
+                  <TableCell className="font-medium">{format(new Date(timecard.date.replace(/-/g, '/')), 'MMM d, yyyy')}</TableCell>
                   <TableCell>{timecard.clientName}</TableCell>
                   <TableCell>{timecard.projectName}</TableCell>
                   <TableCell>{timecard.hours.toFixed(2)}</TableCell>
@@ -252,12 +247,27 @@ export function TimecardList({ timecards }: TimecardListProps) {
         </CardContent>
       </Card>
       
+      {timecardToEdit && (
+        <AddTimecardDialog
+            projects={projects || []}
+            clients={clients || []}
+            timecardToEdit={timecardToEdit}
+            isOpen={isEditOpen}
+            onOpenChange={(open) => {
+                setIsEditOpen(open);
+                if (!open) {
+                    setTimecardToEdit(null);
+                }
+            }}
+        />
+      )}
+
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the time entry for <span className="font-semibold">{timecardToDelete?.projectName}</span> on <span className="font-semibold">{timecardToDelete ? format(new Date(timecardToDelete.date), 'MMM d, yyyy') : ''}</span>.
+              This action cannot be undone. This will permanently delete the time entry for <span className="font-semibold">{timecardToDelete?.projectName}</span> on <span className="font-semibold">{timecardToDelete ? format(new Date(timecardToDelete.date.replace(/-/g, '/')), 'MMM d, yyyy') : ''}</span>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

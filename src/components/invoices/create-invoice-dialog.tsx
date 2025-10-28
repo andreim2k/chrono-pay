@@ -4,7 +4,6 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { format, getDate, subMonths, getYear, getMonth } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Download, Save, Loader2, RefreshCw, Eye, PlusCircle, Hourglass } from 'lucide-react';
@@ -17,7 +16,6 @@ import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc, setDocum
 import { collection, query, where, doc, writeBatch } from 'firebase/firestore';
 import { InvoiceHtmlPreview, themeStyles } from '@/components/invoices/invoice-html-preview';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Switch } from '../ui/switch';
 import { ScrollArea } from '../ui/scroll-area';
 import { Badge } from '../ui/badge';
 import { Checkbox } from '../ui/checkbox';
@@ -77,13 +75,12 @@ export function CreateInvoiceDialog() {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [manualQuantity, setManualQuantity] = useState<number | ''>('');
   const lastMonth = subMonths(new Date(), 1);
   const [invoicedMonth, setInvoicedMonth] = useState<number>(lastMonth.getMonth());
   const [invoicedYear, setInvoicedYear] = useState<number>(lastMonth.getFullYear());
   const [previewImage, setPreviewImage] = useState<string>('');
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [generationMode, setGenerationMode] = useState<GenerationMode>('manual');
+  const [generationMode, setGenerationMode] = useState<GenerationMode>('timecards');
   const [selectedTimecards, setSelectedTimecards] = useState<Record<string, boolean>>({});
   
   const [invoiceConfig, setInvoiceConfig] = useState<InvoiceConfig>({
@@ -142,8 +139,10 @@ export function CreateInvoiceDialog() {
   const filteredTimecards = useMemo(() => {
     if (!unbilledTimecards) return [];
     return unbilledTimecards.filter(tc => {
-        const tcDate = new Date(tc.date);
-        return getYear(tcDate) === invoicedYear && getMonth(tcDate) === invoicedMonth;
+        // Parse date as YYYY-MM-DD to avoid timezone issues
+        const [year, month] = tc.date.split('-').map(Number);
+        // getMonth() is 0-indexed, but the month from split is 1-indexed
+        return year === invoicedYear && (month - 1) === invoicedMonth;
     });
   }, [unbilledTimecards, invoicedYear, invoicedMonth]);
 
@@ -151,128 +150,99 @@ export function CreateInvoiceDialog() {
     return clients?.find(c => c.id === selectedClientId) || null;
   }, [selectedClientId, clients]);
 
-  // Effect to reset project-specific fields when client changes
-  useEffect(() => {
-    setSelectedProjectId(null);
-    setCurrentProject(null);
-  }, [selectedClientId]);
-
   // When project ID changes, find the full project object
   useEffect(() => {
-    if (selectedProjectId && projectsForClient) {
-      const project = projectsForClient.find(p => p.id === selectedProjectId);
-      setCurrentProject(project || null);
-    } else {
-      setCurrentProject(null);
-    }
-     // Reset quantity and timecards whenever project changes
-    setManualQuantity('');
-    setSelectedTimecards({});
+      if (selectedProjectId) {
+          const project = projectsForClient?.find(p => p.id === selectedProjectId);
+          setCurrentProject(project || null);
+      } else {
+          setCurrentProject(null);
+      }
+      setSelectedTimecards({});
   }, [selectedProjectId, projectsForClient]);
-
 
   // Effect to fetch rates and update config when the final `currentProject` object is stable.
   useEffect(() => {
-    if (!currentProject) {
-      // If no project, reset to a default config.
-      setInvoiceConfig({
-        currency: 'EUR',
-        invoiceTheme: 'Classic',
-        exchangeRate: undefined,
-        exchangeRateDate: undefined,
-        usedMaxRate: false,
-        isFetchingRate: false,
-      });
-      return;
-    }
-
-    const newCurrency = currentProject.currency || 'EUR';
-    const newTheme = currentProject.invoiceTheme || 'Classic';
-
-    const fetchRate = async () => {
-      // Start fetching, update config immediately with known values and loading state.
-      setInvoiceConfig({
-        currency: newCurrency,
-        invoiceTheme: newTheme,
-        exchangeRate: undefined,
-        exchangeRateDate: undefined,
-        usedMaxRate: false,
-        isFetchingRate: true,
-      });
-
-      if (newCurrency === 'RON') {
-        setInvoiceConfig(prev => ({
-          ...prev,
-          exchangeRate: 1,
-          exchangeRateDate: new Date().toISOString().split('T')[0],
-          isFetchingRate: false,
-        }));
-        return;
-      }
-
-      if (currentProject.maxExchangeRate && currentProject.maxExchangeRateDate) {
-        setInvoiceConfig(prev => ({
-          ...prev,
-          exchangeRate: currentProject.maxExchangeRate,
-          exchangeRateDate: currentProject.maxExchangeRateDate,
-          usedMaxRate: true,
-          isFetchingRate: false,
-        }));
-        toast({
-          title: 'Fixed Exchange Rate Applied',
-          description: `Using fixed project exchange rate of ${currentProject.maxExchangeRate.toFixed(4)} RON.`,
-        });
-        return;
-      }
-
-      try {
-        const result = await getExchangeRate({ currency: newCurrency });
-        if (result.rate && result.date) {
-          setInvoiceConfig(prev => ({
-            ...prev,
-            exchangeRate: result.rate,
-            exchangeRateDate: result.date,
-            isFetchingRate: false,
-          }));
-          toast({
-            title: 'Exchange Rate Fetched',
-            description: `BNR rate for ${formatDateWithOrdinal(result.date)}: 1 ${newCurrency} = ${result.rate.toFixed(4)} RON.`,
+      if (!currentProject) {
+          // If no project, reset to a default config.
+          setInvoiceConfig({
+              currency: 'EUR',
+              invoiceTheme: 'Classic',
+              exchangeRate: undefined,
+              exchangeRateDate: undefined,
+              usedMaxRate: false,
+              isFetchingRate: false,
           });
-        } else {
-          throw new Error('Rate not found');
-        }
-      } catch (error) {
-        setInvoiceConfig(prev => ({ ...prev, isFetchingRate: false }));
-        toast({
-          variant: 'destructive',
-          title: 'Error Fetching Rate',
-          description: 'Could not fetch the exchange rate from BNR.',
-        });
+          return;
       }
-    };
 
-    fetchRate();
+      const newCurrency = currentProject.currency || 'EUR';
+      const newTheme = currentProject.invoiceTheme || 'Classic';
+
+      const fetchRate = async () => {
+          // Start fetching, update config immediately with known values and loading state.
+          setInvoiceConfig({
+              currency: newCurrency,
+              invoiceTheme: newTheme,
+              exchangeRate: undefined,
+              exchangeRateDate: undefined,
+              usedMaxRate: false,
+              isFetchingRate: true,
+          });
+
+          if (newCurrency === 'RON') {
+              setInvoiceConfig(prev => ({
+                  ...prev,
+                  exchangeRate: 1,
+                  exchangeRateDate: new Date().toISOString().split('T')[0],
+                  isFetchingRate: false,
+              }));
+              return;
+          }
+
+          if (currentProject.maxExchangeRate && currentProject.maxExchangeRateDate) {
+              setInvoiceConfig(prev => ({
+                  ...prev,
+                  exchangeRate: currentProject.maxExchangeRate,
+                  exchangeRateDate: currentProject.maxExchangeRateDate,
+                  usedMaxRate: true,
+                  isFetchingRate: false,
+              }));
+              toast({
+                  title: 'Fixed Exchange Rate Applied',
+                  description: `Using fixed project exchange rate of ${currentProject.maxExchangeRate.toFixed(4)} RON.`,
+              });
+              return;
+          }
+
+          try {
+              const result = await getExchangeRate({ currency: newCurrency });
+              if (result.rate && result.date) {
+                  setInvoiceConfig(prev => ({
+                      ...prev,
+                      exchangeRate: result.rate,
+                      exchangeRateDate: result.date,
+                      isFetchingRate: false,
+                  }));
+                  toast({
+                      title: 'Exchange Rate Fetched',
+                      description: `BNR rate for ${formatDateWithOrdinal(result.date)}: 1 ${newCurrency} = ${result.rate.toFixed(4)} RON.`,
+                  });
+              } else {
+                  throw new Error('Rate not found');
+              }
+          } catch (error) {
+              setInvoiceConfig(prev => ({ ...prev, isFetchingRate: false }));
+              toast({
+                  variant: 'destructive',
+                  title: 'Error Fetching Rate',
+                  description: 'Could not fetch the exchange rate from BNR.',
+              });
+          }
+      };
+
+      fetchRate();
   }, [currentProject, toast]);
-  
-
-  useEffect(() => {
-    // Debounced toast for manual quantity entry
-    if (typeof manualQuantity !== 'number' || manualQuantity <= 0 || !currentProject?.rate) {
-      return;
-    }
-    const handler = setTimeout(() => {
-        if(currentProject?.rate) { // Extra check to ensure project data is available
-            toast({
-                title: 'Project Rate Applied',
-                description: `Using rate: ${currentProject.rate} ${invoiceConfig.currency} / ${currentProject.rateType || 'day'}`,
-            });
-        }
-    }, 1000);
-
-    return () => {
-        clearTimeout(handler);
-    };
-  }, [manualQuantity, currentProject, invoiceConfig.currency, toast]);
   
   const generateInvoiceNumber = (project: Project, allInvoices: Invoice[]) => {
     const prefix = project.invoiceNumberPrefix || project.name.split(' ').map(word => word[0]).join('').toUpperCase();
@@ -290,44 +260,31 @@ export function CreateInvoiceDialog() {
     const description = `${currentProject.name}: Consultancy services for ${format(servicePeriod, 'MMMM yyyy')}`;
     const projectRate = currentProject.rate;
 
-    if (generationMode === 'timecards') {
-        const totalHours = filteredTimecards.reduce((acc, tc) => selectedTimecards[tc.id] ? acc + tc.hours : acc, 0);
-        billedTimecardIds = filteredTimecards.filter(tc => selectedTimecards[tc.id]).map(tc => tc.id);
-        
-        if (billedTimecardIds.length === 0 || typeof projectRate !== 'number') return null;
-        
-        let quantity: number;
-        let unit: string;
-        
-        if (currentProject.rateType === 'hourly') {
-            quantity = totalHours;
-            unit = 'hours';
-            subtotal = totalHours * projectRate;
-        } else { // daily
-            quantity = totalHours / 8; // Assuming 8 hours/day
-            unit = 'days';
-            subtotal = quantity * projectRate;
-        }
-        
-        items = [{
-          description,
-          quantity,
-          unit,
-          rate: projectRate,
-          amount: subtotal,
-        }];
-
-    } else { // manual mode
-        if (typeof manualQuantity !== 'number' || manualQuantity <= 0 || typeof projectRate !== 'number') return null;
-        subtotal = manualQuantity * projectRate;
-        items = [{
-          description,
-          quantity: manualQuantity,
-          unit: currentProject.rateType === 'hourly' ? 'hours' : 'days',
-          rate: projectRate,
-          amount: subtotal,
-        }];
+    const totalHours = filteredTimecards.reduce((acc, tc) => selectedTimecards[tc.id] ? acc + tc.hours : acc, 0);
+    billedTimecardIds = filteredTimecards.filter(tc => selectedTimecards[tc.id]).map(tc => tc.id);
+    
+    if (billedTimecardIds.length === 0 || typeof projectRate !== 'number') return null;
+    
+    let quantity: number;
+    let unit: string;
+    
+    if (currentProject.rateType === 'hourly') {
+        quantity = totalHours;
+        unit = 'hours';
+        subtotal = totalHours * projectRate;
+    } else { // daily
+        quantity = totalHours / 8; // Assuming 8 hours/day
+        unit = 'days';
+        subtotal = quantity * projectRate;
     }
+    
+    items = [{
+      description,
+      quantity,
+      unit,
+      rate: projectRate,
+      amount: subtotal,
+    }];
 
     const vatAmount = currentProject.hasVat ? subtotal * (myCompany?.companyVatRate || 0) : 0;
     const total = subtotal + vatAmount;
@@ -368,7 +325,7 @@ export function CreateInvoiceDialog() {
 
     return data;
   }, [
-      selectedClient, currentProject, invoices, manualQuantity, invoiceConfig,
+      selectedClient, currentProject, invoices, invoiceConfig,
       myCompany, invoicedMonth, invoicedYear, invoiceCreationDate, 
       generationMode, filteredTimecards, selectedTimecards
     ]);
@@ -475,8 +432,7 @@ export function CreateInvoiceDialog() {
         setSelectedClientId(null);
         setSelectedProjectId(null);
         setCurrentProject(null);
-        setManualQuantity('');
-        setGenerationMode('manual');
+        setGenerationMode('timecards');
         setSelectedTimecards({});
         setIsPreviewOpen(false);
     }
@@ -495,9 +451,9 @@ export function CreateInvoiceDialog() {
   const availableClients = clients || [];
   
   const totalHoursFromTimecards = useMemo(() => {
-    if (generationMode !== 'timecards' || !filteredTimecards) return 0;
+    if (!filteredTimecards) return 0;
     return filteredTimecards.reduce((acc, tc) => selectedTimecards[tc.id] ? acc + tc.hours : acc, 0);
-  }, [generationMode, filteredTimecards, selectedTimecards]);
+  }, [filteredTimecards, selectedTimecards]);
 
 
   const totalRonDisplay = useMemo(() => {
@@ -523,7 +479,7 @@ export function CreateInvoiceDialog() {
           <DialogHeader className="px-1">
             <DialogTitle>Create New Invoice</DialogTitle>
             <DialogDescription>
-              Select a client and enter details to generate a new invoice.
+              Select a client and project to generate an invoice from unbilled timecards.
             </DialogDescription>
           </DialogHeader>
 
@@ -604,33 +560,7 @@ export function CreateInvoiceDialog() {
                         </Select>
                       </div>
                     </div>
-                <div className="flex items-center space-x-2 rounded-lg border p-3 shadow-sm">
-                  <Switch id="generation-mode" checked={generationMode === 'timecards'} onCheckedChange={(checked) => setGenerationMode(checked ? 'timecards' : 'manual')} />
-                  <Label htmlFor="generation-mode">Generate from Unbilled Timecards</Label>
-                </div>
-
-                {generationMode === 'manual' ? (
-                  <div className="grid grid-cols-1 gap-4 items-end">
-                    <div className="space-y-2">
-                      <Label htmlFor="manual-quantity" className="mb-2 block">
-                        Quantity ({currentProject?.rateType === 'hourly' ? 'Hours' : 'Days'})
-                      </Label>
-                      <Input
-                        id="manual-quantity"
-                        type="number"
-                        value={manualQuantity}
-                        onChange={(e) => setManualQuantity(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                        onBlur={(e) => {
-                          if (e.target.value === '') {
-                            setManualQuantity('');
-                          }
-                        }}
-                        min="0"
-                        placeholder={`e.g., 20 ${currentProject?.rateType === 'hourly' ? 'hours' : 'days'}`}
-                      />
-                    </div>
-                  </div>
-                ) : (
+                
                   <div className="space-y-4">
                     <div className="p-3 bg-muted/50 rounded-lg text-sm flex items-center justify-between">
                       <div className='flex items-center'>
@@ -657,7 +587,7 @@ export function CreateInvoiceDialog() {
                                   <div className='flex items-center gap-3'>
                                     <Checkbox id={`tc-${tc.id}`} checked={!!selectedTimecards[tc.id]} onCheckedChange={(checked) => setSelectedTimecards(prev => ({ ...prev, [tc.id]: !!checked }))} />
                                     <div>
-                                      <p className='font-medium'>{format(new Date(tc.date), 'MMM d, yyyy')}</p>
+                                      <p className='font-medium'>{format(new Date(tc.date.replace(/-/g, '/')), 'MMM d, yyyy')}</p>
                                       <p className='text-xs text-muted-foreground'>{tc.description || 'No description'}</p>
                                     </div>
                                   </div>
@@ -674,8 +604,7 @@ export function CreateInvoiceDialog() {
                       </CardContent>
                     </Card>
                   </div>
-                )}
-
+                
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                   <div className="space-y-2 md:col-span-1">
                     <Label htmlFor="currency-select" className="mb-2 block">Currency</Label>
