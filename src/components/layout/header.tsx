@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ThemeToggle } from './theme-toggle';
 import { LogOut, Menu, LayoutDashboard, FileText, BarChart, Settings as SettingsIcon, Clock } from 'lucide-react';
-import { ChronoSapientPayLogo } from '../icons';
+import { ChronoSapientWorkPayLogo } from '../icons';
 import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
 import { MainNav } from './main-nav';
 import { useAuth, useUser } from '@/firebase';
@@ -25,8 +25,8 @@ import { useRouter } from 'next/navigation';
 
 const mainNav = [
     { name: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard /> },
-    { name: 'Timecards', href: '/timecards', icon: <Clock /> },
     { name: 'Invoices', href: '/invoices', icon: <FileText /> },
+    { name: 'Timecards', href: '/timecards', icon: <Clock /> },
     { name: 'Reports', href: '/reports', icon: <BarChart /> },
     { name: 'Settings', href: '/settings', icon: <SettingsIcon /> },
 ];
@@ -52,8 +52,8 @@ export function Header() {
           href="/dashboard"
           className="flex items-center gap-2 text-lg font-semibold md:text-base"
         >
-          <ChronoSapientPayLogo className="h-8 w-8 text-primary" />
-          <span className="">ChronoSapient Pay</span>
+          <ChronoSapientWorkPayLogo className="h-8 w-8 text-primary" />
+          <span className="">ChronoSapient WorkPay</span>
         </Link>
         <MainNav navItems={mainNav} />
       </nav>
@@ -75,8 +75,8 @@ export function Header() {
               href="/dashboard"
               className="flex items-center gap-2 text-lg font-semibold"
             >
-              <ChronoSapientPayLogo className="h-8 w-8 text-primary" />
-              <span className="">ChronoSapient Pay</span>
+              <ChronoSapientWorkPayLogo className="h-8 w-8 text-primary" />
+              <span className="">ChronoSapient WorkPay</span>
             </Link>
             {mainNav.map(item => (
                 <Link

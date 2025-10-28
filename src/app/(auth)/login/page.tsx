@@ -66,7 +66,7 @@ export default function LoginPage() {
         
         toast({
             title: "Account Initialized",
-            description: "Welcome to ChronoSapient Pay! Please fill in your company details in Settings.",
+            description: "Welcome to ChronoSapient WorkPay! Please fill in your company details in Settings.",
         });
       } else {
         toast({
@@ -102,8 +102,8 @@ export default function LoginPage() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Sign In to ChronoSapient Pay</CardTitle>
-        <CardDescription>Welcome! ChronoSapient Pay is your streamlined solution for invoicing. Sign in to manage your clients, projects, and billing with ease.</CardDescription>
+        <CardTitle>Sign In to ChronoSapient WorkPay</CardTitle>
+        <CardDescription>Welcome! ChronoSapient WorkPay is your streamlined solution for invoicing. Sign in to manage your clients, projects, and billing with ease.</CardDescription>
       </CardHeader>
       <CardContent>
         <Button 

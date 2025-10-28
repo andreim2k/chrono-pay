@@ -12,7 +12,7 @@ interface DataExportProps {
   buttonLabel?: string;
 }
 
-export function DataExport({ data, fileName = 'chronosapientpay_backup.json', buttonLabel = 'Export Data' }: DataExportProps) {
+export function DataExport({ data, fileName = 'chronosapientworkpay_backup.json', buttonLabel = 'Export Data' }: DataExportProps) {
   const { toast } = useToast();
 
   const handleExport = () => {
