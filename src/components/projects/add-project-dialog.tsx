@@ -81,8 +81,12 @@ export function AddProjectDialog() {
       clientId: '',
       invoiceTheme: 'Classic',
       currency: 'EUR',
+      invoiceNumberPrefix: '',
       hasVat: false,
       rateType: 'daily',
+      rate: undefined,
+      maxExchangeRate: undefined,
+      maxExchangeRateDate: undefined,
     },
   });
 
@@ -196,7 +200,7 @@ export function AddProjectDialog() {
                       render={({ field: rateField }) => (
                         <FormItem>
                           <FormControl>
-                            <Input type="number" placeholder="e.g., 500" {...rateField} />
+                            <Input type="number" placeholder="e.g., 500" {...rateField} value={rateField.value ?? ''} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -264,7 +268,7 @@ export function AddProjectDialog() {
                     <FormItem>
                       <FormLabel>Invoice Number Prefix</FormLabel>
                       <FormControl>
-                        <Input placeholder={suggestedPrefix ? `e.g., ${suggestedPrefix}` : 'e.g. CP-'} {...field} />
+                        <Input placeholder={suggestedPrefix ? `e.g., ${suggestedPrefix}` : 'e.g. CP-'} {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -280,7 +284,7 @@ export function AddProjectDialog() {
                             <FormItem>
                             <FormLabel>Fixed Exchange Rate (RON)</FormLabel>
                             <FormControl>
-                                <Input type="number" placeholder="e.g., 5.0" {...field} />
+                                <Input type="number" placeholder="e.g., 5.0" {...field} value={field.value ?? ''} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>
