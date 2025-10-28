@@ -235,18 +235,18 @@ export function CreateInvoiceDialog() {
   // Debounced toast for rate
   useEffect(() => {
     if (typeof manualQuantity === 'number' && manualQuantity > 0 && selectedProject?.rate) {
-      const handler = setTimeout(() => {
-        toast({
-          title: 'Project Rate Applied',
-          description: `Using rate: ${selectedProject.rate} ${selectedProject.currency || 'EUR'} / ${selectedProject.rateType || 'day'}`,
-        });
-      }, 1000);
+        const handler = setTimeout(() => {
+            toast({
+                title: 'Project Rate Applied',
+                description: `Using rate: ${selectedProject.rate} ${selectedProject.currency || 'EUR'} / ${selectedProject.rateType || 'day'}`,
+            });
+        }, 1000);
 
-      return () => {
-        clearTimeout(handler);
-      };
+        return () => {
+            clearTimeout(handler);
+        };
     }
-  }, [manualQuantity, selectedProject, toast]);
+}, [manualQuantity, selectedProject, toast]);
 
 
 
@@ -255,8 +255,11 @@ export function CreateInvoiceDialog() {
   }, [selectedClientId])
 
   useEffect(() => {
-    setManualQuantity(0); // Reset quantity when project changes
-    setSelectedTimecards({}); // Reset timecards when project changes
+    // This effect runs when selectedProjectId changes.
+    // We reset the manual quantity and timecard selections
+    // to ensure a clean state for the new project context.
+    setManualQuantity(0);
+    setSelectedTimecards({});
   }, [selectedProjectId]);
   
   const generateInvoiceNumber = (project: Project, allInvoices: Invoice[]) => {
@@ -786,3 +789,5 @@ export function CreateInvoiceDialog() {
     </>
   );
 }
+
+    
