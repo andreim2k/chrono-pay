@@ -13,7 +13,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import type { Client, Invoice, Project, InvoiceTheme, User, Timecard } from '@/lib/types';
 import { getExchangeRate } from '@/ai/flows/get-exchange-rate';
-import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
+import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc, setDocumentNonBlocking } from '@/firebase';
 import { collection, query, where, doc, writeBatch } from 'firebase/firestore';
 import { InvoiceHtmlPreview, themeStyles } from '@/components/invoices/invoice-html-preview';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -75,6 +75,7 @@ export function CreateInvoiceDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [manualQuantity, setManualQuantity] = useState<number | ''>('');
   const lastMonth = subMonths(new Date(), 1);
@@ -150,39 +151,45 @@ export function CreateInvoiceDialog() {
     return clients?.find(c => c.id === selectedClientId) || null;
   }, [selectedClientId, clients]);
 
-  const selectedProject = useMemo(() => {
-    return projectsForClient?.find(p => p.id === selectedProjectId) || null;
-  }, [selectedProjectId, projectsForClient]);
-
   // Effect to reset project-specific fields when client changes
   useEffect(() => {
     setSelectedProjectId(null);
+    setCurrentProject(null);
   }, [selectedClientId]);
 
-  // Effect to reset quantity and timecards when project changes
+  // New state management: This effect watches for the project ID to change.
+  // When it does, it finds the full project object and sets it to a dedicated state.
   useEffect(() => {
+    if (selectedProjectId && projectsForClient) {
+      const project = projectsForClient.find(p => p.id === selectedProjectId);
+      setCurrentProject(project || null);
+    } else {
+      setCurrentProject(null);
+    }
+     // Reset quantity and timecards whenever project changes
     setManualQuantity('');
     setSelectedTimecards({});
-  }, [selectedProjectId]);
+  }, [selectedProjectId, projectsForClient]);
 
-  // This is the main controlling effect. It runs ONLY when the selectedProject object becomes available or changes.
+
+  // This is the main controlling effect. It runs ONLY when the stable `currentProject` object changes.
   useEffect(() => {
-    if (!selectedProject) {
-        // If no project is selected (e.g., client changed, or initial state), reset to a default config.
-        setInvoiceConfig({
-            currency: 'EUR',
-            invoiceTheme: 'Classic',
-            exchangeRate: undefined,
-            exchangeRateDate: undefined,
-            usedMaxRate: false,
-            isFetchingRate: false,
-        });
-        return;
+    if (!currentProject) {
+      // If no project, reset to a default config.
+      setInvoiceConfig({
+        currency: 'EUR',
+        invoiceTheme: 'Classic',
+        exchangeRate: undefined,
+        exchangeRateDate: undefined,
+        usedMaxRate: false,
+        isFetchingRate: false,
+      });
+      return;
     }
-    
+
     // A project is selected, fetch its details and rates.
-    const newCurrency = selectedProject.currency || 'EUR';
-    const newTheme = selectedProject.invoiceTheme || 'Classic';
+    const newCurrency = currentProject.currency || 'EUR';
+    const newTheme = currentProject.invoiceTheme || 'Classic';
 
     const fetchRate = async () => {
       // Start fetching, update config immediately with known values and loading state.
@@ -205,17 +212,17 @@ export function CreateInvoiceDialog() {
         return;
       }
 
-      if (selectedProject.maxExchangeRate && selectedProject.maxExchangeRateDate) {
+      if (currentProject.maxExchangeRate && currentProject.maxExchangeRateDate) {
         setInvoiceConfig(prev => ({
           ...prev,
-          exchangeRate: selectedProject.maxExchangeRate,
-          exchangeRateDate: selectedProject.maxExchangeRateDate,
+          exchangeRate: currentProject.maxExchangeRate,
+          exchangeRateDate: currentProject.maxExchangeRateDate,
           usedMaxRate: true,
           isFetchingRate: false,
         }));
         toast({
           title: 'Fixed Exchange Rate Applied',
-          description: `Using fixed project exchange rate of ${selectedProject.maxExchangeRate.toFixed(4)} RON.`,
+          description: `Using fixed project exchange rate of ${currentProject.maxExchangeRate.toFixed(4)} RON.`,
         });
         return;
       }
@@ -247,20 +254,19 @@ export function CreateInvoiceDialog() {
     };
 
     fetchRate();
-  // This effect correctly depends on the final project object.
-  }, [selectedProject, toast]); 
+  }, [currentProject, toast]); // This effect correctly depends on the final project object.
   
 
   useEffect(() => {
     // Debounced toast for manual quantity entry
-    if (typeof manualQuantity !== 'number' || manualQuantity <= 0 || !selectedProject?.rate) {
+    if (typeof manualQuantity !== 'number' || manualQuantity <= 0 || !currentProject?.rate) {
       return;
     }
     const handler = setTimeout(() => {
-        if(selectedProject?.rate) { // Extra check to ensure project data is available
+        if(currentProject?.rate) { // Extra check to ensure project data is available
             toast({
                 title: 'Project Rate Applied',
-                description: `Using rate: ${selectedProject.rate} ${invoiceConfig.currency} / ${selectedProject.rateType || 'day'}`,
+                description: `Using rate: ${currentProject.rate} ${invoiceConfig.currency} / ${currentProject.rateType || 'day'}`,
             });
         }
     }, 1000);
@@ -268,7 +274,7 @@ export function CreateInvoiceDialog() {
     return () => {
         clearTimeout(handler);
     };
-  }, [manualQuantity, selectedProject, invoiceConfig.currency, toast]);
+  }, [manualQuantity, currentProject, invoiceConfig.currency, toast]);
   
   const generateInvoiceNumber = (project: Project, allInvoices: Invoice[]) => {
     const prefix = project.invoiceNumberPrefix || project.name.split(' ').map(word => word[0]).join('').toUpperCase();
@@ -279,12 +285,12 @@ export function CreateInvoiceDialog() {
   };
 
   const invoiceData: Omit<Invoice, 'id'> | null = useMemo(() => {
-    if (!selectedClient || !selectedProject || !myCompany || !invoices ) return null;
+    if (!selectedClient || !currentProject || !myCompany || !invoices ) return null;
 
     let items: Invoice['items'], subtotal: number, billedTimecardIds: string[] = [];
     const servicePeriod = new Date(invoicedYear, invoicedMonth);
-    const description = `${selectedProject.name}: Consultancy services for ${format(servicePeriod, 'MMMM yyyy')}`;
-    const projectRate = selectedProject.rate;
+    const description = `${currentProject.name}: Consultancy services for ${format(servicePeriod, 'MMMM yyyy')}`;
+    const projectRate = currentProject.rate;
 
     if (generationMode === 'timecards') {
         const totalHours = filteredTimecards.reduce((acc, tc) => selectedTimecards[tc.id] ? acc + tc.hours : acc, 0);
@@ -295,7 +301,7 @@ export function CreateInvoiceDialog() {
         let quantity: number;
         let unit: string;
         
-        if (selectedProject.rateType === 'hourly') {
+        if (currentProject.rateType === 'hourly') {
             quantity = totalHours;
             unit = 'hours';
             subtotal = totalHours * projectRate;
@@ -319,18 +325,18 @@ export function CreateInvoiceDialog() {
         items = [{
           description,
           quantity: manualQuantity,
-          unit: selectedProject.rateType === 'hourly' ? 'hours' : 'days',
+          unit: currentProject.rateType === 'hourly' ? 'hours' : 'days',
           rate: projectRate,
           amount: subtotal,
         }];
     }
 
-    const vatAmount = selectedProject.hasVat ? subtotal * (myCompany?.companyVatRate || 0) : 0;
+    const vatAmount = currentProject.hasVat ? subtotal * (myCompany?.companyVatRate || 0) : 0;
     const total = subtotal + vatAmount;
     const totalRon = invoiceConfig.exchangeRate ? total * invoiceConfig.exchangeRate : undefined;
     
     const data: Omit<Invoice, 'id'> & { vatRate?: number } = {
-      invoiceNumber: generateInvoiceNumber(selectedProject, invoices),
+      invoiceNumber: generateInvoiceNumber(currentProject, invoices),
       companyName: myCompany.companyName!,
       companyAddress: myCompany.companyAddress!,
       companyVat: myCompany.companyVat!,
@@ -340,8 +346,8 @@ export function CreateInvoiceDialog() {
       clientName: selectedClient.name,
       clientAddress: selectedClient.address,
       clientVat: selectedClient.vat,
-      projectId: selectedProject.id,
-      projectName: selectedProject.name,
+      projectId: currentProject.id,
+      projectName: currentProject.name,
       date: format(invoiceCreationDate, 'yyyy-MM-dd'),
       currency: invoiceConfig.currency,
       language: selectedClient.language || 'English',
@@ -358,13 +364,13 @@ export function CreateInvoiceDialog() {
       billedTimecardIds,
     };
     
-    if (selectedProject.hasVat && myCompany.companyVatRate) {
+    if (currentProject.hasVat && myCompany.companyVatRate) {
         data.vatRate = myCompany.companyVatRate;
     }
 
     return data;
   }, [
-      selectedClient, selectedProject, invoices, manualQuantity, invoiceConfig,
+      selectedClient, currentProject, invoices, manualQuantity, invoiceConfig,
       myCompany, invoicedMonth, invoicedYear, invoiceCreationDate, 
       generationMode, filteredTimecards, selectedTimecards
     ]);
@@ -470,6 +476,7 @@ export function CreateInvoiceDialog() {
     if (!isOpen) {
         setSelectedClientId(null);
         setSelectedProjectId(null);
+        setCurrentProject(null);
         setManualQuantity('');
         setGenerationMode('manual');
         setSelectedTimecards({});
@@ -607,7 +614,7 @@ export function CreateInvoiceDialog() {
                   <div className="grid grid-cols-1 gap-4 items-end">
                     <div className="space-y-2">
                       <Label htmlFor="manual-quantity" className="mb-2 block">
-                        Quantity ({selectedProject?.rateType === 'hourly' ? 'Hours' : 'Days'})
+                        Quantity ({currentProject?.rateType === 'hourly' ? 'Hours' : 'Days'})
                       </Label>
                       <Input
                         id="manual-quantity"
@@ -620,7 +627,7 @@ export function CreateInvoiceDialog() {
                           }
                         }}
                         min="0"
-                        placeholder={`e.g., 20 ${selectedProject?.rateType === 'hourly' ? 'hours' : 'days'}`}
+                        placeholder={`e.g., 20 ${currentProject?.rateType === 'hourly' ? 'hours' : 'days'}`}
                       />
                     </div>
                   </div>
@@ -674,7 +681,7 @@ export function CreateInvoiceDialog() {
                   <div className="space-y-2 md:col-span-1">
                     <Label htmlFor="currency-select" className="mb-2 block">Currency</Label>
                     <div className="flex items-center gap-2">
-                      <Select value={invoiceConfig.currency} onValueChange={(c) => setInvoiceConfig(prev => ({...prev, currency: c }))} disabled={!!selectedProject?.maxExchangeRate}>
+                      <Select value={invoiceConfig.currency} onValueChange={(c) => setInvoiceConfig(prev => ({...prev, currency: c }))} disabled={!!currentProject?.maxExchangeRate}>
                         <SelectTrigger id="currency-select">
                           <SelectValue placeholder="Select currency" />
                         </SelectTrigger>
@@ -686,7 +693,7 @@ export function CreateInvoiceDialog() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <Button variant="ghost" size="icon" onClick={() => { /* This might be deprecated by auto-fetch */ }} disabled={invoiceConfig.isFetchingRate || invoiceConfig.currency === 'RON' || !!selectedProject?.maxExchangeRate}>
+                      <Button variant="ghost" size="icon" onClick={() => { /* This might be deprecated by auto-fetch */ }} disabled={invoiceConfig.isFetchingRate || invoiceConfig.currency === 'RON' || !!currentProject?.maxExchangeRate}>
                         {invoiceConfig.isFetchingRate ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                       </Button>
                     </div>
