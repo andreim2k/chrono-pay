@@ -1,7 +1,8 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useMemo, useCallback } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { TimecardList } from '@/components/timecards/timecard-list';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { Timecard, Client, Project } from '@/lib/types';
@@ -15,11 +16,14 @@ const months = Array.from({ length: 12 }, (_, i) => ({ value: i, label: new Date
 export default function TimecardsPage() {
   const firestore = useFirestore();
   const { user } = useUser();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
-  const [selectedClientId, setSelectedClientId] = useState<string>('all');
-  const [selectedProjectId, setSelectedProjectId] = useState<string>('all');
-  const [selectedYear, setSelectedYear] = useState<string>('all');
-  const [selectedMonth, setSelectedMonth] = useState<string>('all');
+  const selectedClientId = searchParams.get('clientId') || 'all';
+  const selectedProjectId = searchParams.get('projectId') || 'all';
+  const selectedYear = searchParams.get('year') || 'all';
+  const selectedMonth = searchParams.get('month') || 'all';
 
   const timecardsQuery = useMemoFirebase(
     () => (firestore && user ? query(collection(firestore, `users/${user.uid}/timecards`), orderBy('date', 'desc')) : null),
@@ -38,6 +42,30 @@ export default function TimecardsPage() {
     [firestore, user]
   );
   const { data: projects } = useCollection<Project>(projectsQuery, `users/${user?.uid}/projects`);
+
+  const createQueryString = useCallback(
+    (name: string, value: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (value === 'all') {
+        params.delete(name);
+      } else {
+        params.set(name, value);
+      }
+      return params.toString();
+    },
+    [searchParams]
+  );
+
+  const handleFilterChange = (filterName: string, value: string) => {
+    let queryString = createQueryString(filterName, value);
+    if (filterName === 'clientId') {
+      const newParams = new URLSearchParams(queryString);
+      newParams.delete('projectId');
+      queryString = newParams.toString();
+    }
+    router.push(`${pathname}?${queryString}`);
+  };
+
 
   const availableYears = useMemo(() => {
     if (!timecards) return [];
@@ -62,10 +90,6 @@ export default function TimecardsPage() {
     });
   }, [timecards, selectedClientId, selectedProjectId, selectedYear, selectedMonth]);
 
-  useEffect(() => {
-    setSelectedProjectId('all');
-  }, [selectedClientId]);
-
   return (
     <div className="space-y-6">
       <div>
@@ -77,28 +101,28 @@ export default function TimecardsPage() {
       <Card>
         <CardContent className="p-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+            <Select value={selectedClientId} onValueChange={(value) => handleFilterChange('clientId', value)}>
               <SelectTrigger><SelectValue placeholder="Filter by Client" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Clients</SelectItem>
                 {clients?.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={selectedProjectId} onValueChange={setSelectedProjectId} disabled={selectedClientId === 'all' && projectsForClient.length === 0}>
+            <Select value={selectedProjectId} onValueChange={(value) => handleFilterChange('projectId', value)} disabled={selectedClientId === 'all' && projectsForClient.length === 0}>
               <SelectTrigger><SelectValue placeholder="Filter by Project" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Projects</SelectItem>
                 {projectsForClient?.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={selectedYear} onValueChange={setSelectedYear}>
+            <Select value={selectedYear} onValueChange={(value) => handleFilterChange('year', value)}>
               <SelectTrigger><SelectValue placeholder="Filter by Year" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Years</SelectItem>
                 {availableYears.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <Select value={selectedMonth} onValueChange={(value) => handleFilterChange('month', value)}>
               <SelectTrigger><SelectValue placeholder="Filter by Month" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Months</SelectItem>
