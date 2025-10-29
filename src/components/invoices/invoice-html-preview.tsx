@@ -622,7 +622,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                 <h1 className="text-4xl font-bold" style={{ letterSpacing: '-0.01em' }}>{companyName}</h1>
                 <div className="text-sm mt-2 opacity-90 space-y-px">
                   <p>{companyAddress}</p>
-                   {companyBankName && <p><span className="font-semibold">{t.bank}:</span> {companyBankName}</p>}
+                  {companyBankName && <p><span className="font-semibold">{t.bank}:</span> {companyBankName}</p>}
                   {companyIban && <p><span className="font-semibold">{t.iban}:</span> {companyIban}</p>}
                   {companySwift && <p><span className="font-semibold">{t.swift}:</span> {companySwift}</p>}
                   {companyPhone && <p>{t.phone}: {companyPhone}</p>}
@@ -642,7 +642,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                 <div style={{ backgroundColor: styles.secondaryBg }} className='p-6 rounded'>
                     <p className={cn('text-xs font-bold uppercase mb-3', styles.headerTextClass)}>{t.billedTo}</p>
                     <p className='font-bold text-gray-900'>{clientName}</p>
-                    <div className='text-gray-600 text-sm'>
+                    <div className='text-gray-600 text-sm space-y-px'>
                         <p>{clientAddress}</p>
                         {clientVat && <p>{t.vatId}: {clientVat}</p>}
                         {clientBankName && <p><span className="font-semibold">{t.bank}:</span> {clientBankName}</p>}
