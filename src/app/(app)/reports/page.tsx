@@ -16,6 +16,7 @@ import { VatChart } from '@/components/reports/vat-chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getYear, parseISO } from 'date-fns';
 import { HoursPerProjectChart } from '@/components/reports/hours-per-project-chart';
+import { VatChartYearly } from '@/components/reports/vat-chart-yearly';
 
 export default function ReportsPage() {
   const firestore = useFirestore();
@@ -149,8 +150,9 @@ export default function ReportsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <RevenueChart invoices={filteredInvoices || []} />
-        <VatChart invoices={filteredInvoices || []} selectedYear={selectedYear} />
         <InvoiceStatusChart invoices={filteredInvoices || []} />
+        <VatChart invoices={filteredInvoices || []} selectedYear={selectedYear} />
+        <VatChartYearly invoices={allInvoices} />
         <HoursPerProjectChart timecards={filteredTimecards || []} projects={projects || []} />
         <InvoicesPerClientChart invoices={filteredInvoices || []} />
         <InvoicesPerProjectChart invoices={filteredInvoices || []} projects={projects || []} />
