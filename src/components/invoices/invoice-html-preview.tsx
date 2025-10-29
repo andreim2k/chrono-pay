@@ -654,10 +654,10 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
       <div className="flex justify-between items-start px-12 pt-12 pb-8">
         <div>
           <h1 className={cn('text-3xl font-bold', styles.headerTextClass)}>{companyName}</h1>
-          <div className="text-gray-600 mt-2 text-sm">
-            <p>{companyAddress}</p>
-            {companyPhone && <p>{t.phone}: {companyPhone}</p>}
-            {companyEmail && <p>{t.email}: {companyEmail}</p>}
+          <div className="text-gray-600 mt-2 text-sm" style={{lineHeight: '1.2'}}>
+            {companyAddress}
+            {companyPhone && <><br/>{t.phone}: {companyPhone}</>}
+            {companyEmail && <><br/>{t.email}: {companyEmail}</>}
           </div>
         </div>
         <div className="text-right">
@@ -672,12 +672,12 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
         <div className='col-span-2'>
             <p className="text-gray-500 text-sm uppercase tracking-wider font-semibold">{t.billedTo}</p>
             <p className="font-bold text-gray-800 mt-2">{clientName}</p>
-            <p className="text-gray-600 text-sm">{clientAddress}</p>
-            <div className='text-sm text-gray-600 mt-2'>
-              <p>{t.vatId}: {clientVat}</p>
-              {clientBankName && <p>{t.bank}: {clientBankName}</p>}
-              {clientIban && <p>{t.iban}: {clientIban}</p>}
-              {clientSwift && <p>{t.swift}: {clientSwift}</p>}
+            <div className='text-sm text-gray-600' style={{lineHeight: '1.2'}}>
+              {clientAddress}
+              <br/>{t.vatId}: {clientVat}
+              {clientBankName && <><br/>{t.bank}: {clientBankName}</>}
+              {clientIban && <><br/>{t.iban}: {clientIban}</>}
+              {clientSwift && <><br/>{t.swift}: {clientSwift}</>}
             </div>
             {invoice.projectName && <p className='text-gray-600 text-sm mt-2'>Project: {invoice.projectName}</p>}
         </div>
@@ -692,10 +692,10 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
           </div>
            <div className='mt-4 text-sm'>
              <p className="text-gray-500 uppercase tracking-wider font-semibold">Payout Details</p>
-             <div className='text-gray-700 mt-1'>
-              <p>{t.bank}: {companyBankName}</p>
-              <p>{t.iban}: {companyIban}</p>
-              <p>{t.swift}: {companySwift}</p>
+             <div className='text-gray-700 mt-1' style={{lineHeight: '1.2'}}>
+              {t.bank}: {companyBankName}
+              <br/>{t.iban}: {companyIban}
+              <br/>{t.swift}: {companySwift}
             </div>
           </div>
         </div>
@@ -708,10 +708,10 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
       <div className="px-12 py-10 grid grid-cols-2 gap-8">
         <div>
           <h1 className="text-4xl font-bold">{companyName}</h1>
-          <div className='text-sm text-gray-600 mt-4'>
-            <p>{companyAddress}</p>
-            {companyPhone && <p>{t.phone}: {companyPhone}</p>}
-            {companyEmail && <p>{t.email}: {companyEmail}</p>}
+          <div className='text-sm text-gray-600 mt-4' style={{lineHeight: '1.2'}}>
+            {companyAddress}
+            {companyPhone && <><br/>{t.phone}: {companyPhone}</>}
+            {companyEmail && <><br/>{t.email}: {companyEmail}</>}
           </div>
         </div>
         <div className="text-right">
@@ -724,12 +724,12 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
           <p className="text-sm font-semibold uppercase tracking-wide">{t.billedTo}</p>
           <div className="mt-2 text-sm text-gray-700">
             <p className="font-bold text-base text-gray-900">{clientName}</p>
-            <p>{clientAddress}</p>
-            <div className='mt-2'>
-                <p>{t.vatId}: {clientVat}</p>
-                {clientBankName && <p>{t.bank}: {clientBankName}</p>}
-                {clientIban && <p>{t.iban}: {clientIban}</p>}
-                {clientSwift && <p>{t.swift}: {clientSwift}</p>}
+            <div style={{lineHeight: '1.2'}}>
+                {clientAddress}
+                <br/>{t.vatId}: {clientVat}
+                {clientBankName && <><br/>{t.bank}: {clientBankName}</>}
+                {clientIban && <><br/>{t.iban}: {clientIban}</>}
+                {clientSwift && <><br/>{t.swift}: {clientSwift}</>}
             </div>
             {invoice.projectName && <div className='mt-2'><p>Project: {invoice.projectName}</p></div>}
           </div>
@@ -748,10 +748,10 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
           <div className='border-t my-3'></div>
           <div className='text-sm'>
             <p className="font-semibold uppercase tracking-wide">Payout Details</p>
-             <div className='text-gray-700 mt-2'>
-              <p>{t.bank}: {companyBankName}</p>
-              <p>{t.iban}: {companyIban}</p>
-              <p>{t.swift}: {companySwift}</p>
+             <div className='text-gray-700 mt-2' style={{lineHeight: '1.2'}}>
+              {t.bank}: {companyBankName}
+              <br/>{t.iban}: {companyIban}
+              <br/>{t.swift}: {companySwift}
             </div>
           </div>
         </div>
@@ -765,15 +765,14 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-4xl font-bold" style={{ letterSpacing: '-0.01em' }}>{companyName}</h1>
-            <div className="text-sm mt-2 opacity-90">
-              <p>{companyAddress}</p>
-              {companyPhone && <p>{t.phone}: {companyPhone}</p>}
-              {companyEmail && <p>{t.email}: {companyEmail}</p>}
-              <div className='pt-1'>
-                {companyBankName && <p><span className="font-semibold">{t.bank}:</span> {companyBankName}</p>}
-                {companyIban && <p><span className="font-semibold">{t.iban}:</span> {companyIban}</p>}
-                {companySwift && <p><span className="font-semibold">{t.swift}:</span> {companySwift}</p>}
-              </div>
+            <div className="text-sm mt-2 opacity-90" style={{lineHeight: '1.2'}}>
+              {companyAddress}
+              {companyPhone && <><br/>{t.phone}: {companyPhone}</>}
+              {companyEmail && <><br/>{t.email}: {companyEmail}</>}
+              <br/>
+              {companyBankName && <><span className="font-semibold">{t.bank}:</span> {companyBankName}</>}
+              {companyIban && <><br/><span className="font-semibold">{t.iban}:</span> {companyIban}</>}
+              {companySwift && <><br/><span className="font-semibold">{t.swift}:</span> {companySwift}</>}
             </div>
           </div>
           <div className="text-right">
@@ -787,14 +786,12 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
             <div>
                 <p className={cn('text-xs font-bold uppercase', styles.headerTextClass)}>{t.billedTo}</p>
                 <p className='font-bold text-gray-900 mt-1'>{clientName}</p>
-                <div className='text-gray-600 text-sm leading-snug'>
-                    <p>{clientAddress}</p>
-                    <div className="mt-2">
-                      <p>{t.vatId}: {clientVat}</p>
-                      {clientBankName && <p>{t.bank}: {clientBankName}</p>}
-                      {clientIban && <p>{t.iban}: {clientIban}</p>}
-                      {clientSwift && <p>{t.swift}: {clientSwift}</p>}
-                    </div>
+                <div className='text-gray-600 text-sm' style={{lineHeight: '1.2'}}>
+                    {clientAddress}
+                    <br/>{t.vatId}: {clientVat}
+                    {clientBankName && <><br/>{t.bank}: {clientBankName}</>}
+                    {clientIban && <><br/>{t.iban}: {clientIban}</>}
+                    {clientSwift && <><br/>{t.swift}: {clientSwift}</>}
                 </div>
                  {invoice.projectName && <div className='mt-2'><p>Project: {invoice.projectName}</p></div>}
             </div>
