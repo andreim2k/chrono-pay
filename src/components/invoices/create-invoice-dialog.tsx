@@ -671,7 +671,7 @@ export function CreateInvoiceDialog() {
                       <span className="text-muted-foreground">Subtotal:</span>
                       <span className='font-medium text-foreground'>{invoiceData.currency} {invoiceData.subtotal.toFixed(2)}</span>
                     </div>
-                    {invoiceData.vatAmount && invoiceData.vatAmount > 0 ? (
+                    {invoiceData.vatAmount !== undefined ? (
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">VAT ({(invoiceData.vatRate! * 100).toFixed(0)}%):</span>
                         <span className='font-medium text-foreground'>{invoiceData.currency} {invoiceData.vatAmount.toFixed(2)}</span>
