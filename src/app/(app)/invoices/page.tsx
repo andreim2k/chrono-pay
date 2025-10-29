@@ -6,12 +6,12 @@ import { InvoiceList } from '@/components/invoices/invoice-list';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
 import { Invoice, Client, Project } from '@/lib/types';
 import { collection } from 'firebase/firestore';
-import { DataExport } from '@/components/data/data-export';
 import { DataImport } from '@/components/data/data-import';
 import { CreateInvoiceDialog } from '@/components/invoices/create-invoice-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getYear, parseISO } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
+import { ExportMenu } from '@/components/data/export-menu';
 
 export default function InvoicesPage() {
   const firestore = useFirestore();
@@ -67,7 +67,18 @@ export default function InvoicesPage() {
   }, [invoices, projects, selectedClientId, selectedProjectId, selectedYear]);
   
   const exportableData = useMemo(() => {
-    return { invoices: filteredInvoices || [] };
+    return filteredInvoices.map(({
+      id,
+      companyName,
+      companyAddress,
+      companyVat,
+      companyIban,
+      companyBankName,
+      companySwift,
+      billedTimecardIds,
+      theme,
+      ...rest
+    }) => rest);
   }, [filteredInvoices]);
 
 
@@ -81,10 +92,9 @@ export default function InvoicesPage() {
           </p>
         </div>
         <div className='flex items-center gap-2'>
-          <DataExport 
+          <ExportMenu 
             data={exportableData} 
-            fileName='invoices_export.json' 
-            buttonLabel="Export Filtered"
+            filename='invoices'
           />
           <DataImport 
             allowedCollections={['invoices']}
