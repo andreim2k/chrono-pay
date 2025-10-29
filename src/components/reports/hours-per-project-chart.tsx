@@ -4,27 +4,32 @@
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
-import type { Timecard } from '@/lib/types';
+import type { Timecard, Project } from '@/lib/types';
 import { useMemo } from 'react';
 
-export function HoursPerProjectChart({ timecards }: { timecards: Timecard[] }) {
+export function HoursPerProjectChart({ timecards, projects }: { timecards: Timecard[], projects: Project[] }) {
     const projectData = useMemo(() => {
-        const hours: { [projectName: string]: number } = {};
+        const projectMap = new Map(projects.map(p => [p.id, p]));
+        const hours: { [projectId: string]: number } = {};
+        
         timecards.forEach(tc => {
-            const key = `${tc.projectName} (${tc.clientName})`;
-            if (hours[key]) {
-                hours[key] += tc.hours;
+            if (hours[tc.projectId]) {
+                hours[tc.projectId] += tc.hours;
             } else {
-                hours[key] = tc.hours;
+                hours[tc.projectId] = tc.hours;
             }
         });
 
-        return Object.entries(hours).map(([projectName, totalHours]) => ({
-            project: projectName,
-            hours: totalHours,
-        })).sort((a, b) => b.hours - a.hours);
+        return Object.entries(hours).map(([projectId, totalHours]) => {
+            const project = projectMap.get(projectId);
+            const projectName = project ? `${project.name} (${project.clientName})` : 'Unknown Project';
+            return {
+                project: projectName,
+                hours: totalHours,
+            };
+        }).sort((a, b) => b.hours - a.hours);
 
-    }, [timecards]);
+    }, [timecards, projects]);
 
     const chartConfig = {
         hours: {

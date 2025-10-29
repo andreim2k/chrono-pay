@@ -88,7 +88,7 @@ export default function ReportsPage() {
     };
   }, [filteredInvoices]);
 
-  // Assuming EUR is the primary currency for this summary. A more complex app would need currency conversion.
+  // Assuming EUR is the primary currency for this summary.
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(amount);
   }
@@ -114,6 +114,7 @@ export default function ReportsPage() {
                 <SelectValue placeholder="Select Year" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="all">All Time</SelectItem>
                 {availableYears.map(year => (
                   <SelectItem key={year} value={String(year)}>
                     {year}
@@ -145,7 +146,7 @@ export default function ReportsPage() {
         <RevenueChart invoices={filteredInvoices || []} />
         <VatChart invoices={filteredInvoices || []} selectedYear={selectedYear} />
         <InvoiceStatusChart invoices={filteredInvoices || []} />
-        <HoursPerProjectChart timecards={filteredTimecards || []} />
+        <HoursPerProjectChart timecards={filteredTimecards || []} projects={projects || []} />
         <InvoicesPerClientChart invoices={filteredInvoices || []} />
         <InvoicesPerProjectChart invoices={filteredInvoices || []} projects={projects || []} />
         <UnpaidByClientChart invoices={filteredInvoices || []} />

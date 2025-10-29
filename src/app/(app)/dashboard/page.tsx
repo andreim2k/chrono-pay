@@ -5,10 +5,10 @@ import { StatCard } from '@/components/dashboard/stat-card';
 import { RecentInvoices } from '@/components/dashboard/recent-invoices';
 import { useCollection, useUser } from '@/firebase';
 import { DollarSign, Users, Clock, Banknote, Landmark, Briefcase, Hourglass } from 'lucide-react';
-import type { Invoice, Project, Timecard } from '@/lib/types';
+import type { Invoice, Project, Timecard, Client } from '@/lib/types';
 import { useMemo } from 'react';
 import { useFirestore, useMemoFirebase } from '@/firebase/provider';
-import { collection, query, where } from 'firebase/firestore';
+import { collection } from 'firebase/firestore';
 
 export default function DashboardPage() {
   const firestore = useFirestore();
@@ -24,7 +24,7 @@ export default function DashboardPage() {
     () => (firestore && user ? collection(firestore, `users/${user.uid}/clients`) : null),
     [firestore, user]
   );
-  const { data: clients } = useCollection(clientsQuery, `users/${user?.uid}/clients`);
+  const { data: clients } = useCollection<Client>(clientsQuery, `users/${user?.uid}/clients`);
 
   const projectsQuery = useMemoFirebase(
     () => (firestore && user ? collection(firestore, `users/${user.uid}/projects`) : null),
@@ -39,26 +39,16 @@ export default function DashboardPage() {
   const { data: timecards } = useCollection<Timecard>(timecardsQuery, `users/${user?.uid}/timecards`);
 
   const dashboardStats = useMemo(() => {
-    if (!invoices || !clients || !projects || !timecards) {
-      return {
-        totalRevenue: '€0.00',
-        unpaidAmount: '€0.00',
-        unpaidTotal: 0,
-        clientCount: 0,
-        projectCount: 0,
-        paidCount: 0,
-        totalVatCollected: '€0.00',
-        outstandingVat: '€0.00',
-        outstandingVatTotal: 0,
-        unbilledHours: '0.00',
-      };
-    }
+    const safeInvoices = invoices || [];
+    const safeClients = clients || [];
+    const safeProjects = projects || [];
+    const safeTimecards = timecards || [];
 
-    const paidInvoices = invoices.filter(inv => inv.status === 'Paid');
-    const unpaidInvoices = invoices.filter(inv => inv.status !== 'Paid');
+    const paidInvoices = safeInvoices.filter(inv => inv.status === 'Paid');
+    const unpaidInvoices = safeInvoices.filter(inv => inv.status !== 'Paid');
     
-    const clientCount = clients.length;
-    const projectCount = projects.length;
+    const clientCount = safeClients.length;
+    const projectCount = safeProjects.length;
 
     const totalRevenue = paidInvoices.reduce((acc, inv) => acc + inv.total, 0);
     const unpaidTotal = unpaidInvoices.reduce((acc, inv) => acc + inv.total, 0);
@@ -66,9 +56,9 @@ export default function DashboardPage() {
     const totalVatCollected = paidInvoices.reduce((acc, inv) => acc + (inv.vatAmount || 0), 0);
     const outstandingVatTotal = unpaidInvoices.reduce((acc, inv) => acc + (inv.vatAmount || 0), 0);
     
-    const unbilledHours = timecards.filter(tc => tc.status === 'Unbilled').reduce((acc, tc) => acc + tc.hours, 0);
+    const unbilledHours = safeTimecards.filter(tc => tc.status === 'Unbilled').reduce((acc, tc) => acc + tc.hours, 0);
 
-    // Assuming EUR as the primary currency for dashboard summary, mirroring reports page.
+    // Assuming EUR as the primary currency for dashboard summary.
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(amount);
     }
@@ -108,20 +98,20 @@ export default function DashboardPage() {
         title="Unpaid Amount"
         value={dashboardStats.unpaidAmount}
         icon={<Clock className="h-4 w-4 text-muted-foreground" />}
-        description="Awaiting payment"
+        description="Awaiting payment from clients"
         valueClassName={dashboardStats.unpaidTotal > 0 ? 'text-destructive' : ''}
         />
          <StatCard
-          title="Clients"
+          title="Active Clients"
           value={String(dashboardStats.clientCount)}
           icon={<Users className="h-4 w-4 text-muted-foreground" />}
-          description="Total number of clients"
+          description="Total number of active clients"
         />
          <StatCard
-          title="Projects"
+          title="Active Projects"
           value={String(dashboardStats.projectCount)}
           icon={<Briefcase className="h-4 w-4 text-muted-foreground" />}
-          description="Total number of projects"
+          description="Total number of active projects"
         />
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -129,7 +119,7 @@ export default function DashboardPage() {
           title="Paid Invoices"
           value={String(dashboardStats.paidCount)}
           icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
-          description="Total number of paid invoices"
+          description="Total number of settled invoices"
         />
         <StatCard
           title="Total VAT Collected"
