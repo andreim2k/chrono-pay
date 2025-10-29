@@ -143,7 +143,7 @@ export function AddProjectDialog() {
           <PlusCircle className="mr-2 h-4 w-4" /> Add Project
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[700px]">
         <DialogHeader>
           <DialogTitle>Add New Project</DialogTitle>
           <DialogDescription>
@@ -190,12 +190,12 @@ export function AddProjectDialog() {
               )}
             />
             
-            <div className="grid grid-cols-3 gap-4 items-end">
+            <div className="grid grid-cols-4 gap-4 items-end">
                 <FormField
                   control={form.control}
                   name="rate"
                   render={({ field }) => (
-                    <FormItem className='col-span-2'>
+                    <FormItem>
                       <FormLabel>Default Rate</FormLabel>
                       <FormControl>
                         <Input type="number" placeholder="e.g., 500" {...field} value={field.value ?? ''} />
@@ -209,6 +209,7 @@ export function AddProjectDialog() {
                   name="rateType"
                   render={({ field }) => (
                     <FormItem>
+                       <FormLabel>&nbsp;</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -224,32 +225,12 @@ export function AddProjectDialog() {
                     </FormItem>
                   )}
                 />
-            </div>
-            
-            {watchedRateType === 'daily' && (
                  <FormField
-                  control={form.control}
-                  name="hoursPerDay"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Hours per Day</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="e.g., 8" {...field} value={field.value ?? ''} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-            )}
-
-
-            <div className="grid grid-cols-2 gap-4">
-                <FormField
                   control={form.control}
                   name="currency"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Default Currency</FormLabel>
+                      <FormLabel>Currency</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -273,7 +254,7 @@ export function AddProjectDialog() {
                   name="invoiceNumberPrefix"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Invoice Number Prefix</FormLabel>
+                      <FormLabel>Prefix</FormLabel>
                       <FormControl>
                         <Input placeholder={suggestedPrefix ? `e.g., ${suggestedPrefix}` : 'e.g. CP-'} {...field} value={field.value ?? ''} />
                       </FormControl>
@@ -282,7 +263,24 @@ export function AddProjectDialog() {
                   )}
                 />
             </div>
-             <div className="space-y-2 rounded-lg border p-3 shadow-sm">
+            
+            {watchedRateType === 'daily' && (
+                 <FormField
+                  control={form.control}
+                  name="hoursPerDay"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Hours per Day</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="e.g., 8" {...field} value={field.value ?? ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            )}
+
+            <div className="space-y-2 rounded-lg border p-3 shadow-sm">
                 <div className="grid grid-cols-2 items-end gap-4">
                      <FormField
                         control={form.control}
