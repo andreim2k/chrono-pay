@@ -654,7 +654,11 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
       <div className="flex justify-between items-start px-12 pt-12 pb-8">
         <div>
           <h1 className={cn('text-3xl font-bold', styles.headerTextClass)}>{companyName}</h1>
-          <p className="text-gray-600 mt-2 text-sm">{companyAddress}</p>
+          <div className="text-gray-600 mt-2 text-sm">
+            <p>{companyAddress}</p>
+            {companyPhone && <p>{t.phone}: {companyPhone}</p>}
+            {companyEmail && <p>{t.email}: {companyEmail}</p>}
+          </div>
         </div>
         <div className="text-right">
           <p className="text-4xl font-bold uppercase tracking-wider">{t.invoice}</p>
@@ -670,10 +674,10 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
             <p className="font-bold text-gray-800 mt-2">{clientName}</p>
             <p className="text-gray-600 text-sm">{clientAddress}</p>
             <div className='text-sm text-gray-600 mt-2'>
-                <p>{t.vatId}: {clientVat}</p>
-                {clientBankName && <p>{t.bank}: {clientBankName}</p>}
-                {clientIban && <p>{t.iban}: {clientIban}</p>}
-                {clientSwift && <p>{t.swift}: {clientSwift}</p>}
+              <p>{t.vatId}: {clientVat}</p>
+              {clientBankName && <p>{t.bank}: {clientBankName}</p>}
+              {clientIban && <p>{t.iban}: {clientIban}</p>}
+              {clientSwift && <p>{t.swift}: {clientSwift}</p>}
             </div>
             {invoice.projectName && <p className='text-gray-600 text-sm mt-2'>Project: {invoice.projectName}</p>}
         </div>
@@ -686,9 +690,9 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
             <p className="text-gray-500 text-sm uppercase tracking-wider font-semibold">{t.dueDate}</p>
             <p className="text-gray-700 font-medium mt-1">{formatDateWithOrdinal(dueDate)}</p>
           </div>
-           <div className='mt-4 text-sm text-gray-600'>
-             <p className="text-gray-500 text-sm uppercase tracking-wider font-semibold">Payout Details</p>
-             <div className='text-gray-700 mt-1 space-y-px'>
+           <div className='mt-4 text-sm'>
+             <p className="text-gray-500 uppercase tracking-wider font-semibold">Payout Details</p>
+             <div className='text-gray-700 mt-1'>
               <p>{t.bank}: {companyBankName}</p>
               <p>{t.iban}: {companyIban}</p>
               <p>{t.swift}: {companySwift}</p>
@@ -704,7 +708,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
       <div className="px-12 py-10 grid grid-cols-2 gap-8">
         <div>
           <h1 className="text-4xl font-bold">{companyName}</h1>
-          <div className='text-sm text-gray-600 mt-4 space-y-px'>
+          <div className='text-sm text-gray-600 mt-4'>
             <p>{companyAddress}</p>
             {companyPhone && <p>{t.phone}: {companyPhone}</p>}
             {companyEmail && <p>{t.email}: {companyEmail}</p>}
@@ -736,7 +740,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
               <p className="font-semibold uppercase tracking-wide">{t.invoiceDate}</p>
               <p className="mt-2 text-gray-700">{formatDateWithOrdinal(date)}</p>
             </div>
-            <div className='text-sm'>
+            <div className='text-sm text-right'>
               <p className="font-semibold uppercase tracking-wide">{t.dueDate}</p>
               <p className="mt-2 text-gray-700">{formatDateWithOrdinal(dueDate)}</p>
             </div>
@@ -744,7 +748,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
           <div className='border-t my-3'></div>
           <div className='text-sm'>
             <p className="font-semibold uppercase tracking-wide">Payout Details</p>
-             <div className='text-gray-700 mt-2 space-y-px'>
+             <div className='text-gray-700 mt-2'>
               <p>{t.bank}: {companyBankName}</p>
               <p>{t.iban}: {companyIban}</p>
               <p>{t.swift}: {companySwift}</p>
@@ -761,7 +765,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-4xl font-bold" style={{ letterSpacing: '-0.01em' }}>{companyName}</h1>
-            <div className="text-sm mt-2 opacity-90 space-y-px">
+            <div className="text-sm mt-2 opacity-90">
               <p>{companyAddress}</p>
               {companyPhone && <p>{t.phone}: {companyPhone}</p>}
               {companyEmail && <p>{t.email}: {companyEmail}</p>}
@@ -780,13 +784,13 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
       </div>
       <div className='px-12 mt-8 mb-8'>
         <div className="grid grid-cols-2 gap-6">
-            <div className='space-y-1'>
+            <div>
                 <p className={cn('text-xs font-bold uppercase', styles.headerTextClass)}>{t.billedTo}</p>
-                <p className='font-bold text-gray-900'>{clientName}</p>
+                <p className='font-bold text-gray-900 mt-1'>{clientName}</p>
                 <div className='text-gray-600 text-sm leading-snug'>
                     <p>{clientAddress}</p>
-                    <p>{t.vatId}: {clientVat}</p>
-                    <div className='mt-1'>
+                    <div className="mt-2">
+                      <p>{t.vatId}: {clientVat}</p>
                       {clientBankName && <p>{t.bank}: {clientBankName}</p>}
                       {clientIban && <p>{t.iban}: {clientIban}</p>}
                       {clientSwift && <p>{t.swift}: {clientSwift}</p>}
@@ -794,7 +798,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                 </div>
                  {invoice.projectName && <div className='mt-2'><p>Project: {invoice.projectName}</p></div>}
             </div>
-            <div className="text-right space-y-1">
+            <div className="text-right">
                 <p className={cn('text-xs font-bold uppercase', styles.headerTextClass)}>{t.invoiceDate}</p>
                 <p className="text-gray-800">{formatDateWithOrdinal(date)}</p>
                 <p className={cn('text-xs font-bold uppercase pt-2', styles.headerTextClass)}>{t.dueDate}</p>
