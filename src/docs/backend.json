@@ -135,8 +135,7 @@
                     "description": "Date the max exchange rate was set."
                 },
                 "ratePerDay": {
-                    "type": "number",
-                    "description": "The billing rate for the project per day."
+                    "type": "number"
                 }
             },
             "required": [

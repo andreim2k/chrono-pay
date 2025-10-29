@@ -8,7 +8,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         {children}
       </main>
       <footer className="py-4 px-4 text-center text-sm text-muted-foreground md:px-8">
-        <p>&copy; {new Date().getFullYear()} WorkPay. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} ChronoSapient. All rights reserved.</p>
       </footer>
     </div>
   );

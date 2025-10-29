@@ -1,26 +1,22 @@
 
 import type { SVGProps } from "react";
 
-export function WorkPayLogo(props: SVGProps<SVGSVGElement>) {
+export function ChronoPayLogo(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2"
+      strokeWidth="2.5"
       strokeLinecap="round"
       strokeLinejoin="round"
       {...props}
     >
-      <defs>
-        <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style={{ stopColor: 'hsl(var(--primary))', stopOpacity: 1 }} />
-          <stop offset="100%" style={{ stopColor: 'hsl(var(--accent))', stopOpacity: 1 }} />
-        </linearGradient>
-      </defs>
-      <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z" stroke="url(#logoGradient)" strokeWidth="2.5"/>
-      <path d="M15 8.5a2.5 2.5 0 0 0-5 0V10m0-1.5a2.5 2.5 0 0 1 5 0V10m-5 4a2.5 2.5 0 0 0 5 0V14m0-4h-5m2.5 10V8m-5 4h10" stroke="url(#logoGradient)" strokeWidth="1.5" />
+      <path d="M12 2a10 10 0 1 0 10 10A10.1 10.1 0 0 0 12 2zm-1.5 5a1.5 1.5 0 0 1 3 0m-3 9v-6m3 6v-6" />
+      <path d="M15 15.5a1.5 1.5 0 0 1-3 0" />
+      <path d="M10.5 8.5a1.5 1.5 0 0 1 3 0" />
+      <path d="m9.5 12.5 5-5" />
     </svg>
   );
 }
