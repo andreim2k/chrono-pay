@@ -41,7 +41,7 @@ const translations = {
         reverseCharge: 'Reversal of VAT liability on EU cross-border transactions',
         unit: {
             days: 'days',
-            hours: 'hours'
+            hours: 'ore'
         }
     },
     ro: {
@@ -401,8 +401,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalBgClass: 'bg-emerald-500',
     totalTextClass: 'text-white',
     accentColor: '#10B981',
-    tableHeaderBgColor: '#10B981',
-    secondaryBg: '#ECFDF5'
+    tableHeaderBgColor: '#ECFDF5'
   },
   'Lime': {
     layout: 'modern',
@@ -574,7 +573,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
   
   const lang = language === 'Romanian' ? 'ro' : 'en';
   const t = translations[lang];
-  const hasVat = vatAmount !== undefined && vatAmount > 0;
+  const hasVat = vatAmount !== undefined;
   const isReverseCharge = vatRate === 0 && vatAmount === 0 && invoice.vatRate !== undefined;
 
   const currencySymbols: { [key:string]: string } = {
@@ -600,26 +599,21 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
   }
 
   const translateDescription = (item: Invoice['items'][0]) => {
-      const { description, quantity } = item;
+      const { description, quantity, unit } = item;
       if (lang === 'en') return description;
 
+      const translatedUnit = t.unit[unit as keyof typeof t.unit] || unit;
+
       // Regex for hourly billing
-      const hourlyRegex = /IT Consultancy services for period ([\d\.]+\s*-\s*[\d\.]+) \(([\d\.]+)\s+(hours)\)/;
+      const hourlyRegex = /IT Consultancy services for period ([\d\.]+\s*-\s*[\d\.]+)/;
       const hourlyMatch = description.match(hourlyRegex);
 
       if (hourlyMatch) {
-          const [, period, , matchedUnit] = hourlyMatch;
-          const translatedUnit = t.unit[matchedUnit as keyof typeof t.unit] || matchedUnit;
-          const quantityText = `${quantity.toFixed(2)} ${translatedUnit}`;
-          return t.consultancyServices(period, quantityText);
-      }
-
-      // Regex for daily billing (no quantity in description)
-      const dailyRegex = /IT Consultancy services for period ([\d\.]+\s*-\s*[\d\.]+)/;
-      const dailyMatch = description.match(dailyRegex);
-
-      if (dailyMatch) {
-          const [, period] = dailyMatch;
+          const [, period] = hourlyMatch;
+          if (unit === 'hours') {
+            const quantityText = `${quantity.toFixed(2)} ${translatedUnit}`;
+            return t.consultancyServices(period, quantityText);
+          }
           return t.consultancyServicesDays(period);
       }
 
