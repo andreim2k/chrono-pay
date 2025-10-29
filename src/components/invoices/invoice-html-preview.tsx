@@ -33,7 +33,7 @@ const translations = {
         footerExchange: (date: string, currency: string, rate: number) => `Exchange rate from BNR for ${date}: 1 ${currency} = ${rate.toFixed(4)} RON.`,
         footerMaxRate: (date: string, currency: string, rate: number) => `Using fixed client exchange rate set on ${date}: 1 ${currency} = ${rate.toFixed(4)} RON.`,
         footerThanks: 'Thank you for your business!',
-        consultancyServices: (period: string) => `Consultancy services for ${period}`,
+        consultancyServices: (projectName: string, period: string, quantity: string) => `${projectName}: IT Consultancy services for period ${period} (${quantity})`,
         unit: {
             days: 'days',
         }
@@ -58,7 +58,7 @@ const translations = {
         footerExchange: (date: string, currency: string, rate: number) => `Curs valutar BNR pentru ${date}: 1 ${currency} = ${rate.toFixed(4)} RON.`,
         footerMaxRate: (date: string, currency: string, rate: number) => `Folosind cursul fix al clientului setat la data de ${date}: 1 ${currency} = ${rate.toFixed(4)} RON.`,
         footerThanks: 'Vă mulțumim!',
-        consultancyServices: (period: string) => `Servicii de consultanță pentru ${period}`,
+        consultancyServices: (projectName: string, period: string, quantity: string) => `${projectName}: Servicii de consultanță IT pentru perioada ${period} (${quantity})`,
         unit: {
             days: 'zile',
         }
@@ -587,19 +587,21 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
     return `${dayWithOrdinal} of ${format(adjustedDate, monthYearFormat, locale)}`;
   }
 
-  const translateDescription = (description: string) => {
-    if (lang === 'en') return description;
-
-    // Example: "ProjectX: Consultancy services for MMMM yyyy"
-    const parts = description.split(': Consultancy services for ');
-    if (parts.length === 2) {
-      const projectName = parts[0];
-      const datePart = parts[1];
-      const servicePeriod = format(new Date(datePart), 'LLLL yyyy', { locale: ro });
-      return `${projectName}: ${t.consultancyServices(servicePeriod)}`;
-    }
-    return description; // fallback
-  }
+  const translateDescription = (description: string, quantity: number, unit: string) => {
+      if (lang === 'en') return description;
+  
+      const regex = /(.*?): IT Consultancy services for period ([\d\.]+\s*-\s*[\d\.]+) \(([\d\.]+)\s+days\)/;
+      const match = description.match(regex);
+  
+      if (match) {
+          const [, projectName, period, ,] = match;
+          const translatedUnit = t.unit[unit as keyof typeof t.unit] || unit;
+          const quantityText = `${quantity.toFixed(2)} ${translatedUnit}`;
+          return t.consultancyServices(projectName, period, quantityText);
+      }
+  
+      return description; // Fallback
+  };
 
 
   // Get layout-specific styling
@@ -828,7 +830,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                 </thead>
                 <tbody>
                     {items.map((item, index) => {
-                        const translatedDescription = translateDescription(item.description);
+                        const translatedDescription = translateDescription(item.description, item.quantity, item.unit);
                         const rowClass = styles.layout === 'classic' || styles.layout === 'elegant' || styles.layout === 'minimal'
                           ? 'border-b border-gray-200'
                           : (styles.layout === 'bold' ? 'border-b-2 border-gray-200' : (index % 2 === 0 ? 'bg-gray-50' : 'bg-white'));
