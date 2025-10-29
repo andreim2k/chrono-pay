@@ -644,14 +644,18 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                     <p className='font-bold text-gray-900'>{clientName}</p>
                     <div className='text-gray-600 text-sm space-y-px'>
                         <p>{clientAddress}</p>
-                        {clientVat && <p>{t.vatId}: {clientVat}</p>}
-                        {clientBankName && <p><span className="font-semibold">{t.bank}:</span> {clientBankName}</p>}
-                        {clientIban && <p><span className="font-semibold">{t.iban}:</span> {clientIban}</p>}
-                        {clientSwift && <p><span className="font-semibold">{t.swift}:</span> {clientSwift}</p>}
-                        {invoice.projectName && <p className="text-gray-700 mt-2"><span className='font-semibold'>Project:</span> {invoice.projectName}</p>}
+                        <div className="mt-2 space-y-px">
+                          {clientVat && <p>{t.vatId}: {clientVat}</p>}
+                          {clientBankName && <p>{t.bank}: {clientBankName}</p>}
+                          {clientIban && <p>{t.iban}: {clientIban}</p>}
+                          {clientSwift && <p>{t.swift}: {clientSwift}</p>}
+                        </div>
+                        <div className='mt-2'>
+                          {invoice.projectName && <p className="text-gray-700"><span className='font-semibold'>Project:</span> {invoice.projectName}</p>}
+                        </div>
                     </div>
                 </div>
-                <div style={{ backgroundColor: styles.secondaryBg }} className='p-6 rounded'>
+                <div style={{ backgroundColor: styles.secondaryBg }} className='p-6 rounded text-right'>
                     <p className={cn('text-xs font-bold uppercase mb-3', styles.headerTextClass)}>{t.invoiceDate}</p>
                     <p className="text-gray-800">{formatDateWithOrdinal(date)}</p>
                     <p className={cn('text-xs font-bold uppercase mt-3 mb-3', styles.headerTextClass)}>{t.dueDate}</p>
