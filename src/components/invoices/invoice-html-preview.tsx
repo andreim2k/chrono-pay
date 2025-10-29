@@ -549,8 +549,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalBgClass: 'bg-blue-700',
     totalTextClass: 'text-white',
     accentColor: '#1D4ED8',
-    tableHeaderBgColor: '#1D4ED8',
-    secondaryBg: '#EFF6FF'
+    tableHeaderBgColor: '#EFF6FF'
   },
 };
 
@@ -789,13 +788,11 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
               <div style={{ backgroundColor: styles.secondaryBg }} className={cn('p-6', styles.layout === 'modern' ? 'rounded' : '')}>
                 <p className={cn('text-xs font-bold uppercase mb-3', styles.headerTextClass)}>{t.invoiceDate}</p>
                 <p className="text-gray-800">{formatDateWithOrdinal(date)}</p>
-                {companyBankName && (
-                  <div className="mt-4 pt-4 border-t border-gray-300 space-y-1 text-xs text-gray-600">
-                    <p><span className={styles.layout === 'bold' ? 'font-semibold' : 'font-semibold'}>{t.bank}:</span> {companyBankName}</p>
-                    {companyIban && <p className={styles.layout === 'bold' ? 'font-mono' : 'font-mono'}><span className="font-semibold">{t.iban}:</span> {companyIban}</p>}
-                    {companySwift && <p><span className="font-semibold">{t.swift}:</span> {companySwift}</p>}
-                  </div>
-                )}
+                <div className="mt-4 pt-4 border-t border-gray-300 space-y-1 text-xs text-gray-600">
+                  {companyBankName && <p><span className={styles.layout === 'bold' ? 'font-semibold' : 'font-semibold'}>{t.bank}:</span> {companyBankName}</p>}
+                  {companyIban && <p className={styles.layout === 'bold' ? 'font-mono' : 'font-mono'}><span className="font-semibold">{t.iban}:</span> {companyIban}</p>}
+                  {companySwift && <p><span className="font-semibold">{t.swift}:</span> {companySwift}</p>}
+                </div>
               </div>
             </div>
           )}

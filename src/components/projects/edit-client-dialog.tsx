@@ -27,10 +27,10 @@ const languages = ['English', 'Romanian'];
 const clientSchema = z.object({
   name: z.string().min(1, 'Client name is required'),
   address: z.string().min(1, 'Address is required'),
-  vat: z.string().min(1, 'VAT number is required'),
-  iban: z.string().min(1, 'IBAN is required'),
-  bankName: z.string().min(1, 'Bank name is required'),
-  swift: z.string().min(1, 'SWIFT/BIC is required'),
+  vat: z.string().optional(),
+  iban: z.string().optional(),
+  bankName: z.string().optional(),
+  swift: z.string().optional(),
   language: z.string().min(1, 'Language is required'),
 });
 
@@ -142,9 +142,9 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
                 name="vat"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>VAT Number</FormLabel>
+                    <FormLabel>VAT Number (Optional)</FormLabel>
                     <FormControl>
-                        <Input placeholder="US123456789" {...field} />
+                        <Input placeholder="US123456789" {...field} value={field.value ?? ''}/>
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -181,9 +181,9 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
                     name="bankName"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Bank Name</FormLabel>
+                        <FormLabel>Bank Name (Optional)</FormLabel>
                         <FormControl>
-                            <Input placeholder="Client Bank Name" {...field} />
+                            <Input placeholder="Client Bank Name" {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -194,9 +194,9 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
                     name="swift"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>SWIFT/BIC</FormLabel>
+                        <FormLabel>SWIFT/BIC (Optional)</FormLabel>
                         <FormControl>
-                        <Input placeholder="DEUTDEFF" {...field} />
+                        <Input placeholder="DEUTDEFF" {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -208,9 +208,9 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
             name="iban"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>IBAN</FormLabel>
+                <FormLabel>IBAN (Optional)</FormLabel>
                 <FormControl>
-                    <Input placeholder="DE89370400440532013000" {...field} />
+                    <Input placeholder="DE89370400440532013000" {...field} value={field.value ?? ''} />
                 </FormControl>
                 <FormMessage />
                 </FormItem>

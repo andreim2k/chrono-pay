@@ -21,8 +21,8 @@ export type Client = {
   id: string;
   name: string;
   address: string;
-  vat: string;
-  iban: string;
+  vat?: string;
+  iban?: string;
   logoUrl?: string;
   bankName?: string;
   swift?: string;
@@ -83,7 +83,7 @@ export type Invoice = {
   companySwift?: string;
   clientName: string;
   clientAddress: string;
-  clientVat: string;
+  clientVat?: string;
   projectId: string;
   projectName?: string;
   date: string;
