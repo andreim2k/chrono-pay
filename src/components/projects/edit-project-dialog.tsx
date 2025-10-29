@@ -44,7 +44,7 @@ const projectSchema = z.object({
   clientId: z.string().min(1, 'Please select a client'),
   invoiceTheme: z.string().min(1, 'Please select a theme') as z.ZodType<InvoiceTheme>,
   currency: z.string().min(1, 'Currency is required'),
-  invoiceNumberPrefix: z.string().optional(),
+  invoiceNumberPrefix: z.string().min(1, 'Prefix is required'),
   hasVat: z.boolean().default(false),
   maxExchangeRate: z.coerce.number().optional(),
   maxExchangeRateDate: z.date().optional(),
@@ -436,3 +436,5 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
     </Dialog>
   );
 }
+
+    
