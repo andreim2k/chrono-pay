@@ -48,8 +48,7 @@ const projectSchema = z.object({
   hasVat: z.boolean().default(false),
   maxExchangeRate: z.coerce.number().optional(),
   maxExchangeRateDate: z.date().optional(),
-  rate: z.coerce.number().optional(),
-  rateType: z.enum(['daily']).default('daily'),
+  ratePerDay: z.coerce.number().optional(),
 });
 
 
@@ -85,8 +84,7 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
       hasVat: project.hasVat || false,
       maxExchangeRate: project.maxExchangeRate || undefined,
       maxExchangeRateDate: project.maxExchangeRateDate ? parseISO(project.maxExchangeRateDate) : undefined,
-      rate: project.rate || undefined,
-      rateType: project.rateType || 'daily',
+      ratePerDay: project.ratePerDay || undefined,
     },
   });
   
@@ -113,8 +111,7 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
             hasVat: project.hasVat || false,
             maxExchangeRate: project.maxExchangeRate || undefined,
             maxExchangeRateDate: project.maxExchangeRateDate ? parseISO(project.maxExchangeRateDate) : undefined,
-            rate: project.rate || undefined,
-            rateType: project.rateType || 'daily',
+            ratePerDay: project.ratePerDay || undefined,
         });
     }
   }, [isOpen, project, form]);
@@ -200,7 +197,7 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
             />
              <FormField
               control={form.control}
-              name="rate"
+              name="ratePerDay"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Default Rate per Day</FormLabel>

@@ -50,8 +50,7 @@ const projectSchema = z.object({
   hasVat: z.boolean().default(false),
   maxExchangeRate: z.coerce.number().optional(),
   maxExchangeRateDate: z.date().optional(),
-  rate: z.coerce.number().optional(),
-  rateType: z.enum(['daily']).default('daily'),
+  ratePerDay: z.coerce.number().optional(),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -83,8 +82,7 @@ export function AddProjectDialog() {
       currency: 'EUR',
       invoiceNumberPrefix: '',
       hasVat: false,
-      rateType: 'daily',
-      rate: undefined,
+      ratePerDay: undefined,
       maxExchangeRate: undefined,
       maxExchangeRateDate: undefined,
     },
@@ -189,7 +187,7 @@ export function AddProjectDialog() {
             
             <FormField
               control={form.control}
-              name="rate"
+              name="ratePerDay"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Default Rate per Day</FormLabel>
