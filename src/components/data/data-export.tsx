@@ -21,12 +21,17 @@ export function DataExport({ data, fileName = 'chronopay_backup.json', buttonLab
 
       for (const [key, value] of Object.entries(data)) {
         if (key === 'myCompany' && value && typeof value === 'object') {
-           // Handle the merged user/company object
            const { id, avatarUrl, email, name, role, ...companyDetails } = value;
            dataToExport[key] = companyDetails;
         } else if (Array.isArray(value)) {
-          // It's a collection (clients, projects, invoices), remove 'id' from each document
-          dataToExport[key] = value.map(({ id, ...rest }) => rest);
+          dataToExport[key] = value.map(({ id, ...rest }) => {
+            // Specifically handle projects to clean up old fields if they exist
+            if (key === 'projects') {
+              delete (rest as any).ratePerDay;
+              delete (rest as any).ratePerHour;
+            }
+            return rest;
+          });
         }
       }
       

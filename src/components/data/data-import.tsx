@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Label } from '../ui/label';
-import type { Timecard, Invoice } from '@/lib/types';
+import type { Timecard, Invoice, Project } from '@/lib/types';
 
 interface DataImportProps {
   allowedCollections?: string[];
@@ -27,6 +27,25 @@ interface DataImportProps {
   defaultImportMode?: 'overwrite' | 'merge';
   existingData?: Record<string, any[]>;
   allowModeSelection?: boolean;
+}
+
+const migrateProjectData = (projectData: any): Omit<Project, 'id' | 'clientName'> => {
+  const migrated = { ...projectData };
+
+  // Check for old rate structures and migrate them
+  if (migrated.ratePerDay) {
+    migrated.rate = migrated.ratePerDay;
+    migrated.rateType = 'daily';
+    migrated.hoursPerDay = migrated.hoursPerDay || 8; // Default to 8 if not present
+    delete migrated.ratePerDay;
+  } else if (migrated.ratePerHour) {
+    migrated.rate = migrated.ratePerHour;
+    migrated.rateType = 'hourly';
+    delete migrated.ratePerHour;
+    delete migrated.hoursPerDay; // Not applicable for hourly
+  }
+
+  return migrated;
 }
 
 export function DataImport({ 
@@ -127,16 +146,19 @@ export function DataImport({
              }
           }
 
-
           docsToProcess.forEach((docData: any) => {
+            let finalDocData = docData;
+            // Apply migration for projects collection
+            if (collectionName === 'projects') {
+              finalDocData = migrateProjectData(docData);
+            }
             const newDocRef = doc(collection(firestore, `users/${user.uid}/${collectionName}`));
-            batch.set(newDocRef, docData);
+            batch.set(newDocRef, finalDocData);
             importCount++;
           });
         }
       }
       
-
       if (importCount === 0) {
         toast({
             title: 'No New Data',
