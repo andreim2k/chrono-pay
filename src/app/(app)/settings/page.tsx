@@ -9,7 +9,7 @@ import { ProjectList } from '@/components/projects/project-list';
 import { ClientList } from '@/components/projects/client-list';
 import { useCollection, useDoc, useFirestore, useMemoFirebase, setDocumentNonBlocking, useUser } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
-import type { Client, Project, Invoice, User } from '@/lib/types';
+import type { Client, Project, Invoice, User, Timecard } from '@/lib/types';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -63,6 +63,12 @@ export default function SettingsPage() {
       [firestore, user]
     );
     const { data: invoices } = useCollection<Invoice>(invoicesQuery, `users/${user?.uid}/invoices`);
+
+    const timecardsQuery = useMemoFirebase(
+      () => (firestore && user ? collection(firestore, `users/${user.uid}/timecards`) : null),
+      [firestore, user]
+    );
+    const { data: timecards } = useCollection<Timecard>(timecardsQuery, `users/${user?.uid}/timecards`);
 
 
     const form = useForm<CompanyFormValues>({
@@ -263,6 +269,7 @@ export default function SettingsPage() {
                     clients: clients || [],
                     projects: projects || [],
                     invoices: invoices || [],
+                    timecards: timecards || [],
                 }}
              />
           </TabsContent>

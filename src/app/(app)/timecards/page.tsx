@@ -9,6 +9,8 @@ import { collection, orderBy, query } from 'firebase/firestore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getYear, getMonth, parseISO } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
+import { DataExport } from '@/components/data/data-export';
+import { DataImport } from '@/components/data/data-import';
 
 const months = Array.from({ length: 12 }, (_, i) => ({ value: i, label: new Date(0, i).toLocaleString('default', { month: 'long' }) }));
 
@@ -67,13 +69,33 @@ export default function TimecardsPage() {
     });
   }, [timecards, selectedClientId, selectedProjectId, selectedYear, selectedMonth]);
 
+  const exportableData = useMemo(() => {
+    return { timecards: filteredTimecards || [] };
+  }, [filteredTimecards]);
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Timecards</h1>
-        <p className="text-muted-foreground">
-          Log and manage your work hours for all projects.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Timecards</h1>
+          <p className="text-muted-foreground">
+            Log and manage your work hours for all projects.
+          </p>
+        </div>
+        <div className='flex items-center gap-2'>
+          <DataExport 
+            data={exportableData} 
+            fileName='timecards_export.json' 
+            buttonLabel="Export Filtered"
+          />
+          <DataImport 
+            allowedCollections={['timecards']}
+            buttonLabel="Import Timecards"
+            defaultImportMode="merge"
+            allowModeSelection={true}
+            existingData={{ timecards: timecards || [] }}
+          />
+        </div>
       </div>
       <Card>
         <CardContent className="p-4">

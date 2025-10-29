@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Label } from '../ui/label';
-import type { Timecard } from '@/lib/types';
+import type { Timecard, Invoice } from '@/lib/types';
 
 interface DataImportProps {
   allowedCollections?: string[];
@@ -54,7 +54,7 @@ export function DataImport({
   const { data: existingClients } = useCollection(clientsQuery);
   const { data: existingProjects } = useCollection(projectsQuery);
   const { data: existingInvoicesForOverwrite } = useCollection(invoicesQuery);
-  const { data: existingTimecards } = useCollection<Timecard>(timecardsQuery);
+  const { data: existingTimecardsForOverwrite } = useCollection<Timecard>(timecardsQuery);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -97,8 +97,8 @@ export function DataImport({
         if (allowedCollections.includes('clients') && existingClients) {
           existingClients.forEach(client => batch.delete(doc(firestore, `users/${user.uid}/clients`, client.id)));
         }
-        if (allowedCollections.includes('timecards') && existingTimecards) {
-          existingTimecards.forEach(tc => batch.delete(doc(firestore, `users/${user.uid}/timecards`, tc.id)));
+        if (allowedCollections.includes('timecards') && existingTimecardsForOverwrite) {
+          existingTimecardsForOverwrite.forEach(tc => batch.delete(doc(firestore, `users/${user.uid}/timecards`, tc.id)));
         }
       }
       
@@ -115,10 +115,16 @@ export function DataImport({
 
           if (selectedImportMode === 'merge') {
             if (collectionName === 'invoices' && existingData?.invoices) {
-                const existingInvoiceNumbers = new Set(existingData.invoices.map(inv => inv.invoiceNumber));
+                const existingInvoiceNumbers = new Set(existingData.invoices.map((inv: Invoice) => inv.invoiceNumber));
                 docsToProcess = docsToProcess.filter((docData: any) => !existingInvoiceNumbers.has(docData.invoiceNumber));
             }
-             // Add merge logic for other collections if needed (e.g., check for duplicate timecards)
+             if (collectionName === 'timecards' && existingData?.timecards) {
+                const existingTimecardSignatures = new Set(existingData.timecards.map((tc: Timecard) => `${tc.projectId}-${tc.date}-${tc.hours}`));
+                docsToProcess = docsToProcess.filter((docData: any) => {
+                    const signature = `${docData.projectId}-${docData.date}-${docData.hours}`;
+                    return !existingTimecardSignatures.has(signature);
+                });
+             }
           }
 
 
@@ -144,7 +150,7 @@ export function DataImport({
       
       const countForToast = selectedImportMode === 'overwrite' ? Object.values(dataToImport).flat().length : importCount;
       const successTitle = selectedImportMode === 'overwrite' ? 'Import Successful' : 'Merge Successful';
-      const successDescription = selectedImport-mode === 'overwrite' 
+      const successDescription = selectedImportMode === 'overwrite' 
         ? `Successfully cleared relevant data and imported ${countForToast} records. The page will now refresh.`
         : `Successfully merged ${countForToast} new records. The page will now refresh.`;
 
