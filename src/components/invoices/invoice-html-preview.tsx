@@ -34,9 +34,10 @@ const translations = {
         footerMaxRate: (date: string, currency: string, rate: number) => `Using fixed client exchange rate set on ${date}: 1 ${currency} = ${rate.toFixed(4)} RON.`,
         footerThanks: 'Thank you for your business!',
         consultancyServices: (projectName: string, period: string, quantity: string) => `${projectName}: IT Consultancy services for period ${period} (${quantity})`,
+        consultancyServicesDays: (projectName: string, period: string) => `${projectName}: IT Consultancy services for period ${period}`,
         unit: {
             days: 'days',
-            hours: 'hours'
+            hours: 'ore'
         }
     },
     ro: {
@@ -60,6 +61,7 @@ const translations = {
         footerMaxRate: (date: string, currency: string, rate: number) => `Folosind cursul fix al clientului setat la data de ${date}: 1 ${currency} = ${rate.toFixed(4)} RON.`,
         footerThanks: 'Vă mulțumim!',
         consultancyServices: (projectName: string, period: string, quantity: string) => `${projectName}: Servicii de consultanță IT pentru perioada ${period} (${quantity})`,
+        consultancyServicesDays: (projectName: string, period: string) => `${projectName}: Servicii de consultanță IT pentru perioada ${period}`,
         unit: {
             days: 'zile',
             hours: 'ore'
@@ -589,19 +591,30 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
     return `${dayWithOrdinal} of ${format(adjustedDate, monthYearFormat, locale)}`;
   }
 
-  const translateDescription = (description: string, quantity: number, unit: string) => {
+  const translateDescription = (item: Invoice['items'][0]) => {
+      const { description, quantity, unit } = item;
       if (lang === 'en') return description;
-  
-      const regex = /(.*?): IT Consultancy services for period ([\d\.]+\s*-\s*[\d\.]+) \(([\d\.]+)\s+(days|hours)\)/;
-      const match = description.match(regex);
-  
-      if (match) {
-          const [, projectName, period, , matchedUnit] = match;
+
+      // Regex for hourly billing
+      const hourlyRegex = /(.*?): IT Consultancy services for period ([\d\.]+\s*-\s*[\d\.]+) \(([\d\.]+)\s+(hours)\)/;
+      const hourlyMatch = description.match(hourlyRegex);
+
+      if (hourlyMatch) {
+          const [, projectName, period, , matchedUnit] = hourlyMatch;
           const translatedUnit = t.unit[matchedUnit as keyof typeof t.unit] || matchedUnit;
           const quantityText = `${quantity.toFixed(2)} ${translatedUnit}`;
           return t.consultancyServices(projectName, period, quantityText);
       }
-  
+
+      // Regex for daily billing (no quantity in description)
+      const dailyRegex = /(.*?): IT Consultancy services for period ([\d\.]+\s*-\s*[\d\.]+)/;
+      const dailyMatch = description.match(dailyRegex);
+
+      if (dailyMatch) {
+          const [, projectName, period] = dailyMatch;
+          return t.consultancyServicesDays(projectName, period);
+      }
+
       return description; // Fallback
   };
 
@@ -832,7 +845,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                 </thead>
                 <tbody>
                     {items.map((item, index) => {
-                        const translatedDescription = translateDescription(item.description, item.quantity, item.unit);
+                        const translatedDescription = translateDescription(item);
                         const rowClass = styles.layout === 'classic' || styles.layout === 'elegant' || styles.layout === 'minimal'
                           ? 'border-b border-gray-200'
                           : (styles.layout === 'bold' ? 'border-b-2 border-gray-200' : (index % 2 === 0 ? 'bg-gray-50' : 'bg-white'));
