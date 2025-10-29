@@ -38,7 +38,9 @@
                 "companyBankName": { "type": "string", "description": "The user's company bank name." },
                 "companySwift": { "type": "string", "description": "The user's company SWIFT/BIC code." },
                 "companyVatRate": { "type": "number", "description": "The user's company VAT rate." },
-                "companyLogoUrl": { "type": "string", "description": "URL for the user's company logo." }
+                "companyLogoUrl": { "type": "string", "description": "URL for the user's company logo." },
+                "companyPhone": { "type": "string", "description": "The user's company phone number." },
+                "companyEmail": { "type": "string", "description": "The user's company email address.", "format": "email" }
             },
             "required": [
                 "id",
@@ -223,6 +225,8 @@
                 "companySwift": {
                     "type": "string"
                 },
+                 "companyPhone": { "type": "string" },
+                "companyEmail": { "type": "string", "format": "email" },
                 "clientName": {
                     "type": "string"
                 },

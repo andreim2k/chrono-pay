@@ -27,6 +27,8 @@ const companySchema = z.object({
     companyBankName: z.string().min(1, 'Bank name is required'),
     companySwift: z.string().min(1, 'SWIFT/BIC is required').regex(/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/, 'Invalid SWIFT/BIC format.'),
     companyVatRate: z.coerce.number().min(0, 'VAT rate must be positive').multipleOf(0.01, { message: "VAT rate can have at most 2 decimal places." }),
+    companyPhone: z.string().optional(),
+    companyEmail: z.string().email('Invalid email address').optional().or(z.literal('')),
 });
 
 type CompanyFormValues = z.infer<typeof companySchema>;
@@ -82,6 +84,8 @@ export default function SettingsPage() {
             companyBankName: '',
             companySwift: '',
             companyVatRate: 0,
+            companyPhone: '',
+            companyEmail: '',
         }
     });
 
@@ -95,6 +99,8 @@ export default function SettingsPage() {
                 companyBankName: myCompany.companyBankName || '',
                 companySwift: myCompany.companySwift || '',
                 companyVatRate: myCompany.companyVatRate ? myCompany.companyVatRate * 100 : 0,
+                companyPhone: myCompany.companyPhone || '',
+                companyEmail: myCompany.companyEmail || '',
             });
         } else {
              form.reset({
@@ -105,6 +111,8 @@ export default function SettingsPage() {
                 companyBankName: '',
                 companySwift: '',
                 companyVatRate: 0,
+                companyPhone: '',
+                companyEmail: '',
             });
         }
     }, [myCompany, form]);
@@ -184,6 +192,30 @@ export default function SettingsPage() {
                                   )}
                               />
                             </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="companyEmail"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>E-Mail Address</FormLabel>
+                                            <FormControl><Input placeholder="contact@company.com" {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="companyPhone"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Telephone</FormLabel>
+                                            <FormControl><Input placeholder="+44 123 456 789" {...field} /></FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                              </div>
                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <FormField
                                       control={form.control}

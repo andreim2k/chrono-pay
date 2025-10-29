@@ -15,6 +15,8 @@ export type User = {
   companySwift?: string;
   companyVatRate?: number;
   companyLogoUrl?: string;
+  companyPhone?: string;
+  companyEmail?: string;
 }
 
 export type Client = {
@@ -81,6 +83,8 @@ export type Invoice = {
   companyIban?: string;
   companyBankName?: string;
   companySwift?: string;
+  companyPhone?: string;
+  companyEmail?: string;
   clientName: string;
   clientAddress: string;
   clientVat?: string;

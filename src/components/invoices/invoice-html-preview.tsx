@@ -15,6 +15,8 @@ interface InvoiceHtmlPreviewProps {
 const translations = {
     en: {
         address: 'Address',
+        phone: 'Phone',
+        email: 'E-Mail',
         bank: 'Bank',
         iban: 'IBAN',
         swift: 'SWIFT/BIC',
@@ -33,15 +35,17 @@ const translations = {
         footerExchange: (date: string, currency: string, rate: number) => `Exchange rate from BNR for ${date}: 1 ${currency} = ${rate.toFixed(4)} RON.`,
         footerMaxRate: (date: string, currency: string, rate: number) => `Using fixed client exchange rate set on ${date}: 1 ${currency} = ${rate.toFixed(4)} RON.`,
         footerThanks: 'Thank you for your business!',
-        consultancyServices: (projectName: string, period: string, quantity: string) => `${projectName}: IT Consultancy services for period ${period} (${quantity})`,
-        consultancyServicesDays: (projectName: string, period: string) => `${projectName}: IT Consultancy services for period ${period}`,
+        consultancyServices: (period: string, quantity: string) => `IT Consultancy services for period ${period} (${quantity})`,
+        consultancyServicesDays: (period: string) => `IT Consultancy services for period ${period}`,
         unit: {
             days: 'days',
-            hours: 'ore'
+            hours: 'hours'
         }
     },
     ro: {
         address: 'Adresă',
+        phone: 'Telefon',
+        email: 'E-Mail',
         bank: 'Bancă',
         iban: 'IBAN',
         swift: 'SWIFT/BIC',
@@ -60,8 +64,8 @@ const translations = {
         footerExchange: (date: string, currency: string, rate: number) => `Curs valutar BNR pentru ${date}: 1 ${currency} = ${rate.toFixed(4)} RON.`,
         footerMaxRate: (date: string, currency: string, rate: number) => `Folosind cursul fix al clientului setat la data de ${date}: 1 ${currency} = ${rate.toFixed(4)} RON.`,
         footerThanks: 'Vă mulțumim!',
-        consultancyServices: (projectName: string, period: string, quantity: string) => `${projectName}: Servicii de consultanță IT pentru perioada ${period} (${quantity})`,
-        consultancyServicesDays: (projectName: string, period: string) => `${projectName}: Servicii de consultanță IT pentru perioada ${period}`,
+        consultancyServices: (period: string, quantity: string) => `Servicii de consultanță IT pentru perioada ${period} (${quantity})`,
+        consultancyServicesDays: (period: string) => `Servicii de consultanță IT pentru perioada ${period}`,
         unit: {
             days: 'zile',
             hours: 'ore'
@@ -556,7 +560,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
 
 export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
   const {
-    companyName, companyAddress, companyVat, invoiceNumber, clientName,
+    companyName, companyAddress, companyVat, companyEmail, companyPhone, invoiceNumber, clientName,
     clientAddress, clientVat, date, items, currency, subtotal, vatAmount, total,
     companyBankName, companyIban, companySwift, language, vatRate, totalRon,
     theme = 'Classic'
@@ -595,23 +599,23 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
       if (lang === 'en') return description;
 
       // Regex for hourly billing
-      const hourlyRegex = /(.*?): IT Consultancy services for period ([\d\.]+\s*-\s*[\d\.]+) \(([\d\.]+)\s+(hours)\)/;
+      const hourlyRegex = /IT Consultancy services for period ([\d\.]+\s*-\s*[\d\.]+) \(([\d\.]+)\s+(hours)\)/;
       const hourlyMatch = description.match(hourlyRegex);
 
       if (hourlyMatch) {
-          const [, projectName, period, , matchedUnit] = hourlyMatch;
+          const [, period, , matchedUnit] = hourlyMatch;
           const translatedUnit = t.unit[matchedUnit as keyof typeof t.unit] || matchedUnit;
           const quantityText = `${quantity.toFixed(2)} ${translatedUnit}`;
-          return t.consultancyServices(projectName, period, quantityText);
+          return t.consultancyServices(period, quantityText);
       }
 
       // Regex for daily billing (no quantity in description)
-      const dailyRegex = /(.*?): IT Consultancy services for period ([\d\.]+\s*-\s*[\d\.]+)/;
+      const dailyRegex = /IT Consultancy services for period ([\d\.]+\s*-\s*[\d\.]+)/;
       const dailyMatch = description.match(dailyRegex);
 
       if (dailyMatch) {
-          const [, projectName, period] = dailyMatch;
-          return t.consultancyServicesDays(projectName, period);
+          const [, period] = dailyMatch;
+          return t.consultancyServicesDays(period);
       }
 
       return description; // Fallback
@@ -625,13 +629,9 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
     switch (styles.layout) {
       case 'modern':
         return { ...baseStyles, padding: '0px', fontFamily: styles.fontFamily };
-      case 'minimal':
-        return { ...baseStyles, padding: '70px', fontFamily: styles.fontFamily };
-      case 'elegant':
-        return { ...baseStyles, padding: '60px', fontFamily: styles.fontFamily };
       case 'bold':
         return { ...baseStyles, padding: '0px', fontFamily: styles.fontFamily };
-      default: // classic
+      default: // classic, elegant, minimal
         return { ...baseStyles, padding: '60px', fontFamily: styles.fontFamily };
     }
   };
@@ -642,10 +642,14 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
         {/* Header - Layout varies by theme */}
         {styles.layout === 'modern' && (
           <div className={cn('px-12 py-8', styles.tableHeaderBgClass, styles.tableHeaderTextClass)}>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-start">
               <div>
                 <h1 className="text-4xl font-bold" style={{ letterSpacing: '-0.01em' }}>{companyName}</h1>
-                <p className="text-sm mt-2 opacity-90">{companyAddress}</p>
+                <div className="text-sm mt-2 opacity-90 space-y-px">
+                  <p>{companyAddress}</p>
+                  {companyPhone && <p>{t.phone}: {companyPhone}</p>}
+                  {companyEmail && <p>{t.email}: {companyEmail}</p>}
+                </div>
               </div>
               <div className="text-right">
                 <p className="text-sm uppercase tracking-widest opacity-75">{t.invoice}</p>
@@ -684,6 +688,8 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                   <h1 className={cn('font-bold text-gray-900', styles.layout === 'minimal' ? 'text-2xl' : 'text-3xl')}>{companyName}</h1>
                   <div className={cn('text-gray-600 mt-3 space-y-0.5', styles.layout === 'minimal' ? 'text-xs' : 'text-xs')}>
                     <p>{companyAddress}</p>
+                    {companyPhone && <p>{t.phone}: {companyPhone}</p>}
+                    {companyEmail && <p>{t.email}: {companyEmail}</p>}
                     {companyVat && <p>{lang === 'ro' ? 'CUI' : 'VAT'}: {companyVat}</p>}
                   </div>
                 </div>

@@ -273,12 +273,12 @@ export function CreateInvoiceDialog() {
     if (currentProject.rateType === 'hourly') {
         quantity = totalHours;
         unit = 'hours';
-        description = `${currentProject.name}: IT Consultancy services for period ${format(firstDate, 'dd.MM.yyyy')} - ${format(lastDate, 'dd.MM.yyyy')} (${quantity.toFixed(2)} ${unit})`;
+        description = `IT Consultancy services for period ${format(firstDate, 'dd.MM.yyyy')} - ${format(lastDate, 'dd.MM.yyyy')} (${quantity.toFixed(2)} ${unit})`;
     } else { // daily
         const hoursPerDay = currentProject.hoursPerDay || 8;
         quantity = totalHours / hoursPerDay;
         unit = 'days';
-        description = `${currentProject.name}: IT Consultancy services for period ${format(firstDate, 'dd.MM.yyyy')} - ${format(lastDate, 'dd.MM.yyyy')}`;
+        description = `IT Consultancy services for period ${format(firstDate, 'dd.MM.yyyy')} - ${format(lastDate, 'dd.MM.yyyy')}`;
     }
 
     subtotal = quantity * projectRate;
@@ -303,6 +303,8 @@ export function CreateInvoiceDialog() {
       companyIban: myCompany.companyIban,
       companyBankName: myCompany.companyBankName,
       companySwift: myCompany.companySwift,
+      companyPhone: myCompany.companyPhone,
+      companyEmail: myCompany.companyEmail,
       clientName: selectedClient.name,
       clientAddress: selectedClient.address,
       clientVat: selectedClient.vat,
