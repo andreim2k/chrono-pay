@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React from 'react';
@@ -573,9 +574,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
 
 export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
   const {
-    companyName, companyAddress, companyVat, companyEmail, companyPhone, invoiceNumber, clientName,
-    clientAddress, clientVat, clientBankName, clientIban, clientSwift, date, dueDate, items, currency, subtotal, vatAmount, total,
-    companyBankName, companyIban, companySwift, language, vatRate, totalRon,
+    companyName, companyAddress, companyVat, companyEmail, companyPhone, companyBankName, companyIban, companySwift,
+    invoiceNumber, clientName, clientAddress, clientVat, clientBankName, clientIban, clientSwift,
+    date, dueDate, items, currency, subtotal, vatAmount, total,
+    language, vatRate, totalRon,
     theme = 'Classic'
   } = invoice;
 
@@ -596,7 +598,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
 
   const formatDateWithOrdinal = (dateString: string | undefined) => {
     if (!dateString) return '';
-    const d = new Date(dateString.replace(/-/g, '/'));
+    const d = parseISO(dateString);
     const dayWithOrdinal = getDayWithOrdinal(d, lang);
     const monthYearFormat = lang === 'ro' ? 'LLLL, yyyy' : 'MMMM, yyyy';
     const locale = lang === 'ro' ? { locale: ro } : {};
@@ -756,7 +758,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                         <div className="text-sm text-gray-600 mt-1 space-y-0.5">
                             <p>{clientAddress}</p>
                             {clientVat && <p>{t.vatId}: {clientVat}</p>}
-                            {clientBankName && <p><span className="font-semibold">{t.clientBank}:</span> {clientBankName}</p>}
+                            {clientBankName && <p className="mt-1"><span className="font-semibold">{t.clientBank}:</span> {clientBankName}</p>}
                             {clientIban && <p><span className="font-semibold">{t.clientIban}:</span> {clientIban}</p>}
                             {clientSwift && <p><span className="font-semibold">{t.clientSwift}:</span> {clientSwift}</p>}
                             {invoice.projectName && <p className="mt-2 italic">Project: {invoice.projectName}</p>}
@@ -779,7 +781,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                 <div className="text-sm text-gray-600 mt-1 space-y-0.5">
                     <p>{clientAddress}</p>
                     {clientVat && <p>{t.vatId}: {clientVat}</p>}
-                    {clientBankName && <p><span className="font-semibold">{t.clientBank}:</span> {clientBankName}</p>}
+                    {clientBankName && <p className="mt-1"><span className="font-semibold">{t.clientBank}:</span> {clientBankName}</p>}
                     {clientIban && <p><span className="font-semibold">{t.clientIban}:</span> {clientIban}</p>}
                     {clientSwift && <p><span className="font-semibold">{t.clientSwift}:</span> {clientSwift}</p>}
                     {invoice.projectName && <p className="mt-2 italic">{invoice.projectName}</p>}
@@ -802,7 +804,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                 <div className="text-sm text-gray-600 space-y-0.5">
                     <p>{clientAddress}</p>
                     {clientVat && <p>{t.vatId}: {clientVat}</p>}
-                    {clientBankName && <p><span className="font-semibold">{t.clientBank}:</span> {clientBankName}</p>}
+                    {clientBankName && <p className="mt-1"><span className="font-semibold">{t.clientBank}:</span> {clientBankName}</p>}
                     {clientIban && <p><span className="font-semibold">{t.clientIban}:</span> {clientIban}</p>}
                     {clientSwift && <p><span className="font-semibold">{t.clientSwift}:</span> {clientSwift}</p>}
                     {invoice.projectName && <p className="mt-1">{invoice.projectName}</p>}
@@ -813,10 +815,6 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                 <p className="text-sm text-gray-700">{formatDateWithOrdinal(date)}</p>
                  <p className="text-xs text-gray-400 uppercase tracking-wide mt-2 mb-2">{t.dueDate}</p>
                 <p className="text-sm text-gray-700">{formatDateWithOrdinal(dueDate)}</p>
-                <div className="mt-4 text-xs text-gray-600 text-left">
-                  <p>{companyBankName}</p>
-                  {companyIban && <p className="mt-1 font-mono">{companyIban}</p>}
-                </div>
               </div>
             </div>
           )}
@@ -826,12 +824,13 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
               <div style={{ backgroundColor: styles.secondaryBg }} className={cn('p-6', styles.layout === 'modern' ? 'rounded' : '')}>
                 <p className={cn('text-xs font-bold uppercase mb-3', styles.headerTextClass)}>{t.billedTo}</p>
                 <p className={cn('font-bold text-gray-900', styles.layout === 'bold' ? 'text-2xl mb-2' : '')}>{clientName}</p>
-                <div className={cn('text-gray-600 space-y-0.5', styles.layout === 'bold' ? 'text-sm' : 'text-sm')}>
+                <div className={cn('text-gray-600 space-y-px', styles.layout === 'bold' ? 'text-sm' : 'text-sm')}>
                     <p>{clientAddress}</p>
-                    {clientVat && <p>{t.vatId}: {clientVat}</p>}
-                    {clientBankName && <p><span className="font-semibold">{t.clientBank}:</span> {clientBankName}</p>}
+                    {clientVat && <p className="mt-1">{t.vatId}: {clientVat}</p>}
+                    {clientBankName && <p className="mt-1"><span className="font-semibold">{t.clientBank}:</span> {clientBankName}</p>}
                     {clientIban && <p><span className="font-semibold">{t.clientIban}:</span> {clientIban}</p>}
                     {clientSwift && <p><span className="font-semibold">{t.clientSwift}:</span> {clientSwift}</p>}
+                    {(clientBankName || clientIban || clientSwift) && <div className="mt-2 pt-2 border-t border-gray-300"></div>}
                     {invoice.projectName && <p className={cn('text-gray-700', styles.layout === 'bold' ? 'mt-2 font-semibold' : 'mt-2')}><span className={styles.layout === 'bold' ? '' : 'font-semibold'}>Project:</span> {invoice.projectName}</p>}
                 </div>
               </div>
@@ -840,11 +839,6 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                 <p className="text-gray-800">{formatDateWithOrdinal(date)}</p>
                  <p className={cn('text-xs font-bold uppercase mt-3 mb-3', styles.headerTextClass)}>{t.dueDate}</p>
                 <p className="text-gray-800">{formatDateWithOrdinal(dueDate)}</p>
-                <div className="mt-4 pt-4 border-t border-gray-300 space-y-1 text-xs text-gray-600">
-                  <p><span className={styles.layout === 'bold' ? 'font-semibold' : 'font-semibold'}>{t.bank}:</span> {companyBankName}</p>
-                  {companyIban && <p className={styles.layout === 'bold' ? 'font-mono' : 'font-mono'}><span className="font-semibold">{t.iban}:</span> {companyIban}</p>}
-                  {companySwift && <p><span className="font-semibold">{t.swift}:</span> {companySwift}</p>}
-                </div>
               </div>
             </div>
           )}
@@ -1087,4 +1081,5 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
     </div>
   );
 }
+
 
