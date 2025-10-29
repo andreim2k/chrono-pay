@@ -1,3 +1,4 @@
+
 'use client';
 import {
     Avatar,
@@ -13,7 +14,7 @@ import {
 } from "@/components/ui/card"
 import type { Invoice } from "@/lib/types";
 import { cn, getInitials } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 
 const currencySymbols: { [key: string]: string } = {
     EUR: '€',
@@ -34,7 +35,26 @@ export function RecentInvoices({ invoices }: { invoices: Invoice[] }) {
           default:
             return 'secondary';
         }
-      };
+    };
+    
+    const getServiceMonth = (invoice: Invoice) => {
+        const description = invoice.items?.[0]?.description;
+        if (!description) return '';
+
+        const periodRegex = /period ([\d\.]+) -/;
+        const match = description.match(periodRegex);
+
+        if (match && match[1]) {
+            try {
+                // Assuming format is dd.MM.yyyy
+                const startDate = parse(match[1], 'dd.MM.yyyy', new Date());
+                return `for ${format(startDate, 'MMMM')}`;
+            } catch (e) {
+                return ''; // Date parsing failed
+            }
+        }
+        return '';
+    };
 
 
     return (
@@ -55,6 +75,7 @@ export function RecentInvoices({ invoices }: { invoices: Invoice[] }) {
                                 <p className="text-sm font-medium leading-none">{invoice.clientName}</p>
                                 <p className="text-xs text-muted-foreground">
                                 {invoice.invoiceNumber} &middot; {format(new Date(invoice.date), 'MMM d, yyyy')}
+                                <span className='italic ml-1'>{getServiceMonth(invoice)}</span>
                                 </p>
                             </div>
                             <div className="flex items-center gap-4">
