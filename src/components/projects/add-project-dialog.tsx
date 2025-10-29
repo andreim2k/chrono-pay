@@ -53,7 +53,16 @@ const projectSchema = z.object({
   rate: z.coerce.number().optional(),
   rateType: z.enum(['daily', 'hourly']).default('daily'),
   hoursPerDay: z.coerce.number().optional(),
+}).superRefine((data, ctx) => {
+    if (data.rateType === 'daily' && (!data.hoursPerDay || data.hoursPerDay <= 0)) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ['hoursPerDay'],
+            message: 'Hours per day must be greater than 0.',
+        });
+    }
 });
+
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
 
@@ -77,6 +86,7 @@ export function AddProjectDialog() {
 
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
+    mode: 'onChange',
     defaultValues: {
       name: '',
       clientId: '',
@@ -120,8 +130,12 @@ export function AddProjectDialog() {
       dataToSave.maxExchangeRateDate = format(data.maxExchangeRateDate, 'yyyy-MM-dd');
     }
 
+    if (data.rateType === 'hourly') {
+        delete dataToSave.hoursPerDay;
+    }
+
     Object.keys(dataToSave).forEach(key => {
-      if (dataToSave[key] === undefined) {
+      if (dataToSave[key] === undefined || dataToSave[key] === '') {
         delete dataToSave[key];
       }
     });
@@ -152,45 +166,60 @@ export function AddProjectDialog() {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Project Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Project Phoenix" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="clientId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Client</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+             <div className="grid grid-cols-3 gap-4 items-end">
+                <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Project Name</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a client" />
-                      </SelectTrigger>
+                        <Input placeholder="Project Phoenix" {...field} />
                     </FormControl>
-                    <SelectContent>
-                      {clients?.map(client => (
-                        <SelectItem key={client.id} value={client.id}>
-                          {client.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="clientId"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Client</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a client" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {clients?.map(client => (
+                            <SelectItem key={client.id} value={client.id}>
+                            {client.name}
+                            </SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                  control={form.control}
+                  name="invoiceNumberPrefix"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Prefix</FormLabel>
+                      <FormControl>
+                        <Input placeholder={suggestedPrefix ? `e.g., ${suggestedPrefix}` : 'e.g. CP-'} {...field} value={field.value ?? ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
             
-            <div className={cn("grid gap-4 items-end", watchedRateType === 'daily' ? 'grid-cols-5' : 'grid-cols-4')}>
+            <div className={cn("grid gap-4 items-end", watchedRateType === 'daily' ? 'grid-cols-4' : 'grid-cols-3')}>
                 <FormField
                   control={form.control}
                   name="rate"
@@ -260,19 +289,6 @@ export function AddProjectDialog() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="invoiceNumberPrefix"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Prefix</FormLabel>
-                      <FormControl>
-                        <Input placeholder={suggestedPrefix ? `e.g., ${suggestedPrefix}` : 'e.g. CP-'} {...field} value={field.value ?? ''} />
-                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
