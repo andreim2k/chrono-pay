@@ -13,8 +13,8 @@ export function ChronoPayLogo(props: SVGProps<SVGSVGElement>) {
       {...props}
     >
       <circle cx="12" cy="12" r="10" />
-      <path d="m14.5 9.5-5 5" />
-      <path d="m9.5 9.5 5 5" />
+      <path d="M12 1v22" />
+      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
     </svg>
   );
 }
