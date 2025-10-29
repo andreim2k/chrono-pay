@@ -294,10 +294,8 @@ export function CreateInvoiceDialog() {
     const clientVatRate = selectedClient.vatRate;
     const hasVat = selectedClient.hasVat || false;
     
-    const vatAmount = hasVat ? subtotal * clientVatRate : undefined;
-    const total = subtotal + (vatAmount || 0);
+    let total = subtotal;
 
-    const totalRon = invoiceConfig.exchangeRate ? total * invoiceConfig.exchangeRate : undefined;
     const creationDate = parseISO(format(invoiceCreationDate, 'yyyy-MM-dd'));
     
     const data: Omit<Invoice, 'id'> = {
@@ -321,18 +319,26 @@ export function CreateInvoiceDialog() {
       language: selectedClient.language || 'English',
       items,
       subtotal,
-      vatAmount,
-      vatRate: hasVat ? clientVatRate : undefined,
       total,
       status: 'Created' as const,
-      totalRon,
-      exchangeRate: invoiceConfig.exchangeRate,
-      exchangeRateDate: invoiceConfig.exchangeRateDate,
       usedMaxExchangeRate: invoiceConfig.usedMaxRate,
       theme: invoiceConfig.invoiceTheme,
       billedTimecardIds,
       hasVat: hasVat,
     };
+
+    if (hasVat) {
+        const vatAmount = subtotal * clientVatRate;
+        data.vatAmount = vatAmount;
+        data.vatRate = clientVatRate;
+        data.total = subtotal + vatAmount;
+    }
+
+    if (invoiceConfig.exchangeRate) {
+        data.exchangeRate = invoiceConfig.exchangeRate;
+        data.exchangeRateDate = invoiceConfig.exchangeRateDate;
+        data.totalRon = data.total * invoiceConfig.exchangeRate;
+    }
 
     return data;
   }, [
@@ -776,3 +782,5 @@ export function CreateInvoiceDialog() {
     </>
   );
 }
+
+    
