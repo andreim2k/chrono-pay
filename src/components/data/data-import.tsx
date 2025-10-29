@@ -19,7 +19,25 @@ import {
 } from '@/components/ui/alert-dialog';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Label } from '../ui/label';
-import type { Timecard, Invoice, Project, Client } from '@/lib/types';
+import type { Timecard, Invoice, Project, Client, User } from '@/lib/types';
+
+
+interface DataImportProps {
+  allowedCollections?: Array<keyof AlignedData>;
+  buttonLabel?: string;
+  defaultImportMode?: 'overwrite' | 'merge';
+  existingData: AlignedData;
+  allowModeSelection?: boolean;
+}
+
+interface AlignedData {
+    myCompany?: User,
+    clients?: Client[];
+    projects?: Project[];
+    invoices?: Invoice[];
+    timecards?: Timecard[];
+}
+
 
 const migrateProjectData = (projectData: any): Omit<Project, 'id' | 'clientName'> => {
   const migrated = { ...projectData };
@@ -43,17 +61,15 @@ const migrateProjectData = (projectData: any): Omit<Project, 'id' | 'clientName'
   return migrated;
 }
 
-const migrateClientData = (clientData: any, projectDataForClient: any[]): Omit<Client, 'id'> => {
+const migrateClientData = (clientData: any, projectDataForClient: any[], companyData: any): Omit<Client, 'id'> => {
     const migrated = { ...clientData };
 
-    // Move companyVatRate to client.vatRate if it exists on myCompany
-    // This part is tricky because it depends on another part of the import file.
-    // Assuming myCompany is processed first, we can't easily access it here.
-    // A better approach is to handle this at a higher level if possible,
-    // or just ensure new exports are correct and document this change.
-    // For now, we'll just ensure the new structure is respected.
+    const oldCompanyVatRate = companyData?.companyVatRate;
+    if (oldCompanyVatRate && migrated.vatRate === undefined) {
+        migrated.vatRate = oldCompanyVatRate;
+    }
     if (migrated.vatRate === undefined) {
-        migrated.vatRate = 0; // Default if not present
+        migrated.vatRate = 0;
     }
     
     // Migrate hasVat from the first associated project if it exists
@@ -61,11 +77,15 @@ const migrateClientData = (clientData: any, projectDataForClient: any[]): Omit<C
         const firstProject = projectDataForClient.find(p => p.clientId === clientData.id || p.clientName === clientData.name);
         if (firstProject && firstProject.hasVat !== undefined) {
             migrated.hasVat = firstProject.hasVat;
-        } else {
-            migrated.hasVat = false;
         }
-    } else if (migrated.hasVat === undefined) {
+    }
+     if (migrated.hasVat === undefined) {
         migrated.hasVat = false;
+    }
+    
+    // Ensure payment terms exist, default to 7
+    if (migrated.paymentTerms === undefined) {
+        migrated.paymentTerms = 7;
     }
     
     return migrated;
@@ -88,17 +108,6 @@ export function DataImport({
   const firestore = useFirestore();
   const { user } = useUser();
   
-  // These hooks are only needed for 'overwrite' mode to get all existing docs for deletion.
-  const clientsQuery = useMemoFirebase(() => (firestore && user && allowedCollections.includes('clients') ? collection(firestore, `users/${user.uid}/clients`) : null), [firestore, user, allowedCollections]);
-  const projectsQuery = useMemoFirebase(() => (firestore && user && allowedCollections.includes('projects') ? collection(firestore, `users/${user.uid}/projects`) : null), [firestore, user, allowedCollections]);
-  const invoicesQuery = useMemoFirebase(() => (firestore && user && allowedCollections.includes('invoices') ? collection(firestore, `users/${user.uid}/invoices`) : null), [firestore, user, allowedCollections]);
-  const timecardsQuery = useMemoFirebase(() => (firestore && user && allowedCollections.includes('timecards') ? collection(firestore, `users/${user.uid}/timecards`) : null), [firestore, user, allowedCollections]);
-
-  const { data: existingClients } = useCollection(clientsQuery);
-  const { data: existingProjects } = useCollection(projectsQuery);
-  const { data: existingInvoicesForOverwrite } = useCollection(invoicesQuery);
-  const { data: existingTimecardsForOverwrite } = useCollection<Timecard>(timecardsQuery);
-
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -131,41 +140,33 @@ export function DataImport({
       let importCount = 0;
 
       if (selectedImportMode === 'overwrite') {
-        if (allowedCollections.includes('invoices') && existingInvoicesForOverwrite) {
-          existingInvoicesForOverwrite.forEach(inv => batch.delete(doc(firestore, `users/${user.uid}/invoices`, inv.id)));
+        if (allowedCollections.includes('invoices') && existingData?.invoices) {
+          existingData.invoices.forEach(inv => batch.delete(doc(firestore, `users/${user.uid}/invoices`, inv.id)));
         }
-        if (allowedCollections.includes('projects') && existingProjects) {
-          existingProjects.forEach(proj => batch.delete(doc(firestore, `users/${user.uid}/projects`, proj.id)));
+        if (allowedCollections.includes('projects') && existingData?.projects) {
+          existingData.projects.forEach(proj => batch.delete(doc(firestore, `users/${user.uid}/projects`, proj.id)));
         }
-        if (allowedCollections.includes('clients') && existingClients) {
-          existingClients.forEach(client => batch.delete(doc(firestore, `users/${user.uid}/clients`, client.id)));
+        if (allowedCollections.includes('clients') && existingData?.clients) {
+          existingData.clients.forEach(client => batch.delete(doc(firestore, `users/${user.uid}/clients`, client.id)));
         }
-        if (allowedCollections.includes('timecards') && existingTimecardsForOverwrite) {
-          existingTimecardsForOverwrite.forEach(tc => batch.delete(doc(firestore, `users/${user.uid}/timecards`, tc.id)));
+        if (allowedCollections.includes('timecards') && existingData?.timecards) {
+          existingData.timecards.forEach(tc => batch.delete(doc(firestore, `users/${user.uid}/timecards`, tc.id)));
         }
       }
       
-      // Migrate companyVatRate from myCompany to clients if it exists from an old export
-      const oldCompanyVatRate = dataToImport.myCompany?.companyVatRate;
-      if (oldCompanyVatRate && Array.isArray(dataToImport.clients)) {
-          dataToImport.clients.forEach((client: any) => {
-              if (client.vatRate === undefined) {
-                  client.vatRate = oldCompanyVatRate;
-              }
-          });
-          delete dataToImport.myCompany.companyVatRate;
-      }
-
-
+      // Special handling for myCompany which is always a merge/update
       if (allowedCollections.includes('myCompany') && dataToImport.myCompany) {
         const userRef = doc(firestore, `users/${user.uid}`);
-        batch.set(userRef, dataToImport.myCompany, { merge: true });
+        const companyData = { ...dataToImport.myCompany };
+        // Clean up old vat rate field if it exists
+        delete companyData.companyVatRate;
+        batch.set(userRef, companyData, { merge: true });
         if(selectedImportMode === 'merge') importCount++;
       }
 
       const collectionsToImport = ['clients', 'projects', 'invoices', 'timecards'];
       for (const collectionName of collectionsToImport) {
-        if (allowedCollections.includes(collectionName) && Array.isArray(dataToImport[collectionName])) {
+        if (allowedCollections.includes(collectionName as keyof AlignedData) && Array.isArray(dataToImport[collectionName])) {
           let docsToProcess = dataToImport[collectionName];
 
           if (selectedImportMode === 'merge') {
@@ -188,7 +189,7 @@ export function DataImport({
               finalDocData = migrateProjectData(docData);
             }
             if (collectionName === 'clients') {
-              finalDocData = migrateClientData(docData, dataToImport.projects || []);
+              finalDocData = migrateClientData(docData, dataToImport.projects || [], dataToImport.myCompany);
             }
             const newDocRef = doc(collection(firestore, `users/${user.uid}/${collectionName}`));
             batch.set(newDocRef, finalDocData);
@@ -197,7 +198,7 @@ export function DataImport({
         }
       }
       
-      if (importCount === 0) {
+      if (importCount === 0 && selectedImportMode === 'merge') {
         toast({
             title: 'No New Data',
             description: 'No new data was found in the selected file to import.',
@@ -247,7 +248,7 @@ export function DataImport({
       return "This will add all records from the selected file that do not already exist in your current data. It will not delete anything. Are you sure you want to continue?";
     }
 
-    const collectionsToWipe = allowedCollections.filter(c => c !== 'myCompany');
+    const collectionsToWipe = (allowedCollections as string[]).filter(c => c !== 'myCompany');
 
     if (collectionsToWipe.length > 0) {
         const lastCollection = collectionsToWipe.pop();

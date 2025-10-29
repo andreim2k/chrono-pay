@@ -4,7 +4,7 @@
 import { useMemo, useState } from 'react';
 import { InvoiceList } from '@/components/invoices/invoice-list';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { Invoice, Client, Project } from '@/lib/types';
+import { Invoice, Client, Project, Timecard } from '@/lib/types';
 import { collection } from 'firebase/firestore';
 import { DataImport } from '@/components/data/data-import';
 import { CreateInvoiceDialog } from '@/components/invoices/create-invoice-dialog';
@@ -46,6 +46,12 @@ export default function InvoicesPage() {
   );
   const { data: projects } = useCollection<Project>(projectsQuery, `users/${user?.uid}/projects`);
 
+  const timecardsQuery = useMemoFirebase(
+    () => (firestore && user ? collection(firestore, `users/${user.uid}/timecards`) : null),
+    [firestore, user]
+  );
+  const { data: timecards } = useCollection<Timecard>(timecardsQuery, `users/${user?.uid}/timecards`);
+
   const handleClientChange = (clientId: string) => {
     setSelectedClientId(clientId);
     setSelectedProjectId('all'); // Reset project when client changes
@@ -78,7 +84,7 @@ export default function InvoicesPage() {
   }, [filteredInvoices, selectedRows]);
 
   const exportableUiData = useMemo(() => {
-    const invoicesToExport = selectedInvoices.length > 0 ? selectedInvoices : [];
+    const invoicesToExport = selectedInvoices.length > 0 ? selectedInvoices : filteredInvoices;
     return invoicesToExport.map(inv => ({
       'Invoice #': inv.invoiceNumber,
       'Client': inv.clientName,
@@ -87,13 +93,14 @@ export default function InvoicesPage() {
       'Subtotal': `${currencySymbols[inv.currency] || inv.currency}${inv.subtotal.toFixed(2)}`,
       ...(inv.vatAmount && inv.vatAmount > 0 ? { 'VAT': `${currencySymbols[inv.currency] || inv.currency}${inv.vatAmount.toFixed(2)}` } : {}),
       'Total': `${currencySymbols[inv.currency] || inv.currency}${inv.total.toFixed(2)}`,
+      ...(inv.totalRon ? { 'Total (RON)': `${inv.totalRon.toFixed(2)} RON` } : {}),
       'Status': inv.status,
     }));
-  }, [selectedInvoices]);
+  }, [selectedInvoices, filteredInvoices]);
   
   const exportableRawData = useMemo(() => {
-    return selectedInvoices.length > 0 ? selectedInvoices : [];
-  }, [selectedInvoices]);
+    return selectedInvoices.length > 0 ? selectedInvoices : filteredInvoices;
+  }, [selectedInvoices, filteredInvoices]);
 
 
   return (
@@ -110,15 +117,14 @@ export default function InvoicesPage() {
             uiData={exportableUiData} 
             rawData={exportableRawData}
             filename='invoices'
-            buttonLabel='Export'
-            disabled={selectedInvoices.length === 0}
+            buttonLabel={selectedInvoices.length > 0 ? `Export ${selectedInvoices.length} Selected` : 'Export All Filtered'}
           />
           <DataImport 
-            allowedCollections={['invoices']}
+            allowedCollections={['invoices', 'timecards', 'projects', 'clients']}
             buttonLabel="Import Invoices"
             defaultImportMode="merge"
             allowModeSelection={true}
-            existingData={{ invoices: invoices || [] }}
+            existingData={{ invoices: invoices || [], timecards: timecards || [], projects: projects || [], clients: clients || [] }}
           />
           <CreateInvoiceDialog />
         </div>

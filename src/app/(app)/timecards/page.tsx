@@ -4,7 +4,7 @@
 import { useMemo, useState } from 'react';
 import { TimecardList } from '@/components/timecards/timecard-list';
 import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { Timecard, Client, Project } from '@/lib/types';
+import { Timecard, Client, Project, Invoice } from '@/lib/types';
 import { collection, orderBy, query } from 'firebase/firestore';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getYear, getMonth, parseISO } from 'date-fns';
@@ -40,6 +40,12 @@ export default function TimecardsPage() {
     [firestore, user]
   );
   const { data: projects } = useCollection<Project>(projectsQuery, `users/${user?.uid}/projects`);
+
+  const invoicesQuery = useMemoFirebase(
+    () => (firestore && user ? collection(firestore, `users/${user.uid}/invoices`) : null),
+    [firestore, user]
+  );
+  const { data: invoices } = useCollection<Invoice>(invoicesQuery, `users/${user?.uid}/invoices`);
 
   const handleClientChange = (clientId: string) => {
     setSelectedClientId(clientId);
@@ -89,11 +95,11 @@ export default function TimecardsPage() {
             buttonLabel="Export Filtered"
           />
           <DataImport 
-            allowedCollections={['timecards']}
+            allowedCollections={['timecards', 'projects', 'clients', 'invoices']}
             buttonLabel="Import Timecards"
             defaultImportMode="merge"
             allowModeSelection={true}
-            existingData={{ timecards: timecards || [] }}
+            existingData={{ timecards: timecards || [], projects: projects || [], clients: clients || [], invoices: invoices || [] }}
           />
         </div>
       </div>
