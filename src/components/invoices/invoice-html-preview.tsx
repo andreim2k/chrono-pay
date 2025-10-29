@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React from 'react';
@@ -641,18 +642,14 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
             <div className="grid grid-cols-2 gap-6 mb-10 mt-8">
                 <div style={{ backgroundColor: styles.secondaryBg }} className='p-6 rounded'>
                     <p className={cn('text-xs font-bold uppercase mb-3', styles.headerTextClass)}>{t.billedTo}</p>
-                    <p className='font-bold text-gray-900'>{clientName}</p>
-                    <div className='text-gray-600 text-sm space-y-px'>
-                        <p>{clientAddress}</p>
-                        <div className="mt-2 space-y-px">
-                          {clientVat && <p>{t.vatId}: {clientVat}</p>}
-                          {clientBankName && <p>{t.bank}: {clientBankName}</p>}
-                          {clientIban && <p>{t.iban}: {clientIban}</p>}
-                          {clientSwift && <p>{t.swift}: {clientSwift}</p>}
-                        </div>
-                        <div className='mt-2'>
-                          {invoice.projectName && <p className="text-gray-700"><span className='font-semibold'>Project:</span> {invoice.projectName}</p>}
-                        </div>
+                    <p className='font-bold text-gray-900 leading-tight'>{clientName}</p>
+                    <div className='text-gray-600 text-sm'>
+                        <p className='leading-tight'>{clientAddress}</p>
+                        <p className='leading-tight mt-2'>{t.vatId}: {clientVat}</p>
+                        <p className='leading-tight'>{t.bank}: {clientBankName}</p>
+                        <p className='leading-tight'>{t.iban}: {clientIban}</p>
+                        <p className='leading-tight'>{t.swift}: {clientSwift}</p>
+                        {invoice.projectName && <p className="text-gray-700 mt-2 leading-tight"><span className='font-semibold'>Project:</span> {invoice.projectName}</p>}
                     </div>
                 </div>
                 <div style={{ backgroundColor: styles.secondaryBg }} className='p-6 rounded text-right'>
@@ -746,3 +743,4 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
     </div>
   );
 }
+
