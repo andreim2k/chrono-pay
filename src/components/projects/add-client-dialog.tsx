@@ -35,6 +35,7 @@ const clientSchema = z.object({
   swift: z.string().optional(),
   language: z.string().min(1, 'Language is required'),
   vatRate: z.coerce.number().min(0, "VAT rate must be 0 or greater."),
+  paymentTerms: z.coerce.number().int().min(0, "Payment terms must be 0 or greater").optional(),
 });
 
 type ClientFormValues = z.infer<typeof clientSchema>;
@@ -62,6 +63,7 @@ export function AddClientDialog() {
       swift: '',
       language: 'English',
       vatRate: 0,
+      paymentTerms: 7,
     },
   });
 
@@ -208,19 +210,34 @@ export function AddClientDialog() {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="vatRate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>VAT Rate (%)</FormLabel>
-                  <FormControl>
-                    <Input type="number" placeholder="e.g., 19" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="vatRate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>VAT Rate (%)</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g., 19" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="paymentTerms"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Payment Terms (Days)</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g., 7" {...field} value={field.value ?? ''} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>

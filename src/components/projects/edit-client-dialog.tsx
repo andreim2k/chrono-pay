@@ -33,6 +33,7 @@ const clientSchema = z.object({
   swift: z.string().optional(),
   language: z.string().min(1, 'Language is required'),
   vatRate: z.coerce.number().min(0, "VAT rate must be 0 or greater."),
+  paymentTerms: z.coerce.number().int().min(0, "Payment terms must be 0 or greater").optional(),
 });
 
 type ClientFormValues = z.infer<typeof clientSchema>;
@@ -59,6 +60,7 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
       swift: client.swift,
       language: client.language || 'English',
       vatRate: client.vatRate * 100, // Display as percentage
+      paymentTerms: client.paymentTerms,
     },
   });
 
@@ -73,6 +75,7 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
             swift: client.swift,
             language: client.language || 'English',
             vatRate: client.vatRate * 100, // Display as percentage
+            paymentTerms: client.paymentTerms,
         });
     }
   }, [isOpen, client, form]);
@@ -220,19 +223,34 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
                 </FormItem>
             )}
             />
-            <FormField
-              control={form.control}
-              name="vatRate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>VAT Rate (%)</FormLabel>
-                  <FormControl>
-                    <Input type="number" placeholder="e.g., 19" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+             <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="vatRate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>VAT Rate (%)</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g., 19" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="paymentTerms"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Payment Terms (Days)</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="e.g., 7" {...field} value={field.value ?? ''}/>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

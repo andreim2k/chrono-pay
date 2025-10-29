@@ -316,7 +316,7 @@ export function CreateInvoiceDialog() {
       projectId: currentProject.id,
       projectName: currentProject.name,
       date: format(creationDate, 'yyyy-MM-dd'),
-      dueDate: format(addDays(creationDate, 7), 'yyyy-MM-dd'),
+      dueDate: format(addDays(creationDate, selectedClient.paymentTerms || 7), 'yyyy-MM-dd'),
       currency: invoiceConfig.currency,
       language: selectedClient.language || 'English',
       items,
@@ -680,7 +680,7 @@ export function CreateInvoiceDialog() {
                     </div>
                     {invoiceData.hasVat && (
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">VAT ({(invoiceData.vatRate! * 100).toFixed(0)}%):</span>
+                        <span className="text-muted-foreground">VAT ({((invoiceData.vatRate || 0) * 100).toFixed(0)}%):</span>
                         <span className='font-medium text-foreground'>{invoiceData.currency} {(invoiceData.vatAmount || 0).toFixed(2)}</span>
                       </div>
                     )}

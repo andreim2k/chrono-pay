@@ -86,6 +86,10 @@
                 "vatRate": {
                     "type": "number",
                     "description": "The VAT rate specific to this client."
+                },
+                "paymentTerms": {
+                    "type": "number",
+                    "description": "Number of days until an invoice is due."
                 }
             },
             "required": [
