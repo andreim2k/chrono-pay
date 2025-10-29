@@ -4,7 +4,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { format, getDate, subMonths } from 'date-fns';
+import { format, getDate, subMonths, parseISO, min, max } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Download, Save, Loader2, RefreshCw, Eye, PlusCircle, Hourglass } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -251,28 +251,26 @@ export function CreateInvoiceDialog() {
   const invoiceData: Omit<Invoice, 'id'> | null = useMemo(() => {
     if (!selectedClient || !currentProject || !myCompany || !invoices ) return null;
 
-    let items: Invoice['items'], subtotal: number, billedTimecardIds: string[] = [];
-    const servicePeriod = new Date(invoicedYear, invoicedMonth);
-    const description = `${currentProject.name}: Consultancy services for ${format(servicePeriod, 'MMMM yyyy')}`;
-    const projectRate = currentProject.rate;
+    const currentlySelectedTimecards = filteredTimecards.filter(tc => selectedTimecards[tc.id]);
+    if (currentlySelectedTimecards.length === 0) return null;
 
-    const totalHours = filteredTimecards.reduce((acc, tc) => selectedTimecards[tc.id] ? acc + tc.hours : acc, 0);
-    billedTimecardIds = filteredTimecards.filter(tc => selectedTimecards[tc.id]).map(tc => tc.id);
+    const timecardDates = currentlySelectedTimecards.map(tc => parseISO(tc.date));
+    const firstDate = min(timecardDates);
+    const lastDate = max(timecardDates);
     
+    let items: Invoice['items'], subtotal: number, billedTimecardIds: string[] = [];
+    const projectRate = currentProject.rate;
+    
+    const totalHours = currentlySelectedTimecards.reduce((acc, tc) => acc + tc.hours, 0);
+    billedTimecardIds = currentlySelectedTimecards.map(tc => tc.id);
+
     if (billedTimecardIds.length === 0 || typeof projectRate !== 'number') return null;
     
-    let quantity: number;
-    let unit: string;
-    
-    if (currentProject.rateType === 'hourly') {
-        quantity = totalHours;
-        unit = 'hours';
-        subtotal = totalHours * projectRate;
-    } else { // daily
-        quantity = totalHours / 8; // Assuming 8 hours/day
-        unit = 'days';
-        subtotal = quantity * projectRate;
-    }
+    const quantity = totalHours / 8; // Assuming 8 hours/day
+    const unit = 'days';
+    subtotal = quantity * projectRate;
+
+    const description = `${currentProject.name}: IT Consultancy services for period ${format(firstDate, 'dd.MM.yyyy')} - ${format(lastDate, 'dd.MM.yyyy')} (${quantity.toFixed(2)} days)`;
     
     items = [{
       description,
@@ -322,7 +320,7 @@ export function CreateInvoiceDialog() {
     return data;
   }, [
       selectedClient, currentProject, invoices, invoiceConfig,
-      myCompany, invoicedMonth, invoicedYear, invoiceCreationDate, 
+      myCompany, invoiceCreationDate, 
       filteredTimecards, selectedTimecards
     ]);
   

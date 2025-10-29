@@ -28,7 +28,6 @@ import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { Calendar } from '../ui/calendar';
 import { CalendarIcon } from 'lucide-react';
-import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 
 const currencies = ['EUR', 'USD', 'GBP', 'RON'];
 const invoiceThemes: InvoiceTheme[] = [
@@ -50,7 +49,7 @@ const projectSchema = z.object({
   maxExchangeRate: z.coerce.number().optional(),
   maxExchangeRateDate: z.date().optional(),
   rate: z.coerce.number().optional(),
-  rateType: z.enum(['daily', 'hourly']).default('daily'),
+  rateType: z.enum(['daily']).default('daily'),
 });
 
 
@@ -201,48 +200,13 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
             />
              <FormField
               control={form.control}
-              name="rateType"
+              name="rate"
               render={({ field }) => (
-                <FormItem className="space-y-3">
-                  <FormLabel>Default Rate</FormLabel>
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="rate"
-                      render={({ field: rateField }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Input type="number" placeholder="e.g., 500" {...rateField} value={rateField.value ?? ''} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex items-center space-x-4"
-                      >
-                        <FormItem className="flex items-center space-x-2 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="daily" />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            per Day
-                          </FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-2 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="hourly" />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            per Hour
-                          </FormLabel>
-                        </FormItem>
-                      </RadioGroup>
-                    </FormControl>
-                  </div>
+                <FormItem>
+                  <FormLabel>Default Rate per Day</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="e.g., 500" {...field} value={field.value ?? ''} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

@@ -140,8 +140,8 @@
                 },
                 "rateType": {
                     "type": "string",
-                    "enum": ["daily", "hourly"],
-                    "description": "Specifies if the rate is daily or hourly."
+                    "enum": ["daily"],
+                    "description": "Specifies if the rate is daily."
                 }
             },
             "required": [
