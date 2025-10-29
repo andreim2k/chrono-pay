@@ -21,10 +21,6 @@ const translations = {
         bank: 'Bank',
         iban: 'IBAN',
         swift: 'SWIFT/BIC',
-        clientBank: 'Bank',
-        clientIban: 'IBAN',
-        clientSwift: 'SWIFT/BIC',
-        invoice: 'Invoice',
         billedTo: 'Billed To',
         vatId: 'VAT ID',
         invoiceDate: 'Invoice Date',
@@ -57,10 +53,6 @@ const translations = {
         bank: 'Bancă',
         iban: 'IBAN',
         swift: 'SWIFT/BIC',
-        clientBank: 'Bancă',
-        clientIban: 'IBAN',
-        clientSwift: 'SWIFT/BIC',
-        invoice: 'Factură',
         billedTo: 'Facturat către',
         vatId: 'CUI/CIF',
         invoiceDate: 'Data facturii',
@@ -598,9 +590,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
 
   const formatDateWithOrdinal = (dateString: string | undefined) => {
     if (!dateString) return '';
-    // Use replace to handle both 'yyyy-MM-dd' and 'yyyy/MM/dd'
-    const adjustedDateString = dateString.replace(/-/g, '/');
-    const d = new Date(adjustedDateString);
+    const d = parseISO(dateString);
     const dayWithOrdinal = getDayWithOrdinal(d, lang);
     const monthYearFormat = lang === 'ro' ? 'LLLL, yyyy' : 'MMMM, yyyy';
     const locale = lang === 'ro' ? { locale: ro } : {};
@@ -675,7 +665,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                 <h1 className="text-4xl font-bold" style={{ letterSpacing: '-0.01em' }}>{companyName}</h1>
                 <div className="text-sm mt-2 opacity-90 space-y-px">
                   <p>{companyAddress}</p>
-                  <p><span className="font-semibold">{t.bank}:</span> {companyBankName}</p>
+                   {companyBankName && <p><span className="font-semibold">{t.bank}:</span> {companyBankName}</p>}
                   {companyIban && <p><span className="font-semibold">{t.iban}:</span> {companyIban}</p>}
                   {companySwift && <p><span className="font-semibold">{t.swift}:</span> {companySwift}</p>}
                   {companyPhone && <p>{t.phone}: {companyPhone}</p>}
@@ -759,11 +749,9 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                             <p>{clientAddress}</p>
                             <div className='mt-1'>
                               {clientVat && <p>{t.vatId}: {clientVat}</p>}
-                            </div>
-                            <div className='space-y-0'>
-                              {clientBankName && <p>{t.clientBank}: {clientBankName}</p>}
-                              {clientIban && <p>{t.clientIban}: {clientIban}</p>}
-                              {clientSwift && <p>{t.clientSwift}: {clientSwift}</p>}
+                              {clientBankName && <p>{t.bank}: {clientBankName}</p>}
+                              {clientIban && <p>{t.iban}: {clientIban}</p>}
+                              {clientSwift && <p>{t.swift}: {clientSwift}</p>}
                             </div>
                             {invoice.projectName && <p className="mt-2 italic">Project: {invoice.projectName}</p>}
                         </div>
@@ -788,9 +776,9 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                       {clientVat && <p>{t.vatId}: {clientVat}</p>}
                     </div>
                     <div className='space-y-0'>
-                      {clientBankName && <p>{t.clientBank}: {clientBankName}</p>}
-                      {clientIban && <p>{t.clientIban}: {clientIban}</p>}
-                      {clientSwift && <p>{t.clientSwift}: {clientSwift}</p>}
+                      {clientBankName && <p>{t.bank}: {clientBankName}</p>}
+                      {clientIban && <p>{t.iban}: {clientIban}</p>}
+                      {clientSwift && <p>{t.swift}: {clientSwift}</p>}
                     </div>
                     {invoice.projectName && <p className="mt-2 italic">{invoice.projectName}</p>}
                 </div>
@@ -815,9 +803,9 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                       {clientVat && <p>{t.vatId}: {clientVat}</p>}
                     </div>
                     <div className='space-y-0'>
-                      {clientBankName && <p>{t.clientBank}: {clientBankName}</p>}
-                      {clientIban && <p>{t.clientIban}: {clientIban}</p>}
-                      {clientSwift && <p>{t.clientSwift}: {clientSwift}</p>}
+                      {clientBankName && <p>{t.bank}: {clientBankName}</p>}
+                      {clientIban && <p>{t.iban}: {clientIban}</p>}
+                      {clientSwift && <p>{t.swift}: {clientSwift}</p>}
                     </div>
                     {invoice.projectName && <p className="mt-1">{invoice.projectName}</p>}
                 </div>
@@ -833,29 +821,24 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
 
           {(styles.layout === 'modern' || styles.layout === 'bold') && (
             <div className="grid grid-cols-2 gap-6 mb-10 mt-8">
-              <div style={{ backgroundColor: styles.secondaryBg }} className={cn('p-6', styles.layout === 'modern' ? 'rounded' : '')}>
-                <p className={cn('text-xs font-bold uppercase mb-3', styles.headerTextClass)}>{t.billedTo}</p>
-                <p className={cn('font-bold text-gray-900', styles.layout === 'bold' ? 'text-2xl mb-2' : '')}>{clientName}</p>
-                <div className={cn('text-gray-600 space-y-px', styles.layout === 'bold' ? 'text-sm' : 'text-sm')}>
-                    <p>{clientAddress}</p>
-                    <div className='mt-1'>
-                      {clientVat && <p>{t.vatId}: {clientVat}</p>}
+                <div style={{ backgroundColor: styles.secondaryBg }} className={cn('p-6', styles.layout === 'modern' ? 'rounded' : '')}>
+                    <p className={cn('text-xs font-bold uppercase mb-3', styles.headerTextClass)}>{t.billedTo}</p>
+                    <p className={cn('font-bold text-gray-900', styles.layout === 'bold' ? 'text-2xl mb-2' : '')}>{clientName}</p>
+                    <div className={cn('text-gray-600 space-y-px', styles.layout === 'bold' ? 'text-sm' : 'text-sm')}>
+                        <p>{clientAddress}</p>
+                        {clientVat && <p>{t.vatId}: {clientVat}</p>}
+                        {clientBankName && <p>{t.bank}: {clientBankName}</p>}
+                        {clientIban && <p>{t.iban}: {clientIban}</p>}
+                        {clientSwift && <p>{t.swift}: {clientSwift}</p>}
+                        {invoice.projectName && <p className={cn('text-gray-700', styles.layout === 'bold' ? 'mt-2 font-semibold' : 'mt-2')}><span className={styles.layout === 'bold' ? '' : 'font-semibold'}>Project:</span> {invoice.projectName}</p>}
                     </div>
-                     <div className='space-y-0'>
-                        {clientBankName && <p>{t.clientBank}: {clientBankName}</p>}
-                        {clientIban && <p>{t.clientIban}: {clientIban}</p>}
-                        {clientSwift && <p>{t.clientSwift}: {clientSwift}</p>}
-                    </div>
-                    <div className="mt-2 pt-2 border-t border-gray-300"></div>
-                    {invoice.projectName && <p className={cn('text-gray-700', styles.layout === 'bold' ? 'mt-2 font-semibold' : 'mt-2')}><span className={styles.layout === 'bold' ? '' : 'font-semibold'}>Project:</span> {invoice.projectName}</p>}
                 </div>
-              </div>
-              <div style={{ backgroundColor: styles.secondaryBg }} className={cn('p-6', styles.layout === 'modern' ? 'rounded' : '')}>
-                <p className={cn('text-xs font-bold uppercase mb-3', styles.headerTextClass)}>{t.invoiceDate}</p>
-                <p className="text-gray-800">{formatDateWithOrdinal(date)}</p>
-                 <p className={cn('text-xs font-bold uppercase mt-3 mb-3', styles.headerTextClass)}>{t.dueDate}</p>
-                <p className="text-gray-800">{formatDateWithOrdinal(dueDate)}</p>
-              </div>
+                <div style={{ backgroundColor: styles.secondaryBg }} className={cn('p-6', styles.layout === 'modern' ? 'rounded' : '')}>
+                    <p className={cn('text-xs font-bold uppercase mb-3', styles.headerTextClass)}>{t.invoiceDate}</p>
+                    <p className="text-gray-800">{formatDateWithOrdinal(date)}</p>
+                    <p className={cn('text-xs font-bold uppercase mt-3 mb-3', styles.headerTextClass)}>{t.dueDate}</p>
+                    <p className="text-gray-800">{formatDateWithOrdinal(dueDate)}</p>
+                </div>
             </div>
           )}
         </div>
