@@ -590,16 +590,17 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
 
   const formatDateWithOrdinal = (dateString: string | undefined) => {
     if (!dateString) return '';
+    // The date string is 'yyyy-MM-dd', so we can parse it safely without timezone issues
+    // by treating it as UTC to avoid local timezone shifts.
     const d = parseISO(dateString);
-    const adjustedDate = new Date(d.valueOf() + d.getTimezoneOffset() * 60 * 1000);
-    const dayWithOrdinal = getDayWithOrdinal(adjustedDate, lang);
+    const dayWithOrdinal = getDayWithOrdinal(d, lang);
     const monthYearFormat = lang === 'ro' ? 'LLLL, yyyy' : 'MMMM, yyyy';
     const locale = lang === 'ro' ? { locale: ro } : {};
 
     if (lang === 'ro') {
-        return `${dayWithOrdinal} ${format(adjustedDate, monthYearFormat, locale)}`;
+        return `${dayWithOrdinal} ${format(d, monthYearFormat, locale)}`;
     }
-    return `${dayWithOrdinal} of ${format(adjustedDate, monthYearFormat, locale)}`;
+    return `${dayWithOrdinal} of ${format(d, monthYearFormat, locale)}`;
   }
 
   const translateDescription = (item: Invoice['items'][0]) => {
@@ -1011,7 +1012,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                      <div className="space-y-1 mt-2 text-sm text-gray-600 px-2">
                         <div className="flex justify-between"><span>{t.subtotalRon}</span><span className="font-semibold">{ronBreakdown.subtotal.toFixed(2)} RON</span></div>
                         {hasVat && <div className="flex justify-between"><span>{t.vatRon}</span><span className="font-semibold">{ronBreakdown.vat.toFixed(2)} RON</span></div>}
-                        <div className="flex justify-between"><span>{t.totalRon}</span><span className="font-semibold">{ronBreakdown.total.toFixed(2)} RON</span></div>
+                        <div className="flex justify-between font-bold"><span>{t.totalRon}</span><span className='font-bold'>{ronBreakdown.total.toFixed(2)} RON</span></div>
                     </div>
                   )}
                 </>
@@ -1070,3 +1071,5 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
     </div>
   );
 }
+
+    

@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, Download, Eye, Loader2, Trash2, RotateCcw } from 'lucide-react';
 import type { Invoice } from '@/lib/types';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser } from '@/firebase';
 import { doc, writeBatch } from 'firebase/firestore';
@@ -337,7 +337,7 @@ export function InvoiceList({ invoices, selectedRows, onSelectedRowsChange }: In
                   <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
                   <TableCell>{invoice.clientName}</TableCell>
                   <TableCell>{invoice.projectName}</TableCell>
-                  <TableCell>{format(new Date(invoice.date), 'MMM d, yyyy')}</TableCell>
+                  <TableCell>{format(parseISO(invoice.date), 'MMM d, yyyy')}</TableCell>
                   <TableCell>{currencySymbols[invoice.currency] || invoice.currency}{invoice.subtotal.toFixed(2)}</TableCell>
                   {showVatColumn && (
                       <TableCell>
@@ -435,5 +435,7 @@ export function InvoiceList({ invoices, selectedRows, onSelectedRowsChange }: In
     </>
   );
 }
+
+    
 
     
