@@ -33,7 +33,7 @@ const clientSchema = z.object({
   swift: z.string().optional(),
   language: z.string().min(1, 'Language is required'),
   vatRate: z.coerce.number().min(0, "VAT rate must be 0 or greater."),
-  paymentTerms: z.coerce.number().int().min(0, "Payment terms must be 0 or greater").optional(),
+  paymentTerms: z.coerce.number().int().min(0, "Payment terms must be 0 or greater"),
 });
 
 type ClientFormValues = z.infer<typeof clientSchema>;
@@ -60,7 +60,7 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
       swift: client.swift,
       language: client.language || 'English',
       vatRate: client.vatRate * 100, // Display as percentage
-      paymentTerms: client.paymentTerms,
+      paymentTerms: client.paymentTerms ?? 7,
     },
   });
 
@@ -75,7 +75,7 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
             swift: client.swift,
             language: client.language || 'English',
             vatRate: client.vatRate * 100, // Display as percentage
-            paymentTerms: client.paymentTerms,
+            paymentTerms: client.paymentTerms ?? 7,
         });
     }
   }, [isOpen, client, form]);

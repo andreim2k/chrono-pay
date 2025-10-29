@@ -35,7 +35,7 @@ const clientSchema = z.object({
   swift: z.string().optional(),
   language: z.string().min(1, 'Language is required'),
   vatRate: z.coerce.number().min(0, "VAT rate must be 0 or greater."),
-  paymentTerms: z.coerce.number().int().min(0, "Payment terms must be 0 or greater").optional(),
+  paymentTerms: z.coerce.number().int().min(0, "Payment terms must be 0 or greater"),
 });
 
 type ClientFormValues = z.infer<typeof clientSchema>;

@@ -96,7 +96,8 @@
                 "name",
                 "address",
                 "vat",
-                "vatRate"
+                "vatRate",
+                "paymentTerms"
             ]
         },
         "Project": {

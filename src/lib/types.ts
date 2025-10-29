@@ -30,7 +30,7 @@ export type Client = {
   swift?: string;
   language?: 'English' | 'Romanian';
   order?: number;
-  paymentTerms?: number; // Number of days until invoice is due
+  paymentTerms: number; // Number of days until invoice is due
 };
 
 export type Company = {
