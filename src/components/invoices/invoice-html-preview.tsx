@@ -669,11 +669,11 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
             <p className="text-gray-500 text-sm uppercase tracking-wider font-semibold">{t.billedTo}</p>
             <p className="font-bold text-gray-800 mt-2">{clientName}</p>
             <p className="text-gray-600 text-sm">{clientAddress}</p>
-            <p className="text-gray-600 text-sm">{t.vatId}: {clientVat}</p>
-            <div className='mt-2 text-sm text-gray-600'>
-              {clientBankName && <p>{t.bank}: {clientBankName}</p>}
-              {clientIban && <p>{t.iban}: {clientIban}</p>}
-              {clientSwift && <p>{t.swift}: {clientSwift}</p>}
+            <div className='text-sm text-gray-600 mt-2'>
+                <p>{t.vatId}: {clientVat}</p>
+                {clientBankName && <p>{t.bank}: {clientBankName}</p>}
+                {clientIban && <p>{t.iban}: {clientIban}</p>}
+                {clientSwift && <p>{t.swift}: {clientSwift}</p>}
             </div>
             {invoice.projectName && <p className='text-gray-600 text-sm mt-2'>Project: {invoice.projectName}</p>}
         </div>
@@ -685,6 +685,14 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
           <div className="mt-4">
             <p className="text-gray-500 text-sm uppercase tracking-wider font-semibold">{t.dueDate}</p>
             <p className="text-gray-700 font-medium mt-1">{formatDateWithOrdinal(dueDate)}</p>
+          </div>
+           <div className='mt-4 text-sm text-gray-600'>
+             <p className="text-gray-500 text-sm uppercase tracking-wider font-semibold">Payout Details</p>
+             <div className='text-gray-700 mt-1 space-y-px'>
+              <p>{t.bank}: {companyBankName}</p>
+              <p>{t.iban}: {companyIban}</p>
+              <p>{t.swift}: {companySwift}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -709,7 +717,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
       </div>
       <div className="mt-4 grid grid-cols-2 gap-8 px-12 pb-8">
         <div className={cn('p-4 rounded-lg', styles.secondaryBg)}>
-          <p className="text-sm font-semibold uppercase tracking-wide">Billed To</p>
+          <p className="text-sm font-semibold uppercase tracking-wide">{t.billedTo}</p>
           <div className="mt-2 text-sm text-gray-700">
             <p className="font-bold text-base text-gray-900">{clientName}</p>
             <p>{clientAddress}</p>
@@ -725,11 +733,11 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
         <div className={cn('p-4 rounded-lg', styles.secondaryBg)}>
           <div className="grid grid-cols-2 gap-4">
             <div className='text-sm'>
-              <p className="font-semibold uppercase tracking-wide">Invoice Date</p>
+              <p className="font-semibold uppercase tracking-wide">{t.invoiceDate}</p>
               <p className="mt-2 text-gray-700">{formatDateWithOrdinal(date)}</p>
             </div>
             <div className='text-sm'>
-              <p className="font-semibold uppercase tracking-wide">Due Date</p>
+              <p className="font-semibold uppercase tracking-wide">{t.dueDate}</p>
               <p className="mt-2 text-gray-700">{formatDateWithOrdinal(dueDate)}</p>
             </div>
           </div>
@@ -783,8 +791,8 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                       {clientIban && <p>{t.iban}: {clientIban}</p>}
                       {clientSwift && <p>{t.swift}: {clientSwift}</p>}
                     </div>
-                    {invoice.projectName && <div className='mt-2'><p>Project: {invoice.projectName}</p></div>}
                 </div>
+                 {invoice.projectName && <div className='mt-2'><p>Project: {invoice.projectName}</p></div>}
             </div>
             <div className="text-right space-y-1">
                 <p className={cn('text-xs font-bold uppercase', styles.headerTextClass)}>{t.invoiceDate}</p>
