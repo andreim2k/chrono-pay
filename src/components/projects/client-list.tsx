@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { Client, Project, Invoice } from '@/lib/types';
+import type { Client, Project, Invoice, Timecard } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { GripVertical, MoreVertical } from 'lucide-react';
@@ -129,6 +129,12 @@ export function ClientList({ clients: initialClients, onEditClient }: ClientList
   );
   const { data: allInvoices } = useCollection<Invoice>(invoicesQuery, `users/${user?.uid}/invoices`);
 
+  const timecardsQuery = useMemoFirebase(
+    () => (firestore && user ? collection(firestore, `users/${user.uid}/timecards`) : null),
+    [firestore, user]
+  );
+  const { data: allTimecards } = useCollection<Timecard>(timecardsQuery, `users/${user?.uid}/timecards`);
+
   useEffect(() => {
     const sortedClients = [...initialClients].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     setActiveClients(sortedClients);
@@ -143,7 +149,7 @@ export function ClientList({ clients: initialClients, onEditClient }: ClientList
   );
 
   const handleDelete = async () => {
-    if (!firestore || !clientToDelete || !user || !allProjects || !allInvoices) return;
+    if (!firestore || !clientToDelete || !user || !allProjects || !allInvoices || !allTimecards) return;
 
     const batch = writeBatch(firestore);
 
@@ -151,35 +157,36 @@ export function ClientList({ clients: initialClients, onEditClient }: ClientList
     const clientRef = doc(firestore, `users/${user.uid}/clients`, clientToDelete.id);
     batch.delete(clientRef);
 
-    // 2. Find and delete all associated projects
+    // 2. Find all associated projects
     const projectsToDelete = allProjects.filter(p => p.clientId === clientToDelete.id);
+    const projectIdsToDelete = new Set(projectsToDelete.map(p => p.id));
+
+    // 3. Delete all associated projects
     projectsToDelete.forEach(project => {
         const projectRef = doc(firestore, `users/${user.uid}/projects`, project.id);
         batch.delete(projectRef);
     });
     
-    // 3. Find and delete all associated invoices for that client (covers all projects)
-    const clientInvoicesToDelete = allInvoices.filter(inv => {
-        const project = projectsToDelete.find(p => p.id === inv.projectId);
-        return project && project.clientId === clientToDelete.id;
-    });
-
-    // We can also find invoices just by clientName if projectId is not reliable enough across all schemas
-    const invoicesByClientName = allInvoices.filter(inv => inv.clientName === clientToDelete.name);
-    
-    const combinedInvoices = [...new Map([...clientInvoicesToDelete, ...invoicesByClientName].map(item => [item.id, item])).values()];
-
-
-    combinedInvoices.forEach(invoice => {
+    // 4. Find and delete all associated invoices
+    const invoicesToDelete = allInvoices.filter(inv => projectIdsToDelete.has(inv.projectId));
+    invoicesToDelete.forEach(invoice => {
         const invoiceRef = doc(firestore, `users/${user.uid}/invoices`, invoice.id);
         batch.delete(invoiceRef);
     });
+
+    // 5. Find and delete all associated timecards
+    const timecardsToDelete = allTimecards.filter(tc => projectIdsToDelete.has(tc.projectId));
+    timecardsToDelete.forEach(timecard => {
+        const timecardRef = doc(firestore, `users/${user.uid}/timecards`, timecard.id);
+        batch.delete(timecardRef);
+    });
+
 
     try {
         await batch.commit();
         toast({
           title: 'Client and Data Deleted',
-          description: `${clientToDelete.name}, along with their projects and invoices, has been deleted.`,
+          description: `${clientToDelete.name}, along with their projects, invoices, and timecards, has been deleted.`,
         });
     } catch (error) {
         console.error("Error deleting client and associated data: ", error);
@@ -263,7 +270,7 @@ export function ClientList({ clients: initialClients, onEditClient }: ClientList
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the client <span className='font-bold'>{clientToDelete?.name}</span>, all of their associated projects, and all of their invoices.
+              This action cannot be undone. This will permanently delete the client <span className='font-bold'>{clientToDelete?.name}</span>, all of their associated projects, invoices, and timecards.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

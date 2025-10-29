@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import type { Project, Invoice } from '@/lib/types';
+import type { Project, Invoice, Timecard } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Button } from '../ui/button';
@@ -120,6 +120,13 @@ export function ProjectList({ projects: initialProjects }: ProjectListProps) {
   );
   const { data: allInvoices } = useCollection<Invoice>(invoicesQuery, `users/${user?.uid}/invoices`);
 
+  const timecardsQuery = useMemoFirebase(
+    () => (firestore && user ? collection(firestore, `users/${user.uid}/timecards`) : null),
+    [firestore, user]
+  );
+  const { data: allTimecards } = useCollection<Timecard>(timecardsQuery, `users/${user?.uid}/timecards`);
+
+
   useEffect(() => {
     const sortedProjects = [...initialProjects].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     setActiveProjects(sortedProjects);
@@ -134,7 +141,7 @@ export function ProjectList({ projects: initialProjects }: ProjectListProps) {
   );
 
   const handleDelete = async () => {
-    if (!firestore || !projectToDelete || !user || !allInvoices) return;
+    if (!firestore || !projectToDelete || !user || !allInvoices || !allTimecards) return;
     
     const batch = writeBatch(firestore);
 
@@ -149,18 +156,25 @@ export function ProjectList({ projects: initialProjects }: ProjectListProps) {
       batch.delete(invoiceRef);
     });
 
+    // 3. Find and delete all associated timecards
+    const timecardsToDelete = allTimecards.filter(tc => tc.projectId === projectToDelete.id);
+    timecardsToDelete.forEach(timecard => {
+        const timecardRef = doc(firestore, `users/${user.uid}/timecards`, timecard.id);
+        batch.delete(timecardRef);
+    });
+
     try {
       await batch.commit();
       toast({
-        title: 'Project and Invoices Deleted',
-        description: `${projectToDelete.name} and its associated invoices have been deleted.`,
+        title: 'Project and Data Deleted',
+        description: `${projectToDelete.name} and its associated invoices and timecards have been deleted.`,
       });
     } catch (error) {
-      console.error("Error deleting project and invoices:", error);
+      console.error("Error deleting project and associated data:", error);
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Could not delete the project and its invoices. Please try again.',
+        description: 'Could not delete the project and its data. Please try again.',
       });
     }
 
@@ -254,12 +268,12 @@ export function ProjectList({ projects: initialProjects }: ProjectListProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the project <span className='font-bold'>{projectToDelete?.name}</span> and all of its associated invoices.
+              This action cannot be undone. This will permanently delete the project <span className='font-bold'>{projectToDelete?.name}</span> and all of its associated invoices and timecards.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Delete Project & Invoices</AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete}>Delete Project & Data</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
