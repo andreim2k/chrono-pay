@@ -264,7 +264,7 @@ export function CreateInvoiceDialog() {
     const totalHours = currentlySelectedTimecards.reduce((acc, tc) => acc + tc.hours, 0);
     billedTimecardIds = currentlySelectedTimecards.map(tc => tc.id);
 
-    if (billedTimecardIds.length === 0 || typeof projectRate !== 'number') return null;
+    if (billedTimecardIds.length === 0 || !projectRate) return null;
     
     const quantity = totalHours / 8; // Assuming 8 hours/day
     const unit = 'days';
@@ -736,5 +736,3 @@ export function CreateInvoiceDialog() {
     </>
   );
 }
-
-    
