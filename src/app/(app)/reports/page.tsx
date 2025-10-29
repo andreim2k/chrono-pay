@@ -71,26 +71,31 @@ export default function ReportsPage() {
   const vatStats = useMemo(() => {
     if (!filteredInvoices) {
       return {
-        totalVatCollected: 0,
-        outstandingVat: 0,
+        totalVatCollectedRon: 0,
+        outstandingVatRon: 0,
       };
     }
 
     const paidInvoices = filteredInvoices.filter(inv => inv.status === 'Paid');
     const unpaidInvoices = filteredInvoices.filter(inv => inv.status !== 'Paid');
 
-    const totalVatCollected = paidInvoices.reduce((acc, inv) => acc + (inv.vatAmount || 0), 0);
-    const outstandingVat = unpaidInvoices.reduce((acc, inv) => acc + (inv.vatAmount || 0), 0);
+    const totalVatCollectedRon = paidInvoices.reduce((acc, inv) => {
+        const vatInRon = (inv.vatAmount || 0) * (inv.exchangeRate || 1);
+        return acc + vatInRon;
+    }, 0);
+    const outstandingVatRon = unpaidInvoices.reduce((acc, inv) => {
+        const vatInRon = (inv.vatAmount || 0) * (inv.exchangeRate || 1);
+        return acc + vatInRon;
+    }, 0);
     
     return {
-      totalVatCollected,
-      outstandingVat,
+      totalVatCollectedRon,
+      outstandingVatRon,
     };
   }, [filteredInvoices]);
 
-  // Assuming EUR is the primary currency for this summary.
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(amount);
+  const formatRon = (amount: number) => {
+    return new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(amount);
   }
 
   const handleYearChange = (yearString: string) => {
@@ -128,17 +133,17 @@ export default function ReportsPage() {
 
        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <StatCard
-            title="Total VAT Collected"
-            value={formatCurrency(vatStats.totalVatCollected)}
+            title="Total VAT Collected (RON)"
+            value={formatRon(vatStats.totalVatCollectedRon)}
             icon={<Banknote className="h-4 w-4 text-muted-foreground" />}
             description={`For ${selectedYear === 'all' ? 'all time' : selectedYear} from paid invoices`}
           />
           <StatCard
-            title="Outstanding VAT"
-            value={formatCurrency(vatStats.outstandingVat)}
+            title="Outstanding VAT (RON)"
+            value={formatRon(vatStats.outstandingVatRon)}
             icon={<Landmark className="h-4 w-4 text-muted-foreground" />}
             description={`For ${selectedYear === 'all' ? 'all time' : selectedYear} from created & sent invoices`}
-            valueClassName={vatStats.outstandingVat > 0 ? 'text-destructive' : ''}
+            valueClassName={vatStats.outstandingVatRon > 0 ? 'text-destructive' : ''}
           />
        </div>
 

@@ -7,18 +7,11 @@ import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
 import type { Invoice } from '@/lib/types';
 import { useMemo } from 'react';
-import { format, parseISO, getYear, getMonth } from 'date-fns';
-
-const currencySymbols: { [key: string]: string } = {
-    EUR: '€',
-    USD: '$',
-    GBP: '£',
-    RON: 'RON'
-};
+import { format, parseISO, getMonth } from 'date-fns';
 
 const chartConfig = {
   vat: {
-    label: 'VAT',
+    label: 'VAT (RON)',
     color: 'hsl(var(--chart-2))',
   },
 } satisfies ChartConfig;
@@ -41,9 +34,9 @@ export function VatChart({ invoices, selectedYear }: VatChartProps) {
             
             const invoiceDate = parseISO(invoice.date);
             const monthIndex = getMonth(invoiceDate);
-
-            // Simple aggregation for the bar value. A more robust impl would convert currencies.
-            yearData[monthIndex].vat += invoice.vatAmount;
+            
+            const vatInRon = (invoice.vatAmount || 0) * (invoice.exchangeRate || 1);
+            yearData[monthIndex].vat += vatInRon;
         });
 
         return yearData.filter(d => d.vat > 0);
@@ -53,9 +46,9 @@ export function VatChart({ invoices, selectedYear }: VatChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>VAT Accrued per Month</CardTitle>
+        <CardTitle>VAT Accrued per Month (RON)</CardTitle>
         <CardDescription>
-          {`Total VAT from all invoices created for ${selectedYear === 'all' ? 'the selected period' : selectedYear}.`}
+          {`Total VAT in RON from all invoices created for ${selectedYear === 'all' ? 'the selected period' : selectedYear}.`}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -74,16 +67,19 @@ export function VatChart({ invoices, selectedYear }: VatChartProps) {
                 axisLine={false}
                 tickMargin={8}
                 tickFormatter={(value) => {
-                    const symbol = currencySymbols.EUR; // Assuming EUR for axis formatting
-                    if (value >= 1000) return `${symbol}${value / 1000}k`;
-                    return `${symbol}${value}`;
+                    const formattedValue = new Intl.NumberFormat('ro-RO', {
+                      style: 'currency',
+                      currency: 'RON',
+                      notation: 'compact',
+                      compactDisplay: 'short'
+                    }).format(value);
+                    return formattedValue;
                 }}
               />
               <Tooltip
                 cursor={false}
                 content={<ChartTooltipContent indicator="dot" formatter={(value) => {
-                    const symbol = currencySymbols.EUR; // Assuming EUR for tooltip display
-                    return `${symbol}${(value as number).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+                    return new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(value as number);
                 }} />}
               />
               <Bar 

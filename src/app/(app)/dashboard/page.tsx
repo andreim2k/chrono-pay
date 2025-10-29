@@ -50,29 +50,39 @@ export default function DashboardPage() {
     const clientCount = safeClients.length;
     const projectCount = safeProjects.length;
 
-    const totalRevenue = paidInvoices.reduce((acc, inv) => acc + inv.total, 0);
-    const unpaidTotal = unpaidInvoices.reduce((acc, inv) => acc + inv.total, 0);
+    const totalRevenue = paidInvoices.reduce((acc, inv) => acc + (inv.totalRon || inv.total), 0);
+    const unpaidTotal = unpaidInvoices.reduce((acc, inv) => acc + (inv.totalRon || inv.total), 0);
 
-    const totalVatCollected = paidInvoices.reduce((acc, inv) => acc + (inv.vatAmount || 0), 0);
-    const outstandingVatTotal = unpaidInvoices.reduce((acc, inv) => acc + (inv.vatAmount || 0), 0);
+    const totalVatCollectedRon = paidInvoices.reduce((acc, inv) => {
+        const vatInRon = (inv.vatAmount || 0) * (inv.exchangeRate || 1);
+        return acc + vatInRon;
+    }, 0);
+    
+    const outstandingVatTotalRon = unpaidInvoices.reduce((acc, inv) => {
+        const vatInRon = (inv.vatAmount || 0) * (inv.exchangeRate || 1);
+        return acc + vatInRon;
+    }, 0);
     
     const unbilledHours = safeTimecards.filter(tc => tc.status === 'Unbilled').reduce((acc, tc) => acc + tc.hours, 0);
 
-    // Assuming EUR as the primary currency for dashboard summary.
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'EUR' }).format(amount);
+    const formatCurrency = (amount: number, currency = 'EUR') => {
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
+    }
+    
+    const formatRon = (amount: number) => {
+        return new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(amount);
     }
 
     return {
-      totalRevenue: formatCurrency(totalRevenue),
-      unpaidAmount: formatCurrency(unpaidTotal),
+      totalRevenue: formatRon(totalRevenue),
+      unpaidAmount: formatRon(unpaidTotal),
       unpaidTotal,
       clientCount: clientCount,
       projectCount,
       paidCount: paidInvoices.length,
-      totalVatCollected: formatCurrency(totalVatCollected),
-      outstandingVat: formatCurrency(outstandingVatTotal),
-      outstandingVatTotal,
+      totalVatCollected: formatRon(totalVatCollectedRon),
+      outstandingVat: formatRon(outstandingVatTotalRon),
+      outstandingVatTotal: outstandingVatTotalRon,
       unbilledHours: unbilledHours.toFixed(2),
     };
   }, [invoices, clients, projects, timecards]);
@@ -89,13 +99,13 @@ export default function DashboardPage() {
     <div className="flex flex-col gap-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
-        title="Total Revenue"
+        title="Total Revenue (RON)"
         value={dashboardStats.totalRevenue}
         icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
         description="Total from paid invoices"
         />
         <StatCard
-        title="Unpaid Amount"
+        title="Unpaid Amount (RON)"
         value={dashboardStats.unpaidAmount}
         icon={<Clock className="h-4 w-4 text-muted-foreground" />}
         description="Awaiting payment from clients"
@@ -122,13 +132,13 @@ export default function DashboardPage() {
           description="Total number of settled invoices"
         />
         <StatCard
-          title="Total VAT Collected"
+          title="Total VAT Collected (RON)"
           value={dashboardStats.totalVatCollected}
           icon={<Banknote className="h-4 w-4 text-muted-foreground" />}
           description="From paid invoices"
         />
         <StatCard
-          title="Outstanding VAT"
+          title="Outstanding VAT (RON)"
           value={dashboardStats.outstandingVat}
           icon={<Landmark className="h-4 w-4 text-muted-foreground" />}
           description="From created & sent invoices"
