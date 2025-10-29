@@ -21,7 +21,7 @@ export function DataExport({ data, fileName = 'chronopay_backup.json', buttonLab
 
       for (const [key, value] of Object.entries(data)) {
         if (key === 'myCompany' && value && typeof value === 'object') {
-           const { id, avatarUrl, email, name, role, ...companyDetails } = value;
+           const { id, avatarUrl, email, name, role, companyVatRate, ...companyDetails } = value;
            dataToExport[key] = companyDetails;
         } else if (Array.isArray(value)) {
           dataToExport[key] = value.map(({ id, ...rest }) => {

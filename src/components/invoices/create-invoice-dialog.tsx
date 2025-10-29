@@ -4,7 +4,7 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { format, getDate, subMonths, parseISO, min, max } from 'date-fns';
+import { format, getDate, subMonths, parseISO, min, max, addDays } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Download, Save, Loader2, RefreshCw, Eye, PlusCircle, Hourglass } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -291,9 +291,11 @@ export function CreateInvoiceDialog() {
       amount: subtotal,
     }];
 
-    const vatAmount = currentProject.hasVat ? subtotal * (myCompany?.companyVatRate || 0) : 0;
+    const clientVatRate = selectedClient.vatRate || 0;
+    const vatAmount = currentProject.hasVat ? subtotal * clientVatRate : 0;
     const total = subtotal + vatAmount;
     const totalRon = invoiceConfig.exchangeRate ? total * invoiceConfig.exchangeRate : undefined;
+    const creationDate = parseISO(format(invoiceCreationDate, 'yyyy-MM-dd'));
     
     const data: Omit<Invoice, 'id'> & { vatRate?: number } = {
       invoiceNumber: generateInvoiceNumber(currentProject, invoices),
@@ -310,7 +312,8 @@ export function CreateInvoiceDialog() {
       clientVat: selectedClient.vat,
       projectId: currentProject.id,
       projectName: currentProject.name,
-      date: format(invoiceCreationDate, 'yyyy-MM-dd'),
+      date: format(creationDate, 'yyyy-MM-dd'),
+      dueDate: format(addDays(creationDate, 7), 'yyyy-MM-dd'),
       currency: invoiceConfig.currency,
       language: selectedClient.language || 'English',
       items,
@@ -326,8 +329,8 @@ export function CreateInvoiceDialog() {
       billedTimecardIds,
     };
     
-    if (currentProject.hasVat && myCompany.companyVatRate) {
-        data.vatRate = myCompany.companyVatRate;
+    if (currentProject.hasVat) {
+        data.vatRate = clientVatRate;
     }
 
     return data;

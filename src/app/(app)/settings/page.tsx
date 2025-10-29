@@ -26,7 +26,6 @@ const companySchema = z.object({
     companyIban: z.string().min(1, 'IBAN is required').regex(/^[A-Z]{2}[0-9]{2}[A-Z0-9]{4,30}$/, 'Invalid IBAN. It should start with 2 letters followed by numbers (e.g., DE89370400440532013000).'),
     companyBankName: z.string().min(1, 'Bank name is required'),
     companySwift: z.string().min(1, 'SWIFT/BIC is required').regex(/^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/, 'Invalid SWIFT/BIC format.'),
-    companyVatRate: z.coerce.number().min(0, 'VAT rate must be positive').multipleOf(0.01, { message: "VAT rate can have at most 2 decimal places." }),
     companyPhone: z.string().optional(),
     companyEmail: z.string().email('Invalid email address').optional().or(z.literal('')),
 });
@@ -83,7 +82,6 @@ export default function SettingsPage() {
             companyIban: '',
             companyBankName: '',
             companySwift: '',
-            companyVatRate: 0,
             companyPhone: '',
             companyEmail: '',
         }
@@ -98,7 +96,6 @@ export default function SettingsPage() {
                 companyIban: myCompany.companyIban || '',
                 companyBankName: myCompany.companyBankName || '',
                 companySwift: myCompany.companySwift || '',
-                companyVatRate: myCompany.companyVatRate ? myCompany.companyVatRate * 100 : 0,
                 companyPhone: myCompany.companyPhone || '',
                 companyEmail: myCompany.companyEmail || '',
             });
@@ -110,7 +107,6 @@ export default function SettingsPage() {
                 companyIban: '',
                 companyBankName: '',
                 companySwift: '',
-                companyVatRate: 0,
                 companyPhone: '',
                 companyEmail: '',
             });
@@ -124,7 +120,6 @@ export default function SettingsPage() {
 
         const companyData: Partial<User> = {
             ...data,
-            companyVatRate: data.companyVatRate ? data.companyVatRate / 100 : 0,
             companyLogoUrl: myCompany?.companyLogoUrl || `https://picsum.photos/seed/my-company/40/40`
         };
 
@@ -224,17 +219,6 @@ export default function SettingsPage() {
                                           <FormItem>
                                               <FormLabel>VAT Number</FormLabel>
                                               <FormControl><Input placeholder="Your VAT Number" {...field} /></FormControl>
-                                              <FormMessage />
-                                          </FormItem>
-                                      )}
-                                  />
-                                   <FormField
-                                      control={form.control}
-                                      name="companyVatRate"
-                                      render={({ field }) => (
-                                          <FormItem>
-                                              <FormLabel>VAT Rate (%)</FormLabel>
-                                              <FormControl><Input type="number" placeholder="e.g., 19" step="0.01" {...field} /></FormControl>
                                               <FormMessage />
                                           </FormItem>
                                       )}

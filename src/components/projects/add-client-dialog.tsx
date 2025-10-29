@@ -34,6 +34,7 @@ const clientSchema = z.object({
   bankName: z.string().optional(),
   swift: z.string().optional(),
   language: z.string().min(1, 'Language is required'),
+  vatRate: z.coerce.number().min(0, "VAT rate can't be negative").optional(),
 });
 
 type ClientFormValues = z.infer<typeof clientSchema>;
@@ -60,6 +61,7 @@ export function AddClientDialog() {
       bankName: '',
       swift: '',
       language: 'English',
+      vatRate: undefined,
     },
   });
 
@@ -69,6 +71,7 @@ export function AddClientDialog() {
     
     const dataToSave: any = {
       ...data,
+      vatRate: data.vatRate ? data.vatRate / 100 : 0,
       logoUrl: `https://picsum.photos/seed/${data.name}/40/40`,
       order: clients?.length || 0,
     };
@@ -200,6 +203,19 @@ export function AddClientDialog() {
                   <FormLabel>IBAN (Optional)</FormLabel>
                   <FormControl>
                     <Input placeholder="DE89370400440532013000" {...field} value={field.value ?? ''} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="vatRate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>VAT Rate (%) (Optional)</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="e.g., 19" {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

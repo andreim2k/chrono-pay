@@ -19,15 +19,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Label } from '../ui/label';
-import type { Timecard, Invoice, Project } from '@/lib/types';
-
-interface DataImportProps {
-  allowedCollections?: string[];
-  buttonLabel?: string;
-  defaultImportMode?: 'overwrite' | 'merge';
-  existingData?: Record<string, any[]>;
-  allowModeSelection?: boolean;
-}
+import type { Timecard, Invoice, Project, Client } from '@/lib/types';
 
 const migrateProjectData = (projectData: any): Omit<Project, 'id' | 'clientName'> => {
   const migrated = { ...projectData };
@@ -47,6 +39,23 @@ const migrateProjectData = (projectData: any): Omit<Project, 'id' | 'clientName'
 
   return migrated;
 }
+
+const migrateClientData = (clientData: any): Omit<Client, 'id'> => {
+    const migrated = { ...clientData };
+
+    // Move companyVatRate to client.vatRate if it exists on myCompany
+    // This part is tricky because it depends on another part of the import file.
+    // Assuming myCompany is processed first, we can't easily access it here.
+    // A better approach is to handle this at a higher level if possible,
+    // or just ensure new exports are correct and document this change.
+    // For now, we'll just ensure the new structure is respected.
+    if (migrated.vatRate === undefined) {
+        migrated.vatRate = 0; // Default if not present
+    }
+    
+    return migrated;
+}
+
 
 export function DataImport({ 
   allowedCollections = ['clients', 'projects', 'invoices', 'timecards', 'myCompany'], 
@@ -121,6 +130,18 @@ export function DataImport({
         }
       }
       
+      // Migrate companyVatRate from myCompany to clients if it exists from an old export
+      const oldCompanyVatRate = dataToImport.myCompany?.companyVatRate;
+      if (oldCompanyVatRate && Array.isArray(dataToImport.clients)) {
+          dataToImport.clients.forEach((client: any) => {
+              if (client.vatRate === undefined) {
+                  client.vatRate = oldCompanyVatRate;
+              }
+          });
+          delete dataToImport.myCompany.companyVatRate;
+      }
+
+
       if (allowedCollections.includes('myCompany') && dataToImport.myCompany) {
         const userRef = doc(firestore, `users/${user.uid}`);
         batch.set(userRef, dataToImport.myCompany, { merge: true });
@@ -148,9 +169,11 @@ export function DataImport({
 
           docsToProcess.forEach((docData: any) => {
             let finalDocData = docData;
-            // Apply migration for projects collection
             if (collectionName === 'projects') {
               finalDocData = migrateProjectData(docData);
+            }
+            if (collectionName === 'clients') {
+              finalDocData = migrateClientData(docData);
             }
             const newDocRef = doc(collection(firestore, `users/${user.uid}/${collectionName}`));
             batch.set(newDocRef, finalDocData);

@@ -3,7 +3,7 @@
 
 import React from 'react';
 import type { Invoice, InvoiceTheme } from '@/lib/types';
-import { format, getDate } from 'date-fns';
+import { format, getDate, parseISO } from 'date-fns';
 import { ro } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
@@ -24,6 +24,7 @@ const translations = {
         billedTo: 'Billed To',
         vatId: 'VAT ID',
         invoiceDate: 'Invoice Date',
+        dueDate: 'Due Date',
         description: 'Description',
         quantity: 'Quantity',
         rate: 'Rate',
@@ -37,6 +38,7 @@ const translations = {
         footerThanks: 'Thank you for your business!',
         consultancyServices: (period: string, quantity: string) => `IT Consultancy services for period ${period} (${quantity})`,
         consultancyServicesDays: (period: string) => `IT Consultancy services for period ${period}`,
+        reverseCharge: 'Reversal of VAT liability on EU cross-border transactions',
         unit: {
             days: 'days',
             hours: 'hours'
@@ -53,6 +55,7 @@ const translations = {
         billedTo: 'Facturat către',
         vatId: 'CUI/CIF',
         invoiceDate: 'Data facturii',
+        dueDate: 'Data scadenței',
         description: 'Descriere',
         quantity: 'Cantitate',
         rate: 'Preț Unitar',
@@ -66,6 +69,7 @@ const translations = {
         footerThanks: 'Vă mulțumim!',
         consultancyServices: (period: string, quantity: string) => `Servicii de consultanță IT pentru perioada ${period} (${quantity})`,
         consultancyServicesDays: (period: string) => `Servicii de consultanță IT pentru perioada ${period}`,
+        reverseCharge: 'Taxare inversă - neimpozabil în România',
         unit: {
             days: 'zile',
             hours: 'ore'
@@ -561,7 +565,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
 export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
   const {
     companyName, companyAddress, companyVat, companyEmail, companyPhone, invoiceNumber, clientName,
-    clientAddress, clientVat, date, items, currency, subtotal, vatAmount, total,
+    clientAddress, clientVat, date, dueDate, items, currency, subtotal, vatAmount, total,
     companyBankName, companyIban, companySwift, language, vatRate, totalRon,
     theme = 'Classic'
   } = invoice;
@@ -571,6 +575,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
   const lang = language === 'Romanian' ? 'ro' : 'en';
   const t = translations[lang];
   const hasVat = vatAmount !== undefined && vatAmount > 0;
+  const isReverseCharge = vatRate === 0 && vatAmount === 0 && invoice.vatRate !== undefined;
 
   const currencySymbols: { [key:string]: string } = {
     EUR: '€',
@@ -582,7 +587,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
 
   const formatDateWithOrdinal = (dateString: string | undefined) => {
     if (!dateString) return '';
-    const d = new Date(dateString);
+    const d = parseISO(dateString);
     const adjustedDate = new Date(d.valueOf() + d.getTimezoneOffset() * 60 * 1000);
     const dayWithOrdinal = getDayWithOrdinal(adjustedDate, lang);
     const monthYearFormat = lang === 'ro' ? 'LLLL, yyyy' : 'MMMM, yyyy';
@@ -595,7 +600,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
   }
 
   const translateDescription = (item: Invoice['items'][0]) => {
-      const { description, quantity, unit } = item;
+      const { description, quantity } = item;
       if (lang === 'en') return description;
 
       // Regex for hourly billing
@@ -703,7 +708,6 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                     <>
                       <h2 className={cn('text-2xl font-bold uppercase', styles.headerTextClass)} style={{ letterSpacing: '0.15em' }}>{t.invoice}</h2>
                       <p className="mt-1 text-sm text-gray-700"># {invoiceNumber}</p>
-                      <p className="mt-2 text-xs text-gray-600">{formatDateWithOrdinal(date)}</p>
                     </>
                   )}
                 </div>
@@ -716,13 +720,19 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
         <div style={{padding: styles.layout === 'modern' || styles.layout === 'bold' ? '0 48px' : '0'}}>
           {styles.layout === 'classic' && (
             <>
-              <div className="mb-8">
-                <p className="text-xs font-semibold text-gray-500 uppercase mb-2">{t.billedTo}</p>
-                <div className={cn('p-4 border-l-3', styles.accentClass)} style={{ borderLeftWidth: '3px' }}>
-                  <p className="font-bold text-base text-gray-900">{clientName}</p>
-                  <p className="text-sm text-gray-600 mt-1">{clientAddress}</p>
-                  {clientVat && <p className="text-sm text-gray-600">{t.vatId}: {clientVat}</p>}
-                  {invoice.projectName && <p className="text-sm text-gray-700 mt-2 italic">Project: {invoice.projectName}</p>}
+              <div className="flex justify-between mb-8">
+                <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase mb-2">{t.billedTo}</p>
+                    <div className={cn('p-4 border-l-3', styles.accentClass)} style={{ borderLeftWidth: '3px' }}>
+                    <p className="font-bold text-base text-gray-900">{clientName}</p>
+                    <p className="text-sm text-gray-600 mt-1">{clientAddress}</p>
+                    {clientVat && <p className="text-sm text-gray-600">{t.vatId}: {clientVat}</p>}
+                    {invoice.projectName && <p className="text-sm text-gray-700 mt-2 italic">Project: {invoice.projectName}</p>}
+                    </div>
+                </div>
+                <div className="text-right text-sm">
+                    <p className="font-semibold">{t.invoiceDate}: <span className="font-normal">{formatDateWithOrdinal(date)}</span></p>
+                    <p className="font-semibold">{t.dueDate}: <span className="font-normal">{formatDateWithOrdinal(dueDate)}</span></p>
                 </div>
               </div>
               {companyBankName && (
@@ -747,7 +757,8 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
               <div className="text-right ml-8">
                 <h2 className={cn('text-3xl font-bold', styles.headerTextClass)} style={{ letterSpacing: '0.05em' }}>{t.invoice}</h2>
                 <p className="text-gray-700 mt-2 text-sm">#{invoiceNumber}</p>
-                <p className="text-xs text-gray-500 mt-3">{formatDateWithOrdinal(date)}</p>
+                <p className="text-xs text-gray-500 mt-3">{t.invoiceDate}: {formatDateWithOrdinal(date)}</p>
+                <p className="text-xs text-gray-500 mt-1">{t.dueDate}: {formatDateWithOrdinal(dueDate)}</p>
                 {companyBankName && (
                   <div className="mt-6 text-xs text-gray-600 space-y-1">
                     <p className="font-semibold text-gray-700">{t.bank}</p>
@@ -772,6 +783,8 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
               <div className="text-right">
                 <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">{t.invoiceDate}</p>
                 <p className="text-sm text-gray-700">{formatDateWithOrdinal(date)}</p>
+                 <p className="text-xs text-gray-400 uppercase tracking-wide mt-2 mb-2">{t.dueDate}</p>
+                <p className="text-sm text-gray-700">{formatDateWithOrdinal(dueDate)}</p>
                 {companyBankName && (
                   <div className="mt-4 text-xs text-gray-600 text-left">
                     <p>{companyBankName}</p>
@@ -794,6 +807,8 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
               <div style={{ backgroundColor: styles.secondaryBg }} className={cn('p-6', styles.layout === 'modern' ? 'rounded' : '')}>
                 <p className={cn('text-xs font-bold uppercase mb-3', styles.headerTextClass)}>{t.invoiceDate}</p>
                 <p className="text-gray-800">{formatDateWithOrdinal(date)}</p>
+                 <p className={cn('text-xs font-bold uppercase mt-3 mb-3', styles.headerTextClass)}>{t.dueDate}</p>
+                <p className="text-gray-800">{formatDateWithOrdinal(dueDate)}</p>
                 <div className="mt-4 pt-4 border-t border-gray-300 space-y-1 text-xs text-gray-600">
                   {companyBankName && <p><span className={styles.layout === 'bold' ? 'font-semibold' : 'font-semibold'}>{t.bank}:</span> {companyBankName}</p>}
                   {companyIban && <p className={styles.layout === 'bold' ? 'font-mono' : 'font-mono'}><span className="font-semibold">{t.iban}:</span> {companyIban}</p>}
@@ -803,6 +818,14 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
             </div>
           )}
         </div>
+
+        {isReverseCharge && (
+            <div style={{padding: styles.layout === 'modern' || styles.layout === 'bold' ? '0 48px' : '0'}} className="mb-4">
+                <div className="text-center p-2 bg-gray-100 border border-gray-300 rounded-sm">
+                    <p className="text-sm font-semibold">{t.reverseCharge}</p>
+                </div>
+            </div>
+        )}
 
         {/* Items Table - varies by layout */}
         <div style={{padding: styles.layout === 'modern' || styles.layout === 'bold' ? '0 48px' : '0'}} className={styles.layout === 'minimal' ? '' : 'mt-8 mb-8'}>

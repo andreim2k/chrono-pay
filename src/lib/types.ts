@@ -13,7 +13,6 @@ export type User = {
   companyIban?: string;
   companyBankName?: string;
   companySwift?: string;
-  companyVatRate?: number;
   companyLogoUrl?: string;
   companyPhone?: string;
   companyEmail?: string;
@@ -30,6 +29,7 @@ export type Client = {
   swift?: string;
   language?: 'English' | 'Romanian';
   order?: number;
+  vatRate?: number;
 };
 
 export type Company = {
@@ -91,6 +91,7 @@ export type Invoice = {
   projectId: string;
   projectName?: string;
   date: string;
+  dueDate: string;
   currency: string;
   language?: 'English' | 'Romanian';
   items: {

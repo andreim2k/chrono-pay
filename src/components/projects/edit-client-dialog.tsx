@@ -32,6 +32,7 @@ const clientSchema = z.object({
   bankName: z.string().optional(),
   swift: z.string().optional(),
   language: z.string().min(1, 'Language is required'),
+  vatRate: z.coerce.number().min(0, "VAT rate can't be negative").optional(),
 });
 
 type ClientFormValues = z.infer<typeof clientSchema>;
@@ -57,6 +58,7 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
       bankName: client.bankName,
       swift: client.swift,
       language: client.language || 'English',
+      vatRate: client.vatRate ? client.vatRate * 100 : undefined,
     },
   });
 
@@ -70,6 +72,7 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
             bankName: client.bankName,
             swift: client.swift,
             language: client.language || 'English',
+            vatRate: client.vatRate ? client.vatRate * 100 : undefined,
         });
     }
   }, [isOpen, client, form]);
@@ -81,6 +84,7 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
     const dataToSave: any = {
       ...client, // Preserve existing fields like order, logoUrl
       ...data,
+      vatRate: data.vatRate ? data.vatRate / 100 : 0,
     };
 
     // Remove undefined fields to prevent Firestore errors
@@ -215,6 +219,19 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
                 <FormMessage />
                 </FormItem>
             )}
+            />
+            <FormField
+              control={form.control}
+              name="vatRate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>VAT Rate (%) (Optional)</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="e.g., 19" {...field} value={field.value ?? ''} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
             
             <DialogFooter>
