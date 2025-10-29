@@ -108,7 +108,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
   secondaryBg?: string;
 } } = {
   'Classic': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: 'Georgia, serif',
     accentClass: 'border-blue-600',
     headerTextClass: 'text-blue-600',
     tableHeaderBgClass: 'bg-blue-600',
@@ -117,10 +117,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#2563EB',
     tableHeaderBgColor: '#2563EB',
-    secondaryBg: '#EFF6FF'
+    secondaryBg: '#EFF6FF',
   },
   'Modern': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
     accentClass: 'border-red-600',
     headerTextClass: 'text-red-600',
     tableHeaderBgClass: 'bg-red-600',
@@ -129,10 +129,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#DC2626',
     tableHeaderBgColor: '#DC2626',
-    secondaryBg: '#FEF2F2'
+    secondaryBg: '#FEF2F2',
   },
   'Sunset': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: 'Palatino, "Palatino Linotype", serif',
     accentClass: 'border-orange-600',
     headerTextClass: 'text-orange-600',
     tableHeaderBgClass: 'bg-orange-600',
@@ -141,10 +141,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#EA580C',
     tableHeaderBgColor: '#EA580C',
-    secondaryBg: '#FFF7ED'
+    secondaryBg: '#FFF7ED',
   },
   'Ocean': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: 'Helvetica, Arial, sans-serif',
     accentClass: 'border-cyan-600',
     headerTextClass: 'text-cyan-600',
     tableHeaderBgClass: 'bg-cyan-600',
@@ -153,10 +153,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#0891B2',
     tableHeaderBgColor: '#0891B2',
-    secondaryBg: '#ECFEFF'
+    secondaryBg: '#ECFEFF',
   },
   'Monochrome': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: '"Courier New", monospace',
     accentClass: 'border-gray-800',
     headerTextClass: 'text-gray-800',
     tableHeaderBgClass: 'bg-gray-800',
@@ -165,10 +165,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#1F2937',
     tableHeaderBgColor: '#1F2937',
-    secondaryBg: '#F9FAFB'
+    secondaryBg: '#F9FAFB',
   },
   'Minty': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: 'Verdana, Geneva, sans-serif',
     accentClass: 'border-emerald-600',
     headerTextClass: 'text-emerald-600',
     tableHeaderBgClass: 'bg-emerald-600',
@@ -177,10 +177,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#059669',
     tableHeaderBgColor: '#059669',
-    secondaryBg: '#F0FDF4'
+    secondaryBg: '#F0FDF4',
   },
   'Velvet': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: '"Times New Roman", Times, serif',
     accentClass: 'border-purple-600',
     headerTextClass: 'text-purple-600',
     tableHeaderBgClass: 'bg-purple-600',
@@ -189,10 +189,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#7C3AED',
     tableHeaderBgColor: '#7C3AED',
-    secondaryBg: '#FAF5FF'
+    secondaryBg: '#FAF5FF',
   },
   'Corporate Blue': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: 'Trebuchet MS, sans-serif',
     accentClass: 'border-indigo-800',
     headerTextClass: 'text-indigo-800',
     tableHeaderBgClass: 'bg-indigo-800',
@@ -201,10 +201,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#1E40AF',
     tableHeaderBgColor: '#1E40AF',
-    secondaryBg: '#EFF6FF'
+    secondaryBg: '#EFF6FF',
   },
   'Earthy Tones': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: 'Georgia, serif',
     accentClass: 'border-amber-900',
     headerTextClass: 'text-amber-900',
     tableHeaderBgClass: 'bg-amber-900',
@@ -213,10 +213,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#78350F',
     tableHeaderBgColor: '#78350F',
-    secondaryBg: '#FFFBEB'
+    secondaryBg: '#FFFBEB',
   },
   'Creative': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
     accentClass: 'border-pink-600',
     headerTextClass: 'text-pink-600',
     tableHeaderBgClass: 'bg-pink-600',
@@ -225,10 +225,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#DB2777',
     tableHeaderBgColor: '#DB2777',
-    secondaryBg: '#FDF2F8'
+    secondaryBg: '#FDF2F8',
   },
   'Slate Gray': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: 'Palatino, "Palatino Linotype", serif',
     accentClass: 'border-slate-600',
     headerTextClass: 'text-slate-600',
     tableHeaderBgClass: 'bg-slate-600',
@@ -237,10 +237,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#475569',
     tableHeaderBgColor: '#475569',
-    secondaryBg: '#F8FAFC'
+    secondaryBg: '#F8FAFC',
   },
   'Dark Charcoal': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: 'Helvetica, Arial, sans-serif',
     accentClass: 'border-zinc-800',
     headerTextClass: 'text-zinc-800',
     tableHeaderBgClass: 'bg-zinc-800',
@@ -249,10 +249,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#27272A',
     tableHeaderBgColor: '#27272A',
-    secondaryBg: '#FAFAFA'
+    secondaryBg: '#FAFAFA',
   },
   'Navy Blue': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: '"Courier New", monospace',
     accentClass: 'border-blue-900',
     headerTextClass: 'text-blue-900',
     tableHeaderBgClass: 'bg-blue-900',
@@ -261,10 +261,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#1E3A8A',
     tableHeaderBgColor: '#1E3A8A',
-    secondaryBg: '#EFF6FF'
+    secondaryBg: '#EFF6FF',
   },
   'Forest Green': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: 'Verdana, Geneva, sans-serif',
     accentClass: 'border-green-700',
     headerTextClass: 'text-green-700',
     tableHeaderBgClass: 'bg-green-700',
@@ -273,10 +273,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#15803D',
     tableHeaderBgColor: '#15803D',
-    secondaryBg: '#F0FDF4'
+    secondaryBg: '#F0FDF4',
   },
   'Burgundy': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: '"Times New Roman", Times, serif',
     accentClass: 'border-rose-800',
     headerTextClass: 'text-rose-800',
     tableHeaderBgClass: 'bg-rose-800',
@@ -285,10 +285,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#9F1239',
     tableHeaderBgColor: '#9F1239',
-    secondaryBg: '#FFF1F2'
+    secondaryBg: '#FFF1F2',
   },
   'Teal': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: 'Trebuchet MS, sans-serif',
     accentClass: 'border-teal-600',
     headerTextClass: 'text-teal-600',
     tableHeaderBgClass: 'bg-teal-600',
@@ -297,10 +297,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#0D9488',
     tableHeaderBgColor: '#0D9488',
-    secondaryBg: '#F0FDFA'
+    secondaryBg: '#F0FDFA',
   },
   'Coral': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: 'Garamond, serif',
     accentClass: 'border-red-500',
     headerTextClass: 'text-red-500',
     tableHeaderBgClass: 'bg-red-500',
@@ -309,10 +309,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#EF4444',
     tableHeaderBgColor: '#EF4444',
-    secondaryBg: '#FEF2F2'
+    secondaryBg: '#FEF2F2',
   },
   'Lavender': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: '"Arial Black", sans-serif',
     accentClass: 'border-violet-500',
     headerTextClass: 'text-violet-500',
     tableHeaderBgClass: 'bg-violet-500',
@@ -321,10 +321,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#8B5CF6',
     tableHeaderBgColor: '#8B5CF6',
-    secondaryBg: '#F5F3FF'
+    secondaryBg: '#F5F3FF',
   },
   'Golden': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: 'Tahoma, Geneva, sans-serif',
     accentClass: 'border-yellow-600',
     headerTextClass: 'text-yellow-600',
     tableHeaderBgClass: 'bg-yellow-600',
@@ -333,10 +333,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#CA8A04',
     tableHeaderBgColor: '#CA8A04',
-    secondaryBg: '#FEFCE8'
+    secondaryBg: '#FEFCE8',
   },
   'Steel Blue': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: '"Lucida Console", Monaco, monospace',
     accentClass: 'border-sky-600',
     headerTextClass: 'text-sky-600',
     tableHeaderBgClass: 'bg-sky-600',
@@ -345,10 +345,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#0284C7',
     tableHeaderBgColor: '#0284C7',
-    secondaryBg: '#F0F9FF'
+    secondaryBg: '#F0F9FF',
   },
   'Light Blue': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: 'Cambria, serif',
     accentClass: 'border-blue-400',
     headerTextClass: 'text-blue-400',
     tableHeaderBgClass: 'bg-blue-400',
@@ -357,10 +357,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#60A5FA',
     tableHeaderBgColor: '#60A5FA',
-    secondaryBg: '#EFF6FF'
+    secondaryBg: '#EFF6FF',
   },
   'Sky Blue': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: '"Century Gothic", sans-serif',
     accentClass: 'border-sky-500',
     headerTextClass: 'text-sky-500',
     tableHeaderBgClass: 'bg-sky-500',
@@ -369,10 +369,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#0EA5E9',
     tableHeaderBgColor: '#0EA5E9',
-    secondaryBg: '#F0F9FF'
+    secondaryBg: '#F0F9FF',
   },
   'Mint Green': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: 'Optima, sans-serif',
     accentClass: 'border-emerald-500',
     headerTextClass: 'text-emerald-500',
     tableHeaderBgClass: 'bg-emerald-500',
@@ -392,10 +392,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#65A30D',
     tableHeaderBgColor: '#65A30D',
-    secondaryBg: '#F7FEE7'
+    secondaryBg: '#F7FEE7',
   },
   'Peach': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: 'Didot, serif',
     accentClass: 'border-orange-400',
     headerTextClass: 'text-orange-400',
     tableHeaderBgClass: 'bg-orange-400',
@@ -404,10 +404,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#FB923C',
     tableHeaderBgColor: '#FB923C',
-    secondaryBg: '#FFF7ED'
+    secondaryBg: '#FFF7ED',
   },
   'Rose': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: 'Futura, sans-serif',
     accentClass: 'border-rose-600',
     headerTextClass: 'text-rose-600',
     tableHeaderBgClass: 'bg-rose-600',
@@ -416,10 +416,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#E11D48',
     tableHeaderBgColor: '#E11D48',
-    secondaryBg: '#FFF1F2'
+    secondaryBg: '#FFF1F2',
   },
   'Lilac': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: 'Baskerville, serif',
     accentClass: 'border-purple-400',
     headerTextClass: 'text-purple-400',
     tableHeaderBgClass: 'bg-purple-400',
@@ -428,10 +428,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#C084FC',
     tableHeaderBgColor: '#C084FC',
-    secondaryBg: '#FAF5FF'
+    secondaryBg: '#FAF5FF',
   },
   'Sand': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: 'Rockwell, serif',
     accentClass: 'border-amber-600',
     headerTextClass: 'text-amber-600',
     tableHeaderBgClass: 'bg-amber-600',
@@ -440,10 +440,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#D97706',
     tableHeaderBgColor: '#D97706',
-    secondaryBg: '#FFFBEB'
+    secondaryBg: '#FFFBEB',
   },
   'Olive': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: 'Franklin Gothic, sans-serif',
     accentClass: 'border-lime-700',
     headerTextClass: 'text-lime-700',
     tableHeaderBgClass: 'bg-lime-700',
@@ -452,10 +452,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#4D7C0F',
     tableHeaderBgColor: '#4D7C0F',
-    secondaryBg: '#F7FEE7'
+    secondaryBg: '#F7FEE7',
   },
   'Maroon': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: '"Gill Sans", sans-serif',
     accentClass: 'border-red-900',
     headerTextClass: 'text-red-900',
     tableHeaderBgClass: 'bg-red-900',
@@ -464,10 +464,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#7F1D1D',
     tableHeaderBgColor: '#7F1D1D',
-    secondaryBg: '#FEF2F2'
+    secondaryBg: '#FEF2F2',
   },
   'Deep Purple': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: 'Bodoni, serif',
     accentClass: 'border-purple-800',
     headerTextClass: 'text-purple-800',
     tableHeaderBgClass: 'bg-purple-800',
@@ -476,10 +476,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#6B21A8',
     tableHeaderBgColor: '#6B21A8',
-    secondaryBg: '#FAF5FF'
+    secondaryBg: '#FAF5FF',
   },
   'Turquoise': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: 'Consolas, monospace',
     accentClass: 'border-cyan-500',
     headerTextClass: 'text-cyan-500',
     tableHeaderBgClass: 'bg-cyan-500',
@@ -488,10 +488,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#06B6D4',
     tableHeaderBgColor: '#06B6D4',
-    secondaryBg: '#ECFEFF'
+    secondaryBg: '#ECFEFF',
   },
   'Charcoal': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: '"Segoe UI", sans-serif',
     accentClass: 'border-gray-700',
     headerTextClass: 'text-gray-700',
     tableHeaderBgClass: 'bg-gray-700',
@@ -500,10 +500,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#374151',
     tableHeaderBgColor: '#374151',
-    secondaryBg: '#F9FAFB'
+    secondaryBg: '#F9FAFB',
   },
   'Crimson': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: '"Book Antiqua", serif',
     accentClass: 'border-red-700',
     headerTextClass: 'text-red-700',
     tableHeaderBgClass: 'bg-red-700',
@@ -512,10 +512,10 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalTextClass: 'text-white',
     accentColor: '#B91C1C',
     tableHeaderBgColor: '#B91C1C',
-    secondaryBg: '#FEF2F2'
+    secondaryBg: '#FEF2F2',
   },
   'Sapphire': {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif',
+    fontFamily: 'Impact, sans-serif',
     accentClass: 'border-blue-700',
     headerTextClass: 'text-blue-700',
     tableHeaderBgClass: 'bg-blue-700',
@@ -523,7 +523,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalBgClass: 'bg-blue-700',
     totalTextClass: 'text-white',
     accentColor: '#1D4ED8',
-    tableHeaderBgColor: '#EFF6FF'
+    tableHeaderBgColor: '#EFF6FF',
   },
 };
 
@@ -538,7 +538,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
   } = invoice;
 
   const styles = themeStyles[theme];
-  
+
   const lang = language === 'Romanian' ? 'ro' : 'en';
   const t = translations[lang];
   const hasVat = vatAmount !== undefined && vatAmount > 0;
@@ -612,7 +612,6 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
     };
   }, [subtotal, vatAmount, invoice.exchangeRate, currency, hasVat]);
 
-
   return (
     <div className="bg-white text-gray-900" style={layoutStyles}>
       <main className="flex-grow" style={{paddingLeft: '0px', paddingRight: '0px'}}>
@@ -623,11 +622,11 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                 <h1 className="text-4xl font-bold" style={{ letterSpacing: '-0.01em' }}>{companyName}</h1>
                 <div className="text-sm mt-2 opacity-90 space-y-px">
                   <p>{companyAddress}</p>
+                  {companyPhone && <p>{t.phone}: {companyPhone}</p>}
+                  {companyEmail && <p>{t.email}: {companyEmail}</p>}
                   {companyBankName && <p><span className="font-semibold">{t.bank}:</span> {companyBankName}</p>}
                   {companyIban && <p><span className="font-semibold">{t.iban}:</span> {companyIban}</p>}
                   {companySwift && <p><span className="font-semibold">{t.swift}:</span> {companySwift}</p>}
-                  {companyPhone && <p>{t.phone}: {companyPhone}</p>}
-                  {companyEmail && <p>{t.email}: {companyEmail}</p>}
                 </div>
               </div>
               <div className="text-right">
@@ -643,13 +642,15 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                 <div style={{ backgroundColor: styles.secondaryBg }} className='p-6 rounded'>
                     <p className={cn('text-xs font-bold uppercase mb-3', styles.headerTextClass)}>{t.billedTo}</p>
                     <p className='font-bold text-gray-900 m-0' style={{ lineHeight: '1.5' }}>{clientName}</p>
-                    <div className='text-gray-600 text-sm' style={{ lineHeight: '1.5' }}>
-                        <p className='m-0'>{clientAddress}</p>
-                        {clientVat && <p className='m-0' style={{ marginTop: '8px' }}>{t.vatId}: {clientVat}</p>}
-                        {clientBankName && <p className='m-0'>{t.bank}: {clientBankName}</p>}
-                        {clientIban && <p className='m-0'>{t.iban}: {clientIban}</p>}
-                        {clientSwift && <p className='m-0'>{t.swift}: {clientSwift}</p>}
-                        {invoice.projectName && <p className="text-gray-700 m-0" style={{ marginTop: '8px' }}><span className='font-semibold'>Project:</span> {invoice.projectName}</p>}
+                    <div className='text-gray-600 text-sm'>
+                       <p className='m-0'>{clientAddress}</p>
+                        <div className="mt-2">
+                            {clientVat && <p className='m-0'>{t.vatId}: {clientVat}</p>}
+                            {clientBankName && <p className='m-0'>{t.bank}: {clientBankName}</p>}
+                            {clientIban && <p className='m-0'>{t.iban}: {clientIban}</p>}
+                            {clientSwift && <p className='m-0'>{t.swift}: {clientSwift}</p>}
+                        </div>
+                        {invoice.projectName && <div className="mt-2"><p className="text-gray-700 m-0"><span className='font-semibold'>Project:</span> {invoice.projectName}</p></div>}
                     </div>
                 </div>
                 <div style={{ backgroundColor: styles.secondaryBg }} className='p-6 rounded text-right'>
@@ -743,4 +744,3 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
     </div>
   );
 }
-
