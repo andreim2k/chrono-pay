@@ -826,11 +826,19 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                     <p className={cn('font-bold text-gray-900', styles.layout === 'bold' ? 'text-2xl mb-2' : '')}>{clientName}</p>
                     <div className={cn('text-gray-600 space-y-px', styles.layout === 'bold' ? 'text-sm' : 'text-sm')}>
                         <p>{clientAddress}</p>
-                        {clientVat && <p>{t.vatId}: {clientVat}</p>}
-                        {clientBankName && <p>{t.bank}: {clientBankName}</p>}
-                        {clientIban && <p>{t.iban}: {clientIban}</p>}
-                        {clientSwift && <p>{t.swift}: {clientSwift}</p>}
-                        {invoice.projectName && <p className={cn('text-gray-700', styles.layout === 'bold' ? 'mt-2 font-semibold' : 'mt-2')}><span className={styles.layout === 'bold' ? '' : 'font-semibold'}>Project:</span> {invoice.projectName}</p>}
+                        <div className='space-y-0'>
+                          {clientVat && <p>{t.vatId}: {clientVat}</p>}
+                          {clientBankName && <p>{t.bank}: {clientBankName}</p>}
+                          {clientIban && <p>{t.iban}: {clientIban}</p>}
+                          {clientSwift && <p>{t.swift}: {clientSwift}</p>}
+                        </div>
+                        {invoice.projectName && 
+                          <div className='mt-2'>
+                              <p className={cn('text-gray-700', styles.layout === 'bold' ? 'font-semibold' : '')}>
+                                <span className={styles.layout === 'bold' ? '' : 'font-semibold'}>Project:</span> {invoice.projectName}
+                              </p>
+                          </div>
+                        }
                     </div>
                 </div>
                 <div style={{ backgroundColor: styles.secondaryBg }} className={cn('p-6', styles.layout === 'modern' ? 'rounded' : '')}>
