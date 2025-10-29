@@ -96,6 +96,7 @@ function getDayWithOrdinal(date: Date, lang: 'en' | 'ro'): string {
 }
 
 export const themeStyles: { [key in InvoiceTheme]: {
+  layout: 'classic' | 'modern' | 'bold';
   fontFamily: string;
   accentClass: string;
   headerTextClass: string;
@@ -108,6 +109,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
   secondaryBg?: string;
 } } = {
   'Classic': {
+    layout: 'classic',
     fontFamily: 'Georgia, serif',
     accentClass: 'border-blue-600',
     headerTextClass: 'text-blue-600',
@@ -120,6 +122,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#EFF6FF',
   },
   'Modern': {
+    layout: 'modern',
     fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
     accentClass: 'border-red-600',
     headerTextClass: 'text-red-600',
@@ -132,6 +135,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FEF2F2',
   },
   'Sunset': {
+    layout: 'classic',
     fontFamily: 'Palatino, "Palatino Linotype", serif',
     accentClass: 'border-orange-600',
     headerTextClass: 'text-orange-600',
@@ -144,6 +148,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FFF7ED',
   },
   'Ocean': {
+    layout: 'bold',
     fontFamily: 'Helvetica, Arial, sans-serif',
     accentClass: 'border-cyan-600',
     headerTextClass: 'text-cyan-600',
@@ -156,6 +161,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#ECFEFF',
   },
   'Monochrome': {
+    layout: 'classic',
     fontFamily: '"Courier New", monospace',
     accentClass: 'border-gray-800',
     headerTextClass: 'text-gray-800',
@@ -168,6 +174,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#F9FAFB',
   },
   'Minty': {
+    layout: 'modern',
     fontFamily: 'Verdana, Geneva, sans-serif',
     accentClass: 'border-emerald-600',
     headerTextClass: 'text-emerald-600',
@@ -180,6 +187,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#F0FDF4',
   },
   'Velvet': {
+    layout: 'bold',
     fontFamily: '"Times New Roman", Times, serif',
     accentClass: 'border-purple-600',
     headerTextClass: 'text-purple-600',
@@ -192,6 +200,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FAF5FF',
   },
   'Corporate Blue': {
+    layout: 'classic',
     fontFamily: 'Trebuchet MS, sans-serif',
     accentClass: 'border-indigo-800',
     headerTextClass: 'text-indigo-800',
@@ -204,6 +213,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#EFF6FF',
   },
   'Earthy Tones': {
+    layout: 'modern',
     fontFamily: 'Georgia, serif',
     accentClass: 'border-amber-900',
     headerTextClass: 'text-amber-900',
@@ -216,6 +226,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FFFBEB',
   },
   'Creative': {
+    layout: 'bold',
     fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
     accentClass: 'border-pink-600',
     headerTextClass: 'text-pink-600',
@@ -228,6 +239,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FDF2F8',
   },
   'Slate Gray': {
+    layout: 'classic',
     fontFamily: 'Palatino, "Palatino Linotype", serif',
     accentClass: 'border-slate-600',
     headerTextClass: 'text-slate-600',
@@ -240,6 +252,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#F8FAFC',
   },
   'Dark Charcoal': {
+    layout: 'modern',
     fontFamily: 'Helvetica, Arial, sans-serif',
     accentClass: 'border-zinc-800',
     headerTextClass: 'text-zinc-800',
@@ -252,6 +265,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FAFAFA',
   },
   'Navy Blue': {
+    layout: 'bold',
     fontFamily: '"Courier New", monospace',
     accentClass: 'border-blue-900',
     headerTextClass: 'text-blue-900',
@@ -264,6 +278,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#EFF6FF',
   },
   'Forest Green': {
+    layout: 'classic',
     fontFamily: 'Verdana, Geneva, sans-serif',
     accentClass: 'border-green-700',
     headerTextClass: 'text-green-700',
@@ -276,6 +291,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#F0FDF4',
   },
   'Burgundy': {
+    layout: 'modern',
     fontFamily: '"Times New Roman", Times, serif',
     accentClass: 'border-rose-800',
     headerTextClass: 'text-rose-800',
@@ -288,6 +304,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FFF1F2',
   },
   'Teal': {
+    layout: 'bold',
     fontFamily: 'Trebuchet MS, sans-serif',
     accentClass: 'border-teal-600',
     headerTextClass: 'text-teal-600',
@@ -300,6 +317,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#F0FDFA',
   },
   'Coral': {
+    layout: 'classic',
     fontFamily: 'Garamond, serif',
     accentClass: 'border-red-500',
     headerTextClass: 'text-red-500',
@@ -312,6 +330,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FEF2F2',
   },
   'Lavender': {
+    layout: 'modern',
     fontFamily: '"Arial Black", sans-serif',
     accentClass: 'border-violet-500',
     headerTextClass: 'text-violet-500',
@@ -324,6 +343,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#F5F3FF',
   },
   'Golden': {
+    layout: 'bold',
     fontFamily: 'Tahoma, Geneva, sans-serif',
     accentClass: 'border-yellow-600',
     headerTextClass: 'text-yellow-600',
@@ -336,6 +356,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FEFCE8',
   },
   'Steel Blue': {
+    layout: 'classic',
     fontFamily: '"Lucida Console", Monaco, monospace',
     accentClass: 'border-sky-600',
     headerTextClass: 'text-sky-600',
@@ -347,7 +368,8 @@ export const themeStyles: { [key in InvoiceTheme]: {
     tableHeaderBgColor: '#0284C7',
     secondaryBg: '#F0F9FF',
   },
-  'Light Blue': {
+    'Light Blue': {
+    layout: 'modern',
     fontFamily: 'Cambria, serif',
     accentClass: 'border-blue-400',
     headerTextClass: 'text-blue-400',
@@ -360,6 +382,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#EFF6FF',
   },
   'Sky Blue': {
+    layout: 'bold',
     fontFamily: '"Century Gothic", sans-serif',
     accentClass: 'border-sky-500',
     headerTextClass: 'text-sky-500',
@@ -372,6 +395,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#F0F9FF',
   },
   'Mint Green': {
+    layout: 'classic',
     fontFamily: 'Optima, sans-serif',
     accentClass: 'border-emerald-500',
     headerTextClass: 'text-emerald-500',
@@ -383,6 +407,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     tableHeaderBgColor: '#ECFDF5'
   },
   'Lime': {
+    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-lime-600',
     headerTextClass: 'text-lime-600',
@@ -395,6 +420,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#F7FEE7',
   },
   'Peach': {
+    layout: 'bold',
     fontFamily: 'Didot, serif',
     accentClass: 'border-orange-400',
     headerTextClass: 'text-orange-400',
@@ -407,6 +433,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FFF7ED',
   },
   'Rose': {
+    layout: 'classic',
     fontFamily: 'Futura, sans-serif',
     accentClass: 'border-rose-600',
     headerTextClass: 'text-rose-600',
@@ -419,6 +446,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FFF1F2',
   },
   'Lilac': {
+    layout: 'modern',
     fontFamily: 'Baskerville, serif',
     accentClass: 'border-purple-400',
     headerTextClass: 'text-purple-400',
@@ -431,6 +459,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FAF5FF',
   },
   'Sand': {
+    layout: 'bold',
     fontFamily: 'Rockwell, serif',
     accentClass: 'border-amber-600',
     headerTextClass: 'text-amber-600',
@@ -443,6 +472,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FFFBEB',
   },
   'Olive': {
+    layout: 'classic',
     fontFamily: 'Franklin Gothic, sans-serif',
     accentClass: 'border-lime-700',
     headerTextClass: 'text-lime-700',
@@ -455,6 +485,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#F7FEE7',
   },
   'Maroon': {
+    layout: 'modern',
     fontFamily: '"Gill Sans", sans-serif',
     accentClass: 'border-red-900',
     headerTextClass: 'text-red-900',
@@ -467,6 +498,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FEF2F2',
   },
   'Deep Purple': {
+    layout: 'bold',
     fontFamily: 'Bodoni, serif',
     accentClass: 'border-purple-800',
     headerTextClass: 'text-purple-800',
@@ -479,6 +511,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FAF5FF',
   },
   'Turquoise': {
+    layout: 'classic',
     fontFamily: 'Consolas, monospace',
     accentClass: 'border-cyan-500',
     headerTextClass: 'text-cyan-500',
@@ -491,6 +524,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#ECFEFF',
   },
   'Charcoal': {
+    layout: 'modern',
     fontFamily: '"Segoe UI", sans-serif',
     accentClass: 'border-gray-700',
     headerTextClass: 'text-gray-700',
@@ -503,6 +537,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#F9FAFB',
   },
   'Crimson': {
+    layout: 'bold',
     fontFamily: '"Book Antiqua", serif',
     accentClass: 'border-red-700',
     headerTextClass: 'text-red-700',
@@ -515,6 +550,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FEF2F2',
   },
   'Sapphire': {
+    layout: 'classic',
     fontFamily: 'Impact, sans-serif',
     accentClass: 'border-blue-700',
     headerTextClass: 'text-blue-700',
@@ -612,55 +648,161 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
     };
   }, [subtotal, vatAmount, invoice.exchangeRate, currency, hasVat]);
 
-  return (
-    <div className="bg-white text-gray-900" style={layoutStyles}>
-      <main className="flex-grow" style={{paddingLeft: '0px', paddingRight: '0px'}}>
-        {/* Header */}
-          <div className={cn('px-12 py-8', styles.tableHeaderBgClass, styles.tableHeaderTextClass)}>
-            <div className="flex justify-between items-start">
-              <div>
-                <h1 className="text-4xl font-bold" style={{ letterSpacing: '-0.01em' }}>{companyName}</h1>
-                <div className="text-sm mt-2 opacity-90 space-y-px">
-                  <p>{companyAddress}</p>
-                  {companyPhone && <p>{t.phone}: {companyPhone}</p>}
-                  {companyEmail && <p>{t.email}: {companyEmail}</p>}
-                  {companyBankName && <p><span className="font-semibold">{t.bank}:</span> {companyBankName}</p>}
-                  {companyIban && <p><span className="font-semibold">{t.iban}:</span> {companyIban}</p>}
-                  {companySwift && <p><span className="font-semibold">{t.swift}:</span> {companySwift}</p>}
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-sm uppercase tracking-widest opacity-75">{t.invoice}</p>
-                <p className="text-3xl font-bold mt-1">#{invoiceNumber}</p>
+  const renderClassicLayout = () => (
+    <>
+      {/* Header */}
+      <div className="flex justify-between items-start px-12 pt-12 pb-8">
+        <div>
+          <h1 className={cn('text-3xl font-bold', styles.headerTextClass)}>{companyName}</h1>
+          <p className="text-gray-600 mt-2 text-sm">{companyAddress}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-4xl font-bold uppercase tracking-wider">{t.invoice}</p>
+          <p className="text-gray-600 text-sm mt-1">#{invoiceNumber}</p>
+        </div>
+      </div>
+      {/* Horizontal Line */}
+      <div className="px-12"><div className={cn('border-t-2', styles.accentClass)}></div></div>
+      {/* Info Section */}
+      <div className="grid grid-cols-3 gap-8 px-12 mt-8">
+        <div className='col-span-2'>
+            <p className="text-gray-500 text-sm uppercase tracking-wider font-semibold">{t.billedTo}</p>
+            <p className="font-bold text-gray-800 mt-2">{clientName}</p>
+            <p className="text-gray-600 text-sm">{clientAddress}</p>
+            <p className="text-gray-600 text-sm">{t.vatId}: {clientVat}</p>
+            <div className='mt-2 text-sm text-gray-600'>
+              {clientBankName && <p>{t.bank}: {clientBankName}</p>}
+              {clientIban && <p>{t.iban}: {clientIban}</p>}
+              {clientSwift && <p>{t.swift}: {clientSwift}</p>}
+            </div>
+            {invoice.projectName && <p className='text-gray-600 text-sm mt-2'>Project: {invoice.projectName}</p>}
+        </div>
+        <div className="text-right">
+          <div>
+            <p className="text-gray-500 text-sm uppercase tracking-wider font-semibold">{t.invoiceDate}</p>
+            <p className="text-gray-700 font-medium mt-1">{formatDateWithOrdinal(date)}</p>
+          </div>
+          <div className="mt-4">
+            <p className="text-gray-500 text-sm uppercase tracking-wider font-semibold">{t.dueDate}</p>
+            <p className="text-gray-700 font-medium mt-1">{formatDateWithOrdinal(dueDate)}</p>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
+  const renderModernLayout = () => (
+    <>
+      <div className="px-12 py-10 grid grid-cols-2 gap-8">
+        <div>
+          <h1 className="text-4xl font-bold">{companyName}</h1>
+          <div className='text-sm text-gray-600 mt-4 space-y-px'>
+            <p>{companyAddress}</p>
+            {companyPhone && <p>{t.phone}: {companyPhone}</p>}
+            {companyEmail && <p>{t.email}: {companyEmail}</p>}
+          </div>
+        </div>
+        <div className="text-right">
+          <p className={cn('text-5xl font-extrabold tracking-tight', styles.headerTextClass)}>{t.invoice}</p>
+          <p className="text-gray-500">#{invoiceNumber}</p>
+        </div>
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-8 px-12 pb-8">
+        <div className={cn('p-4 rounded-lg', styles.secondaryBg)}>
+          <p className="text-sm font-semibold uppercase tracking-wide">Billed To</p>
+          <div className="mt-2 text-sm text-gray-700">
+            <p className="font-bold text-base text-gray-900">{clientName}</p>
+            <p>{clientAddress}</p>
+            <div className='mt-2'>
+                <p>{t.vatId}: {clientVat}</p>
+                {clientBankName && <p>{t.bank}: {clientBankName}</p>}
+                {clientIban && <p>{t.iban}: {clientIban}</p>}
+                {clientSwift && <p>{t.swift}: {clientSwift}</p>}
+            </div>
+            {invoice.projectName && <div className='mt-2'><p>Project: {invoice.projectName}</p></div>}
+          </div>
+        </div>
+        <div className={cn('p-4 rounded-lg', styles.secondaryBg)}>
+          <div className="grid grid-cols-2 gap-4">
+            <div className='text-sm'>
+              <p className="font-semibold uppercase tracking-wide">Invoice Date</p>
+              <p className="mt-2 text-gray-700">{formatDateWithOrdinal(date)}</p>
+            </div>
+            <div className='text-sm'>
+              <p className="font-semibold uppercase tracking-wide">Due Date</p>
+              <p className="mt-2 text-gray-700">{formatDateWithOrdinal(dueDate)}</p>
+            </div>
+          </div>
+          <div className='border-t my-3'></div>
+          <div className='text-sm'>
+            <p className="font-semibold uppercase tracking-wide">Payout Details</p>
+             <div className='text-gray-700 mt-2 space-y-px'>
+              <p>{t.bank}: {companyBankName}</p>
+              <p>{t.iban}: {companyIban}</p>
+              <p>{t.swift}: {companySwift}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
+  const renderBoldLayout = () => (
+    <>
+      <div className={cn("px-12 py-8", styles.tableHeaderBgClass, styles.tableHeaderTextClass)}>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-4xl font-bold" style={{ letterSpacing: '-0.01em' }}>{companyName}</h1>
+            <div className="text-sm mt-2 opacity-90 space-y-px">
+              <p>{companyAddress}</p>
+              {companyPhone && <p>{t.phone}: {companyPhone}</p>}
+              {companyEmail && <p>{t.email}: {companyEmail}</p>}
+              <div className='pt-1'>
+                {companyBankName && <p><span className="font-semibold">{t.bank}:</span> {companyBankName}</p>}
+                {companyIban && <p><span className="font-semibold">{t.iban}:</span> {companyIban}</p>}
+                {companySwift && <p><span className="font-semibold">{t.swift}:</span> {companySwift}</p>}
               </div>
             </div>
           </div>
-
-        {/* Client Info Section */}
-        <div style={{padding: '0 48px'}}>
-            <div className="grid grid-cols-2 gap-6 mb-10 mt-8">
-                <div style={{ backgroundColor: styles.secondaryBg }} className='p-6 rounded'>
-                    <p className={cn('text-xs font-bold uppercase mb-3', styles.headerTextClass)}>{t.billedTo}</p>
-                    <p className='font-bold text-gray-900 m-0' style={{ lineHeight: '1.5' }}>{clientName}</p>
-                    <div className='text-gray-600 text-sm'>
-                       <p className='m-0'>{clientAddress}</p>
-                        <div className="mt-2">
-                            {clientVat && <p className='m-0'>{t.vatId}: {clientVat}</p>}
-                            {clientBankName && <p className='m-0'>{t.bank}: {clientBankName}</p>}
-                            {clientIban && <p className='m-0'>{t.iban}: {clientIban}</p>}
-                            {clientSwift && <p className='m-0'>{t.swift}: {clientSwift}</p>}
-                        </div>
-                        {invoice.projectName && <div className="mt-2"><p className="text-gray-700 m-0"><span className='font-semibold'>Project:</span> {invoice.projectName}</p></div>}
+          <div className="text-right">
+            <p className="text-sm uppercase tracking-widest opacity-75">{t.invoice}</p>
+            <p className="text-3xl font-bold mt-1">#{invoiceNumber}</p>
+          </div>
+        </div>
+      </div>
+      <div className='px-12 mt-8 mb-8'>
+        <div className="grid grid-cols-2 gap-6">
+            <div className='space-y-1'>
+                <p className={cn('text-xs font-bold uppercase', styles.headerTextClass)}>{t.billedTo}</p>
+                <p className='font-bold text-gray-900'>{clientName}</p>
+                <div className='text-gray-600 text-sm leading-snug'>
+                    <p>{clientAddress}</p>
+                    <p>{t.vatId}: {clientVat}</p>
+                    <div className='mt-1'>
+                      {clientBankName && <p>{t.bank}: {clientBankName}</p>}
+                      {clientIban && <p>{t.iban}: {clientIban}</p>}
+                      {clientSwift && <p>{t.swift}: {clientSwift}</p>}
                     </div>
-                </div>
-                <div style={{ backgroundColor: styles.secondaryBg }} className='p-6 rounded text-right'>
-                    <p className={cn('text-xs font-bold uppercase mb-3', styles.headerTextClass)}>{t.invoiceDate}</p>
-                    <p className="text-gray-800">{formatDateWithOrdinal(date)}</p>
-                    <p className={cn('text-xs font-bold uppercase mt-3 mb-3', styles.headerTextClass)}>{t.dueDate}</p>
-                    <p className="text-gray-800">{formatDateWithOrdinal(dueDate)}</p>
+                    {invoice.projectName && <div className='mt-2'><p>Project: {invoice.projectName}</p></div>}
                 </div>
             </div>
+            <div className="text-right space-y-1">
+                <p className={cn('text-xs font-bold uppercase', styles.headerTextClass)}>{t.invoiceDate}</p>
+                <p className="text-gray-800">{formatDateWithOrdinal(date)}</p>
+                <p className={cn('text-xs font-bold uppercase pt-2', styles.headerTextClass)}>{t.dueDate}</p>
+                <p className="text-gray-800">{formatDateWithOrdinal(dueDate)}</p>
+            </div>
         </div>
+      </div>
+    </>
+  );
+
+  return (
+    <div className="bg-white text-gray-900" style={layoutStyles}>
+      <main className="flex-grow">
+        {styles.layout === 'modern' && renderModernLayout()}
+        {styles.layout === 'bold' && renderBoldLayout()}
+        {styles.layout === 'classic' && renderClassicLayout()}
 
         {isReverseCharge && (
             <div style={{padding: '0 48px'}} className="mb-4">
