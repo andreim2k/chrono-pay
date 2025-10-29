@@ -465,11 +465,19 @@ export function CreateInvoiceDialog() {
   }, [filteredTimecards, selectedTimecards]);
 
 
-  const totalRonDisplay = useMemo(() => {
-    if (invoiceData?.total && invoiceConfig.exchangeRate && invoiceConfig.currency !== 'RON') {
-        return (invoiceData.total * invoiceConfig.exchangeRate).toFixed(2);
+  const ronBreakdown = useMemo(() => {
+    if (!invoiceData || !invoiceConfig.exchangeRate || invoiceConfig.currency === 'RON') {
+        return null;
     }
-    return null;
+    const subtotalRon = invoiceData.subtotal * invoiceConfig.exchangeRate;
+    const vatAmountRon = (invoiceData.vatAmount || 0) * invoiceConfig.exchangeRate;
+    const totalRon = subtotalRon + vatAmountRon;
+
+    return {
+        subtotal: subtotalRon.toFixed(2),
+        vat: vatAmountRon.toFixed(2),
+        total: totalRon.toFixed(2),
+    };
   }, [invoiceData, invoiceConfig.exchangeRate, invoiceConfig.currency]);
 
   return (
@@ -682,14 +690,29 @@ export function CreateInvoiceDialog() {
                       <span className='text-foreground'>{invoiceData.currency} {invoiceData.total.toFixed(2)}</span>
                     </div>
 
-                    {totalRonDisplay && (
-                      <div className='pt-2 mt-2 border-t'>
-                        <p className="text-muted-foreground">Total in RON (approx.): <span className='font-bold text-foreground'>{totalRonDisplay} RON</span></p>
-                        {invoiceConfig.exchangeRateDate && <p className="text-xs text-muted-foreground mt-1">
-                          {invoiceConfig.usedMaxRate ? `Using fixed project rate set on ${formatDateWithOrdinal(invoiceConfig.exchangeRateDate)}` : `Based on BNR rate from ${formatDateWithOrdinal(invoiceConfig.exchangeRateDate)}`}: 1 {invoiceConfig.currency} = {invoiceConfig.exchangeRate?.toFixed(4)} RON
-                        </p>
-                        }
-                      </div>
+                    {ronBreakdown && (
+                        <div className='pt-2 mt-2 border-t space-y-1'>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Subtotal (RON):</span>
+                                <span className='font-medium text-foreground'>{ronBreakdown.subtotal} RON</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">VAT (RON):</span>
+                                <span className='font-medium text-foreground'>{ronBreakdown.vat} RON</span>
+                            </div>
+                            <div className="flex justify-between font-bold">
+                                <span className="text-foreground">Total (RON):</span>
+                                <span className='text-foreground'>{ronBreakdown.total} RON</span>
+                            </div>
+                             {invoiceConfig.exchangeRateDate && (
+                                <p className="text-xs text-muted-foreground pt-1">
+                                    {invoiceConfig.usedMaxRate
+                                        ? `Using fixed project rate set on ${formatDateWithOrdinal(invoiceConfig.exchangeRateDate)}`
+                                        : `Based on BNR rate from ${formatDateWithOrdinal(invoiceConfig.exchangeRateDate)}`}
+                                    : 1 {invoiceConfig.currency} = {invoiceConfig.exchangeRate?.toFixed(4)} RON
+                                </p>
+                            )}
+                        </div>
                     )}
                   </div>
                 )}

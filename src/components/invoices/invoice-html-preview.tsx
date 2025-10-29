@@ -33,6 +33,8 @@ const translations = {
         vat: 'VAT',
         total: 'Total',
         totalRon: 'Total (RON)',
+        subtotalRon: 'Subtotal (RON)',
+        vatRon: 'VAT (RON)',
         footerExchange: (date: string, currency: string, rate: number) => `Exchange rate from BNR for ${date}: 1 ${currency} = ${rate.toFixed(4)} RON.`,
         footerMaxRate: (date: string, currency: string, rate: number) => `Using fixed client exchange rate set on ${date}: 1 ${currency} = ${rate.toFixed(4)} RON.`,
         footerThanks: 'Thank you for your business!',
@@ -41,7 +43,7 @@ const translations = {
         reverseCharge: 'Reversal of VAT liability on EU cross-border transactions',
         unit: {
             days: 'days',
-            hours: 'ore'
+            hours: 'hours'
         }
     },
     ro: {
@@ -64,6 +66,8 @@ const translations = {
         vat: 'TVA',
         total: 'Total',
         totalRon: 'Total (RON)',
+        subtotalRon: 'Subtotal (RON)',
+        vatRon: 'TVA (RON)',
         footerExchange: (date: string, currency: string, rate: number) => `Curs valutar BNR pentru ${date}: 1 ${currency} = ${rate.toFixed(4)} RON.`,
         footerMaxRate: (date: string, currency: string, rate: number) => `Folosind cursul fix al clientului setat la data de ${date}: 1 ${currency} = ${rate.toFixed(4)} RON.`,
         footerThanks: 'Vă mulțumim!',
@@ -566,7 +570,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
     companyName, companyAddress, companyVat, companyEmail, companyPhone, invoiceNumber, clientName,
     clientAddress, clientVat, date, dueDate, items, currency, subtotal, vatAmount, total,
     companyBankName, companyIban, companySwift, language, vatRate, totalRon,
-    theme = 'Classic'
+    theme = 'Classic', exchangeRate
   } = invoice;
 
   const styles = themeStyles[theme];
@@ -574,7 +578,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
   const lang = language === 'Romanian' ? 'ro' : 'en';
   const t = translations[lang];
   const hasVat = vatAmount !== undefined;
-  const isReverseCharge = vatRate === 0 && vatAmount === 0 && invoice.vatRate !== undefined;
+  const isReverseCharge = vatRate === 0 && hasVat;
 
   const currencySymbols: { [key:string]: string } = {
     EUR: '€',
@@ -604,12 +608,12 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
 
       const translatedUnit = t.unit[unit as keyof typeof t.unit] || unit;
 
-      // Regex for hourly billing
-      const hourlyRegex = /IT Consultancy services for period ([\d\.]+\s*-\s*[\d\.]+)/;
-      const hourlyMatch = description.match(hourlyRegex);
+      // Regex for description
+      const descRegex = /IT Consultancy services for period ([\d\.]+\s*-\s*[\d\.]+)/;
+      const match = description.match(descRegex);
 
-      if (hourlyMatch) {
-          const [, period] = hourlyMatch;
+      if (match) {
+          const [, period] = match;
           if (unit === 'hours') {
             const quantityText = `${quantity.toFixed(2)} ${translatedUnit}`;
             return t.consultancyServices(period, quantityText);
@@ -634,6 +638,22 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
         return { ...baseStyles, padding: '60px', fontFamily: styles.fontFamily };
     }
   };
+  
+  const ronBreakdown = React.useMemo(() => {
+    if (!exchangeRate || currency === 'RON' || !hasVat) {
+        return null;
+    }
+    const subtotalRon = subtotal * exchangeRate;
+    const vatAmountRon = (vatAmount || 0) * exchangeRate;
+    const totalRonCalculated = subtotalRon + vatAmountRon;
+
+    return {
+        subtotal: subtotalRon,
+        vat: vatAmountRon,
+        total: totalRonCalculated,
+    };
+  }, [subtotal, vatAmount, exchangeRate, currency, hasVat]);
+
 
   return (
     <div className="bg-white text-gray-900" style={getLayoutStyles()}>
@@ -929,10 +949,11 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                     <span className={cn('uppercase', styles.layout === 'minimal' ? 'font-bold text-gray-900' : '')}>{t.total}</span>
                     <span className={cn(styles.layout === 'minimal' ? 'text-2xl font-bold text-gray-900' : 'text-lg')}>{currencySymbol}{total.toFixed(2)}</span>
                   </div>
-                  {totalRon && currency !== 'RON' && (
-                    <div className="flex justify-between py-2 px-2 text-sm text-gray-600 mt-2">
-                      <span>{t.totalRon}</span>
-                      <span className={styles.layout === 'minimal' ? '' : 'font-semibold'}>{styles.layout === 'minimal' ? '' : 'RON '}{totalRon.toFixed(2)}</span>
+                  {ronBreakdown && (
+                     <div className="space-y-1 mt-2 text-sm text-gray-600">
+                        <div className="flex justify-between"><span>{t.subtotalRon}</span><span className="font-semibold">{ronBreakdown.subtotal.toFixed(2)} RON</span></div>
+                        <div className="flex justify-between"><span>{t.vatRon}</span><span className="font-semibold">{ronBreakdown.vat.toFixed(2)} RON</span></div>
+                        <div className="flex justify-between"><span>{t.totalRon}</span><span className="font-semibold">{ronBreakdown.total.toFixed(2)} RON</span></div>
                     </div>
                   )}
                 </>
@@ -959,10 +980,11 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                       <span className="text-3xl font-bold text-gray-900">{currencySymbol}{total.toFixed(2)}</span>
                     </div>
                   </div>
-                  {totalRon && currency !== 'RON' && (
-                    <div className="flex justify-between pt-3 text-sm text-gray-600">
-                      <span>{t.totalRon}</span>
-                      <span className="font-semibold">RON {totalRon.toFixed(2)}</span>
+                  {ronBreakdown && (
+                     <div className="space-y-1 mt-3 text-sm text-gray-600">
+                        <div className="flex justify-between"><span>{t.subtotalRon}</span><span className="font-semibold">{ronBreakdown.subtotal.toFixed(2)} RON</span></div>
+                        <div className="flex justify-between"><span>{t.vatRon}</span><span className="font-semibold">{ronBreakdown.vat.toFixed(2)} RON</span></div>
+                        <div className="flex justify-between"><span>{t.totalRon}</span><span className="font-semibold">{ronBreakdown.total.toFixed(2)} RON</span></div>
                     </div>
                   )}
                 </>
@@ -987,10 +1009,11 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                     <span className="text-lg font-bold uppercase">{t.total}</span>
                     <span className="text-2xl font-bold">{currencySymbol}{total.toFixed(2)}</span>
                   </div>
-                  {totalRon && currency !== 'RON' && (
-                    <div className="flex justify-between py-2 px-2 text-sm text-gray-600 mt-2">
-                      <span>{t.totalRon}</span>
-                      <span className="font-semibold">RON {totalRon.toFixed(2)}</span>
+                   {ronBreakdown && (
+                     <div className="space-y-1 mt-2 text-sm text-gray-600 px-2">
+                        <div className="flex justify-between"><span>{t.subtotalRon}</span><span className="font-semibold">{ronBreakdown.subtotal.toFixed(2)} RON</span></div>
+                        <div className="flex justify-between"><span>{t.vatRon}</span><span className="font-semibold">{ronBreakdown.vat.toFixed(2)} RON</span></div>
+                        <div className="flex justify-between"><span>{t.totalRon}</span><span className="font-semibold">{ronBreakdown.total.toFixed(2)} RON</span></div>
                     </div>
                   )}
                 </>
@@ -1017,10 +1040,11 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                       <span className="text-4xl font-black">{currencySymbol}{total.toFixed(2)}</span>
                     </div>
                   </div>
-                  {totalRon && currency !== 'RON' && (
-                    <div className="flex justify-between py-3 px-4 text-base font-semibold text-gray-600 mt-2">
-                      <span>{t.totalRon}</span>
-                      <span>RON {totalRon.toFixed(2)}</span>
+                  {ronBreakdown && (
+                    <div className="space-y-1 mt-2 text-base font-semibold text-gray-600 px-4 py-2">
+                        <div className="flex justify-between"><span>{t.subtotalRon}</span><span>{ronBreakdown.subtotal.toFixed(2)} RON</span></div>
+                        <div className="flex justify-between"><span>{t.vatRon}</span><span>{ronBreakdown.vat.toFixed(2)} RON</span></div>
+                        <div className="flex justify-between"><span>{t.totalRon}</span><span>{ronBreakdown.total.toFixed(2)} RON</span></div>
                     </div>
                   )}
                 </>
