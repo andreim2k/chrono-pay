@@ -33,6 +33,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 
 interface InvoiceListProps {
   invoices: Invoice[];
+  selectedRows: Record<string, boolean>;
+  onSelectedRowsChange: (selectedRows: Record<string, boolean>) => void;
 }
 
 const currencySymbols: { [key: string]: string } = {
@@ -41,7 +43,7 @@ const currencySymbols: { [key: string]: string } = {
   GBP: '£',
 };
 
-export function InvoiceList({ invoices }: InvoiceListProps) {
+export function InvoiceList({ invoices, selectedRows, onSelectedRowsChange }: InvoiceListProps) {
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
@@ -52,7 +54,6 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
   const [previewImage, setPreviewImage] = useState<string>('');
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
-  const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
 
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -61,8 +62,8 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
 
   useEffect(() => {
     // Clear selection when invoices change
-    setSelectedRows({});
-  }, [invoices]);
+    onSelectedRowsChange({});
+  }, [invoices, onSelectedRowsChange]);
 
   const getBadgeVariant = (status: Invoice['status']) => {
     switch (status) {
@@ -218,11 +219,12 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
     if (checked) {
       invoices.forEach(inv => newSelectedRows[inv.id] = true);
     }
-    setSelectedRows(newSelectedRows);
+    onSelectedRowsChange(newSelectedRows);
   };
 
   const handleRowSelect = (invoiceId: string, checked: boolean) => {
-    setSelectedRows(prev => ({ ...prev, [invoiceId]: checked }));
+    const newSelectedRows = { ...selectedRows, [invoiceId]: checked };
+    onSelectedRowsChange(newSelectedRows);
   };
 
   const handleDeleteSelected = async () => {
@@ -250,7 +252,7 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
             title: 'Invoices Deleted',
             description: `${idsToDelete.length} invoices have been successfully deleted.`,
         });
-        setSelectedRows({});
+        onSelectedRowsChange({});
     } catch (error) {
         toast({
             variant: 'destructive',

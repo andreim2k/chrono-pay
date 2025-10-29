@@ -13,9 +13,11 @@ import 'jspdf-autotable';
 interface ExportMenuProps {
   data: Record<string, any>[];
   filename: string;
+  buttonLabel?: string;
+  disabled?: boolean;
 }
 
-export function ExportMenu({ data, filename }: ExportMenuProps) {
+export function ExportMenu({ data, filename, buttonLabel = 'Export Data', disabled = false }: ExportMenuProps) {
   const { toast } = useToast();
 
   const getFinalFilename = (extension: string) => {
@@ -118,9 +120,9 @@ export function ExportMenu({ data, filename }: ExportMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" disabled={!hasData}>
+        <Button variant="outline" disabled={!hasData || disabled}>
           <Upload className="mr-2 h-4 w-4" />
-          Export Data
+          {buttonLabel}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>

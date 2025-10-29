@@ -20,6 +20,7 @@ export default function InvoicesPage() {
   const [selectedClientId, setSelectedClientId] = useState('all');
   const [selectedProjectId, setSelectedProjectId] = useState('all');
   const [selectedYear, setSelectedYear] = useState('all');
+  const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
 
   const invoicesQuery = useMemoFirebase(
     () => (firestore && user ? collection(firestore, `users/${user.uid}/invoices`) : null),
@@ -66,8 +67,13 @@ export default function InvoicesPage() {
     });
   }, [invoices, projects, selectedClientId, selectedProjectId, selectedYear]);
   
+  const selectedInvoices = useMemo(() => {
+    return filteredInvoices.filter(inv => selectedRows[inv.id]);
+  }, [filteredInvoices, selectedRows]);
+
   const exportableData = useMemo(() => {
-    return filteredInvoices.map(({
+    const invoicesToExport = selectedInvoices.length > 0 ? selectedInvoices : [];
+    return invoicesToExport.map(({
       id,
       companyName,
       companyAddress,
@@ -79,7 +85,7 @@ export default function InvoicesPage() {
       theme,
       ...rest
     }) => rest);
-  }, [filteredInvoices]);
+  }, [selectedInvoices]);
 
 
   return (
@@ -95,6 +101,8 @@ export default function InvoicesPage() {
           <ExportMenu 
             data={exportableData} 
             filename='invoices'
+            buttonLabel='Export'
+            disabled={selectedInvoices.length === 0}
           />
           <DataImport 
             allowedCollections={['invoices']}
@@ -133,7 +141,11 @@ export default function InvoicesPage() {
            </div>
         </CardContent>
       </Card>
-      <InvoiceList invoices={filteredInvoices || []} />
+      <InvoiceList 
+        invoices={filteredInvoices || []} 
+        selectedRows={selectedRows}
+        onSelectedRowsChange={setSelectedRows}
+      />
     </div>
   );
 }
