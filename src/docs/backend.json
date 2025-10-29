@@ -90,7 +90,9 @@
             },
             "required": [
                 "name",
-                "address"
+                "address",
+                "vat",
+                "vatRate"
             ]
         },
         "Project": {

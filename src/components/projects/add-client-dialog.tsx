@@ -29,12 +29,12 @@ const languages = ['English', 'Romanian'];
 const clientSchema = z.object({
   name: z.string().min(1, 'Client name is required'),
   address: z.string().min(1, 'Address is required'),
-  vat: z.string().optional(),
+  vat: z.string().min(1, 'VAT number is required'),
   iban: z.string().optional(),
   bankName: z.string().optional(),
   swift: z.string().optional(),
   language: z.string().min(1, 'Language is required'),
-  vatRate: z.coerce.number().min(0, "VAT rate can't be negative").optional(),
+  vatRate: z.coerce.number().min(0, "VAT rate must be 0 or greater."),
 });
 
 type ClientFormValues = z.infer<typeof clientSchema>;
@@ -61,7 +61,7 @@ export function AddClientDialog() {
       bankName: '',
       swift: '',
       language: 'English',
-      vatRate: undefined,
+      vatRate: 0,
     },
   });
 
@@ -71,7 +71,7 @@ export function AddClientDialog() {
     
     const dataToSave: any = {
       ...data,
-      vatRate: data.vatRate ? data.vatRate / 100 : 0,
+      vatRate: data.vatRate / 100, // Store as a decimal
       logoUrl: `https://picsum.photos/seed/${data.name}/40/40`,
       order: clients?.length || 0,
     };
@@ -134,9 +134,9 @@ export function AddClientDialog() {
                 name="vat"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>VAT Number (Optional)</FormLabel>
+                    <FormLabel>VAT Number</FormLabel>
                     <FormControl>
-                      <Input placeholder="US123456789" {...field} value={field.value ?? ''} />
+                      <Input placeholder="US123456789" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -213,9 +213,9 @@ export function AddClientDialog() {
               name="vatRate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>VAT Rate (%) (Optional)</FormLabel>
+                  <FormLabel>VAT Rate (%)</FormLabel>
                   <FormControl>
-                    <Input type="number" placeholder="e.g., 19" {...field} value={field.value ?? ''} />
+                    <Input type="number" placeholder="e.g., 19" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
