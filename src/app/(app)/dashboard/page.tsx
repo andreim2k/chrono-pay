@@ -4,7 +4,7 @@
 import { StatCard } from '@/components/dashboard/stat-card';
 import { RecentInvoices } from '@/components/dashboard/recent-invoices';
 import { useCollection, useUser } from '@/firebase';
-import { DollarSign, Users, Clock, Banknote, Landmark, Briefcase, Hourglass } from 'lucide-react';
+import { DollarSign, Users, Clock, Banknote, Landmark, Briefcase, Hourglass, Euro } from 'lucide-react';
 import type { Invoice, Project, Timecard, Client } from '@/lib/types';
 import { useMemo } from 'react';
 import { useFirestore, useMemoFirebase } from '@/firebase/provider';
@@ -64,6 +64,10 @@ export default function DashboardPage() {
     }, 0);
     
     const unbilledHours = safeTimecards.filter(tc => tc.status === 'Unbilled').reduce((acc, tc) => acc + tc.hours, 0);
+    
+    const paidEurNoVat = paidInvoices
+      .filter(inv => inv.currency === 'EUR' && (!inv.vatAmount || inv.vatAmount === 0))
+      .reduce((acc, inv) => acc + inv.total, 0);
 
     const formatCurrency = (amount: number, currency = 'EUR') => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
@@ -84,6 +88,7 @@ export default function DashboardPage() {
       outstandingVat: formatRon(outstandingVatTotalRon),
       outstandingVatTotal: outstandingVatTotalRon,
       unbilledHours: unbilledHours.toFixed(2),
+      paidEurNoVat: formatCurrency(paidEurNoVat, 'EUR'),
     };
   }, [invoices, clients, projects, timecards]);
 
@@ -126,10 +131,10 @@ export default function DashboardPage() {
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="Paid Invoices"
-          value={String(dashboardStats.paidCount)}
-          icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
-          description="Total number of settled invoices"
+          title="Total Revenue (EUR, no VAT)"
+          value={dashboardStats.paidEurNoVat}
+          icon={<Euro className="h-4 w-4 text-muted-foreground" />}
+          description="From paid EUR invoices without VAT"
         />
         <StatCard
           title="Total VAT Collected (RON)"
