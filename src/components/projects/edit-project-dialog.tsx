@@ -375,9 +375,9 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
                       <SelectTrigger>
                          <SelectValue>
                             <div className="flex items-center gap-2">
-                                <div className="h-5 w-8 rounded-sm border flex overflow-hidden">
-                                    <div className="w-1/3" style={{ backgroundColor: themeStyles[field.value].accentColor }} />
-                                    <div className="w-2/3" style={{ backgroundColor: themeStyles[field.value].tableHeaderBgColor }} />
+                                <div className="h-4 w-6 rounded border flex overflow-hidden">
+                                    <div className="w-1/2" style={{ backgroundColor: themeStyles[field.value].accentColor }} />
+                                    <div className="w-1/2" style={{ backgroundColor: themeStyles[field.value].tableHeaderBgColor }} />
                                 </div>
                                 {field.value}
                             </div>
@@ -388,9 +388,9 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
                       {invoiceThemes.map(theme => (
                         <SelectItem key={theme} value={theme}>
                           <div className="flex items-center gap-3">
-                             <div className="h-5 w-8 rounded-sm border flex overflow-hidden">
-                                <div className="w-1/3" style={{ backgroundColor: themeStyles[theme].accentColor }} />
-                                <div className="w-2/3" style={{ backgroundColor: themeStyles[theme].tableHeaderBgColor }} />
+                             <div className="h-4 w-6 rounded border flex overflow-hidden">
+                                <div className="w-1/2" style={{ backgroundColor: themeStyles[theme].accentColor }} />
+                                <div className="w-1/2" style={{ backgroundColor: themeStyles[theme].tableHeaderBgColor }} />
                             </div>
                             {theme}
                           </div>
@@ -414,5 +414,3 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
     </Dialog>
   );
 }
-
-    

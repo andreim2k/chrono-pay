@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React from 'react';
@@ -23,6 +22,7 @@ const translations = {
         swift: 'SWIFT/BIC',
         billedTo: 'Billed To',
         vatId: 'VAT ID',
+        invoice: 'INVOICE',
         invoiceDate: 'Invoice Date',
         dueDate: 'Due Date',
         description: 'Description',
@@ -55,6 +55,7 @@ const translations = {
         swift: 'SWIFT/BIC',
         billedTo: 'Facturat către',
         vatId: 'CUI/CIF',
+        invoice: 'FACTURĂ',
         invoiceDate: 'Data facturii',
         dueDate: 'Data scadenței',
         description: 'Descriere',
@@ -93,10 +94,7 @@ function getDayWithOrdinal(date: Date, lang: 'en' | 'ro'): string {
     }
 }
 
-// Professional theme styles inspired by InvoiceHome templates
-// All themes use the same Modern layout with different colors
 export const themeStyles: { [key in InvoiceTheme]: {
-  layout: 'modern' | 'classic' | 'minimal' | 'elegant' | 'bold';
   fontFamily: string;
   accentClass: string;
   headerTextClass: string;
@@ -109,7 +107,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
   secondaryBg?: string;
 } } = {
   'Classic': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-blue-600',
     headerTextClass: 'text-blue-600',
@@ -122,7 +119,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#EFF6FF'
   },
   'Modern': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-red-600',
     headerTextClass: 'text-red-600',
@@ -135,7 +131,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FEF2F2'
   },
   'Sunset': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-orange-600',
     headerTextClass: 'text-orange-600',
@@ -148,7 +143,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FFF7ED'
   },
   'Ocean': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-cyan-600',
     headerTextClass: 'text-cyan-600',
@@ -161,7 +155,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#ECFEFF'
   },
   'Monochrome': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-gray-800',
     headerTextClass: 'text-gray-800',
@@ -174,7 +167,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#F9FAFB'
   },
   'Minty': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-emerald-600',
     headerTextClass: 'text-emerald-600',
@@ -187,7 +179,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#F0FDF4'
   },
   'Velvet': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-purple-600',
     headerTextClass: 'text-purple-600',
@@ -200,7 +191,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FAF5FF'
   },
   'Corporate Blue': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-indigo-800',
     headerTextClass: 'text-indigo-800',
@@ -213,7 +203,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#EFF6FF'
   },
   'Earthy Tones': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-amber-900',
     headerTextClass: 'text-amber-900',
@@ -226,7 +215,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FFFBEB'
   },
   'Creative': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-pink-600',
     headerTextClass: 'text-pink-600',
@@ -239,7 +227,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FDF2F8'
   },
   'Slate Gray': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-slate-600',
     headerTextClass: 'text-slate-600',
@@ -252,7 +239,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#F8FAFC'
   },
   'Dark Charcoal': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-zinc-800',
     headerTextClass: 'text-zinc-800',
@@ -265,7 +251,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FAFAFA'
   },
   'Navy Blue': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-blue-900',
     headerTextClass: 'text-blue-900',
@@ -278,7 +263,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#EFF6FF'
   },
   'Forest Green': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-green-700',
     headerTextClass: 'text-green-700',
@@ -291,7 +275,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#F0FDF4'
   },
   'Burgundy': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-rose-800',
     headerTextClass: 'text-rose-800',
@@ -304,7 +287,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FFF1F2'
   },
   'Teal': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-teal-600',
     headerTextClass: 'text-teal-600',
@@ -317,7 +299,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#F0FDFA'
   },
   'Coral': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-red-500',
     headerTextClass: 'text-red-500',
@@ -330,7 +311,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FEF2F2'
   },
   'Lavender': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-violet-500',
     headerTextClass: 'text-violet-500',
@@ -343,7 +323,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#F5F3FF'
   },
   'Golden': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-yellow-600',
     headerTextClass: 'text-yellow-600',
@@ -356,7 +335,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FEFCE8'
   },
   'Steel Blue': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-sky-600',
     headerTextClass: 'text-sky-600',
@@ -369,7 +347,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#F0F9FF'
   },
   'Light Blue': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-blue-400',
     headerTextClass: 'text-blue-400',
@@ -382,7 +359,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#EFF6FF'
   },
   'Sky Blue': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-sky-500',
     headerTextClass: 'text-sky-500',
@@ -395,7 +371,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#F0F9FF'
   },
   'Mint Green': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-emerald-500',
     headerTextClass: 'text-emerald-500',
@@ -407,7 +382,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     tableHeaderBgColor: '#ECFDF5'
   },
   'Lime': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-lime-600',
     headerTextClass: 'text-lime-600',
@@ -420,7 +394,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#F7FEE7'
   },
   'Peach': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-orange-400',
     headerTextClass: 'text-orange-400',
@@ -433,7 +406,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FFF7ED'
   },
   'Rose': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-rose-600',
     headerTextClass: 'text-rose-600',
@@ -446,7 +418,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FFF1F2'
   },
   'Lilac': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-purple-400',
     headerTextClass: 'text-purple-400',
@@ -459,7 +430,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FAF5FF'
   },
   'Sand': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-amber-600',
     headerTextClass: 'text-amber-600',
@@ -472,7 +442,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FFFBEB'
   },
   'Olive': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-lime-700',
     headerTextClass: 'text-lime-700',
@@ -485,7 +454,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#F7FEE7'
   },
   'Maroon': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-red-900',
     headerTextClass: 'text-red-900',
@@ -498,7 +466,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FEF2F2'
   },
   'Deep Purple': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-purple-800',
     headerTextClass: 'text-purple-800',
@@ -511,7 +478,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FAF5FF'
   },
   'Turquoise': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-cyan-500',
     headerTextClass: 'text-cyan-500',
@@ -524,7 +490,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#ECFEFF'
   },
   'Charcoal': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-gray-700',
     headerTextClass: 'text-gray-700',
@@ -537,7 +502,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#F9FAFB'
   },
   'Crimson': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-red-700',
     headerTextClass: 'text-red-700',
@@ -550,7 +514,6 @@ export const themeStyles: { [key in InvoiceTheme]: {
     secondaryBg: '#FEF2F2'
   },
   'Sapphire': {
-    layout: 'modern',
     fontFamily: 'ui-sans-serif, system-ui, sans-serif',
     accentClass: 'border-blue-700',
     headerTextClass: 'text-blue-700',
@@ -624,18 +587,13 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
   };
 
 
-  // Get layout-specific styling
-  const getLayoutStyles = () => {
-    const baseStyles = { width: '794px', minHeight: '1123px', display: 'flex', flexDirection: 'column' as const };
-
-    switch (styles.layout) {
-      case 'modern':
-        return { ...baseStyles, padding: '0px', fontFamily: styles.fontFamily };
-      case 'bold':
-        return { ...baseStyles, padding: '0px', fontFamily: styles.fontFamily };
-      default: // classic, elegant, minimal
-        return { ...baseStyles, padding: '60px', fontFamily: styles.fontFamily };
-    }
+  const layoutStyles = { 
+    width: '794px', 
+    minHeight: '1123px', 
+    display: 'flex', 
+    flexDirection: 'column' as const, 
+    fontFamily: styles.fontFamily,
+    padding: '0px',
   };
   
   const ronBreakdown = React.useMemo(() => {
@@ -655,10 +613,9 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
 
 
   return (
-    <div className="bg-white text-gray-900" style={getLayoutStyles()}>
-      <main className="flex-grow" style={styles.layout === 'modern' || styles.layout === 'bold' ? {} : {paddingLeft: '0px', paddingRight: '0px'}}>
-        {/* Header - Layout varies by theme */}
-        {styles.layout === 'modern' && (
+    <div className="bg-white text-gray-900" style={layoutStyles}>
+      <main className="flex-grow" style={{paddingLeft: '0px', paddingRight: '0px'}}>
+        {/* Header */}
           <div className={cn('px-12 py-8', styles.tableHeaderBgClass, styles.tableHeaderTextClass)}>
             <div className="flex justify-between items-start">
               <div>
@@ -678,266 +635,65 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
               </div>
             </div>
           </div>
-        )}
 
-        {styles.layout === 'bold' && (
-          <div className={cn('p-10', styles.tableHeaderBgClass, styles.tableHeaderTextClass)}>
-            <div className="flex justify-between items-center">
-              <h1 className="text-5xl font-black uppercase" style={{ letterSpacing: '-0.02em' }}>{t.invoice}</h1>
-              <div className="text-right">
-                <p className="text-4xl font-black">#{invoiceNumber}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {(styles.layout === 'classic' || styles.layout === 'elegant' || styles.layout === 'minimal') && (
-          <div className={cn(styles.layout === 'minimal' ? '' : 'border-b-2 pb-6 mb-8', styles.layout === 'elegant' ? 'text-center' : '', styles.accentClass)}>
-            {styles.layout === 'elegant' ? (
-              <>
-                <h1 className="text-4xl font-bold text-gray-900 mb-2" style={{ letterSpacing: '0.05em' }}>{companyName}</h1>
-                <div className={cn('inline-block h-1 w-32 mb-4', styles.tableHeaderBgClass)}></div>
-                <div className="text-xs text-gray-600">
-                  <p>{companyAddress}</p>
-                  {companyPhone && <p>{t.phone}: {companyPhone}</p>}
-                  {companyEmail && <p>{t.email}: {companyEmail}</p>}
-                  {companyVat && <p className="mt-1">{lang === 'ro' ? 'CUI' : 'VAT'}: {companyVat}</p>}
-                </div>
-              </>
-            ) : (
-              <div className={cn('flex justify-between items-start', styles.layout === 'minimal' ? 'mb-12' : '')}>
-                <div>
-                  <h1 className={cn('font-bold text-gray-900', styles.layout === 'minimal' ? 'text-2xl' : 'text-3xl')}>{companyName}</h1>
-                  <div className={cn('text-gray-600 mt-3 space-y-0.5', styles.layout === 'minimal' ? 'text-xs' : 'text-xs')}>
-                    <p>{companyAddress}</p>
-                    <p><span className="font-semibold">{t.bank}:</span> {companyBankName}</p>
-                    {companyIban && <p><span className="font-semibold">{t.iban}:</span> {companyIban}</p>}
-                    {companySwift && <p><span className="font-semibold">{t.swift}:</span> {companySwift}</p>}
-                    {companyPhone && <p>{t.phone}: {companyPhone}</p>}
-                    {companyEmail && <p>{t.email}: {companyEmail}</p>}
-                    {companyVat && <p>{lang === 'ro' ? 'CUI' : 'VAT'}: {companyVat}</p>}
-                  </div>
-                </div>
-                <div className="text-right">
-                  {styles.layout === 'minimal' ? (
-                    <div className={cn('inline-block px-6 py-3', styles.tableHeaderBgClass, styles.tableHeaderTextClass)}>
-                      <p className="text-xs uppercase tracking-wider">{t.invoice}</p>
-                      <p className="text-xl font-bold mt-1">#{invoiceNumber}</p>
-                    </div>
-                  ) : (
-                    <>
-                      <h2 className={cn('text-2xl font-bold uppercase', styles.headerTextClass)} style={{ letterSpacing: '0.15em' }}>{t.invoice}</h2>
-                      <p className="mt-1 text-sm text-gray-700"># {invoiceNumber}</p>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Client Info Section - varies by layout */}
-        <div style={{padding: styles.layout === 'modern' || styles.layout === 'bold' ? '0 48px' : '0'}}>
-          {styles.layout === 'classic' && (
-            <>
-              <div className="flex justify-between mb-8">
-                <div>
-                    <p className="text-xs font-semibold text-gray-500 uppercase mb-2">{t.billedTo}</p>
-                    <div className={cn('p-4 border-l-3', styles.accentClass)} style={{ borderLeftWidth: '3px' }}>
-                        <p className="font-bold text-base text-gray-900">{clientName}</p>
-                        <div className="text-sm text-gray-600 mt-1 space-y-0.5">
-                            <p>{clientAddress}</p>
-                            <div className='mt-1'>
-                              {clientVat && <p>{t.vatId}: {clientVat}</p>}
-                              {clientBankName && <p>{t.bank}: {clientBankName}</p>}
-                              {clientIban && <p>{t.iban}: {clientIban}</p>}
-                              {clientSwift && <p>{t.swift}: {clientSwift}</p>}
-                            </div>
-                            {invoice.projectName && <p className="mt-2 italic">Project: {invoice.projectName}</p>}
-                        </div>
-                    </div>
-                </div>
-                <div className="text-right text-sm">
-                    <p className="font-semibold">{t.invoiceDate}: <span className="font-normal">{formatDateWithOrdinal(date)}</span></p>
-                    <p className="font-semibold">{t.dueDate}: <span className="font-normal">{formatDateWithOrdinal(dueDate)}</span></p>
-                </div>
-              </div>
-            </>
-          )}
-
-          {styles.layout === 'elegant' && (
-            <div className="flex justify-between items-start mb-10">
-              <div className={cn('flex-1 border-l-4 pl-4', styles.accentClass)}>
-                <p className="text-xs font-semibold text-gray-500 uppercase mb-2" style={{ letterSpacing: '0.1em' }}>{t.billedTo}</p>
-                <p className="text-lg font-semibold text-gray-900">{clientName}</p>
-                <div className="text-sm text-gray-600 mt-1 space-y-0.5">
-                    <p>{clientAddress}</p>
-                    <div className='mt-1'>
-                      {clientVat && <p>{t.vatId}: {clientVat}</p>}
-                    </div>
-                    <div className='space-y-0'>
-                      {clientBankName && <p>{t.bank}: {clientBankName}</p>}
-                      {clientIban && <p>{t.iban}: {clientIban}</p>}
-                      {clientSwift && <p>{t.swift}: {clientSwift}</p>}
-                    </div>
-                    {invoice.projectName && <p className="mt-2 italic">{invoice.projectName}</p>}
-                </div>
-              </div>
-              <div className="text-right ml-8">
-                <h2 className={cn('text-3xl font-bold', styles.headerTextClass)} style={{ letterSpacing: '0.05em' }}>{t.invoice}</h2>
-                <p className="text-gray-700 mt-2 text-sm">#{invoiceNumber}</p>
-                <p className="text-xs text-gray-500 mt-3">{t.invoiceDate}: {formatDateWithOrdinal(date)}</p>
-                <p className="text-xs text-gray-500 mt-1">{t.dueDate}: {formatDateWithOrdinal(dueDate)}</p>
-              </div>
-            </div>
-          )}
-
-          {styles.layout === 'minimal' && (
-            <div className="flex justify-between mb-12">
-              <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">{t.billedTo}</p>
-                <p className="font-bold text-gray-900">{clientName}</p>
-                <div className="text-sm text-gray-600 space-y-0.5">
-                    <p>{clientAddress}</p>
-                    <div className='mt-1'>
-                      {clientVat && <p>{t.vatId}: {clientVat}</p>}
-                    </div>
-                    <div className='space-y-0'>
-                      {clientBankName && <p>{t.bank}: {clientBankName}</p>}
-                      {clientIban && <p>{t.iban}: {clientIban}</p>}
-                      {clientSwift && <p>{t.swift}: {clientSwift}</p>}
-                    </div>
-                    {invoice.projectName && <p className="mt-1">{invoice.projectName}</p>}
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">{t.invoiceDate}</p>
-                <p className="text-sm text-gray-700">{formatDateWithOrdinal(date)}</p>
-                 <p className="text-xs text-gray-400 uppercase tracking-wide mt-2 mb-2">{t.dueDate}</p>
-                <p className="text-sm text-gray-700">{formatDateWithOrdinal(dueDate)}</p>
-              </div>
-            </div>
-          )}
-
-          {(styles.layout === 'modern' || styles.layout === 'bold') && (
+        {/* Client Info Section */}
+        <div style={{padding: '0 48px'}}>
             <div className="grid grid-cols-2 gap-6 mb-10 mt-8">
-                <div style={{ backgroundColor: styles.secondaryBg }} className={cn('p-6', styles.layout === 'modern' ? 'rounded' : '')}>
+                <div style={{ backgroundColor: styles.secondaryBg }} className='p-6 rounded'>
                     <p className={cn('text-xs font-bold uppercase mb-3', styles.headerTextClass)}>{t.billedTo}</p>
-                    <p className={cn('font-bold text-gray-900', styles.layout === 'bold' ? 'text-2xl mb-2' : '')}>{clientName}</p>
-                    <div className={cn('text-gray-600 space-y-px', styles.layout === 'bold' ? 'text-sm' : 'text-sm')}>
+                    <p className='font-bold text-gray-900'>{clientName}</p>
+                    <div className='text-gray-600 space-y-px text-sm'>
                         <p>{clientAddress}</p>
-                        <div className='space-y-0'>
-                          {clientVat && <p>{t.vatId}: {clientVat}</p>}
-                          {clientBankName && <p>{t.bank}: {clientBankName}</p>}
-                          {clientIban && <p>{t.iban}: {clientIban}</p>}
-                          {clientSwift && <p>{t.swift}: {clientSwift}</p>}
+                         <div className='space-y-0'>
+                            {clientVat && <p>{t.vatId}: {clientVat}</p>}
+                            {clientBankName && <p><span className="font-semibold">{t.bank}:</span> {clientBankName}</p>}
+                            {clientIban && <p><span className="font-semibold">{t.iban}:</span> {clientIban}</p>}
+                            {clientSwift && <p><span className="font-semibold">{t.swift}:</span> {clientSwift}</p>}
                         </div>
-                        {invoice.projectName && 
-                          <div className='mt-2'>
-                              <p className={cn('text-gray-700', styles.layout === 'bold' ? 'font-semibold' : '')}>
-                                <span className={styles.layout === 'bold' ? '' : 'font-semibold'}>Project:</span> {invoice.projectName}
-                              </p>
-                          </div>
-                        }
+                        <div className='mt-2'>
+                            {invoice.projectName && <p className="text-gray-700"><span className='font-semibold'>Project:</span> {invoice.projectName}</p>}
+                        </div>
                     </div>
                 </div>
-                <div style={{ backgroundColor: styles.secondaryBg }} className={cn('p-6', styles.layout === 'modern' ? 'rounded' : '')}>
+                <div style={{ backgroundColor: styles.secondaryBg }} className='p-6 rounded'>
                     <p className={cn('text-xs font-bold uppercase mb-3', styles.headerTextClass)}>{t.invoiceDate}</p>
                     <p className="text-gray-800">{formatDateWithOrdinal(date)}</p>
                     <p className={cn('text-xs font-bold uppercase mt-3 mb-3', styles.headerTextClass)}>{t.dueDate}</p>
                     <p className="text-gray-800">{formatDateWithOrdinal(dueDate)}</p>
                 </div>
             </div>
-          )}
         </div>
 
         {isReverseCharge && (
-            <div style={{padding: styles.layout === 'modern' || styles.layout === 'bold' ? '0 48px' : '0'}} className="mb-4">
+            <div style={{padding: '0 48px'}} className="mb-4">
                 <div className="text-center p-2 bg-gray-100 border border-gray-300 rounded-sm">
                     <p className="text-sm font-semibold">{t.reverseCharge}</p>
                 </div>
             </div>
         )}
 
-        {/* Items Table - varies by layout */}
-        <div style={{padding: styles.layout === 'modern' || styles.layout === 'bold' ? '0 48px' : '0'}} className={styles.layout === 'minimal' ? '' : 'mt-8 mb-8'}>
+        {/* Items Table */}
+        <div style={{padding: '0 48px'}} className='mt-8 mb-8'>
             <table className="w-full">
                 <thead>
-                    <tr className={cn(
-                      styles.layout === 'classic' ? 'border-b-2 border-gray-300' : '',
-                      styles.layout === 'minimal' ? 'border-b border-gray-300' : '',
-                      styles.layout === 'elegant' ? `border-y-2 border-gray-400` : '',
-                      (styles.layout === 'modern' || styles.layout === 'bold') ? cn(styles.tableHeaderBgClass, styles.tableHeaderTextClass) : ''
-                    )}>
-                        <th className={cn(
-                          'text-left font-semibold uppercase text-xs',
-                          styles.layout === 'classic' || styles.layout === 'elegant' ? 'py-3 px-2 text-gray-700' : '',
-                          styles.layout === 'minimal' ? 'py-4 text-gray-500' : '',
-                          (styles.layout === 'modern' || styles.layout === 'bold') ? 'py-3 px-4' : '',
-                          styles.layout === 'elegant' ? 'tracking-widest' : 'tracking-wider'
-                        )}>{t.description}</th>
-                        <th className={cn(
-                          'text-center font-semibold uppercase text-xs',
-                          styles.layout === 'classic' ? 'w-20 py-3 px-2 text-gray-700' : '',
-                          styles.layout === 'minimal' ? 'w-24 py-4 text-right text-gray-500' : '',
-                          styles.layout === 'elegant' ? 'w-24 py-4 text-gray-700 tracking-widest' : '',
-                          (styles.layout === 'modern' || styles.layout === 'bold') ? 'w-24 py-3 px-4' : '',
-                          styles.layout === 'minimal' ? 'text-right' : 'text-center'
-                        )}>{t.quantity}</th>
-                        <th className={cn(
-                          'text-center font-semibold uppercase text-xs',
-                          styles.layout === 'classic' ? 'w-24 py-3 px-2 text-gray-700' : '',
-                          styles.layout === 'minimal' ? 'w-28 py-4 text-right text-gray-500' : '',
-                          styles.layout === 'elegant' ? 'w-28 py-4 text-gray-700 tracking-widest' : '',
-                          (styles.layout === 'modern' || styles.layout === 'bold') ? 'w-28 py-3 px-4' : '',
-                          styles.layout === 'minimal' ? 'text-right' : 'text-center'
-                        )}>{t.rate}</th>
-                        <th className={cn(
-                          'text-right font-semibold uppercase text-xs',
-                          styles.layout === 'classic' ? 'w-28 py-3 px-2 text-gray-700' : '',
-                          styles.layout === 'minimal' ? 'w-32 py-4 text-gray-500' : '',
-                          styles.layout === 'elegant' ? 'w-32 py-4 text-gray-700 tracking-widest' : '',
-                          (styles.layout === 'modern' || styles.layout === 'bold') ? 'w-32 py-3 px-4' : ''
-                        )}>{t.amount}</th>
+                    <tr className={cn(styles.tableHeaderBgClass, styles.tableHeaderTextClass)}>
+                        <th className='py-3 px-4 text-left font-semibold uppercase text-xs tracking-wider'>{t.description}</th>
+                        <th className='w-24 py-3 px-4 text-center font-semibold uppercase text-xs tracking-wider'>{t.quantity}</th>
+                        <th className='w-28 py-3 px-4 text-center font-semibold uppercase text-xs tracking-wider'>{t.rate}</th>
+                        <th className='w-32 py-3 px-4 text-right font-semibold uppercase text-xs tracking-wider'>{t.amount}</th>
                     </tr>
                 </thead>
                 <tbody>
                     {items.map((item, index) => {
                         const translatedDescription = translateDescription(item);
-                        const rowClass = styles.layout === 'classic' || styles.layout === 'elegant' || styles.layout === 'minimal'
-                          ? 'border-b border-gray-200'
-                          : (styles.layout === 'bold' ? 'border-b-2 border-gray-200' : (index % 2 === 0 ? 'bg-gray-50' : 'bg-white'));
+                        const rowClass = (index % 2 === 0 ? 'bg-gray-50' : 'bg-white');
 
                         return (
                             <tr key={index} className={rowClass}>
-                                <td className={cn(
-                                  'text-sm text-gray-800',
-                                  styles.layout === 'classic' || styles.layout === 'elegant' ? 'py-3 px-2' : '',
-                                  styles.layout === 'minimal' ? 'py-4' : '',
-                                  (styles.layout === 'modern' || styles.layout === 'bold') ? 'py-3 px-4' : '',
-                                  styles.layout === 'bold' ? 'font-medium' : ''
-                                )}>{translatedDescription}</td>
-                                <td className={cn(
-                                  'text-sm text-gray-700',
-                                  styles.layout === 'classic' || styles.layout === 'elegant' ? 'py-3 px-2 text-center' : '',
-                                  styles.layout === 'minimal' ? 'py-4 text-right text-gray-600' : '',
-                                  (styles.layout === 'modern' || styles.layout === 'bold') ? 'py-3 px-4 text-center' : ''
-                                )}>{item.quantity.toFixed(2)} {t.unit[item.unit as keyof typeof t.unit] || item.unit}</td>
-                                <td className={cn(
-                                  'text-sm text-gray-700',
-                                  styles.layout === 'classic' || styles.layout === 'elegant' ? 'py-3 px-2 text-center' : '',
-                                  styles.layout === 'minimal' ? 'py-4 text-right text-gray-600' : '',
-                                  (styles.layout === 'modern' || styles.layout === 'bold') ? 'py-3 px-4 text-center' : ''
-                                )}>{currencySymbol}{item.rate.toFixed(2)}</td>
-                                <td className={cn(
-                                  'text-sm text-gray-900',
-                                  styles.layout === 'classic' || styles.layout === 'minimal' ? 'font-semibold' : '',
-                                  styles.layout === 'elegant' ? 'text-base font-semibold' : '',
-                                  styles.layout === 'bold' ? 'text-base font-bold' : '',
-                                  styles.layout === 'classic' || styles.layout === 'elegant' ? 'py-3 px-2 text-right' : '',
-                                  styles.layout === 'minimal' ? 'py-4 text-right' : '',
-                                  (styles.layout === 'modern' || styles.layout === 'bold') ? 'py-3 px-4 text-right' : ''
-                                )}>{currencySymbol}{item.amount.toFixed(2)}</td>
+                                <td className='py-3 px-4 text-sm text-gray-800'>{translatedDescription}</td>
+                                <td className='py-3 px-4 text-center text-sm text-gray-700'>{item.quantity.toFixed(2)} {t.unit[item.unit as keyof typeof t.unit] || item.unit}</td>
+                                <td className='py-3 px-4 text-center text-sm text-gray-700'>{currencySymbol}{item.rate.toFixed(2)}</td>
+                                <td className='py-3 px-4 text-right text-sm text-gray-900'>{currencySymbol}{item.amount.toFixed(2)}</td>
                             </tr>
                         )
                     })}
@@ -945,70 +701,9 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
             </table>
         </div>
 
-        {/* Total Section - varies by layout */}
-        <div className="flex justify-end" style={{padding: styles.layout === 'modern' || styles.layout === 'bold' ? '0 48px' : '0', marginTop: styles.layout === 'elegant' ? '48px' : styles.layout === 'minimal' ? '32px' : '40px'}}>
-            <div className={styles.layout === 'bold' ? 'w-96' : styles.layout === 'minimal' ? 'w-80' : styles.layout === 'elegant' ? 'w-80' : 'w-64'}>
-              {/* Classic & Minimal layout */}
-              {(styles.layout === 'classic' || styles.layout === 'minimal') && (
-                <>
-                  <div className="flex justify-between py-2 text-sm">
-                    <span className="text-gray-600">{t.subtotal}</span>
-                    <span className={styles.layout === 'classic' ? 'font-semibold' : ''}>{currencySymbol}{subtotal.toFixed(2)}</span>
-                  </div>
-                  {hasVat && (
-                    <div className="flex justify-between py-2 text-sm">
-                      <span className="text-gray-600">{t.vat} ({((vatRate || 0) * 100).toFixed(0)}%)</span>
-                      <span className={styles.layout === 'classic' ? 'font-semibold' : ''}>{currencySymbol}{(vatAmount || 0).toFixed(2)}</span>
-                    </div>
-                  )}
-                  <div className={cn('flex justify-between items-center py-3 px-4 mt-2', styles.layout === 'classic' ? 'text-base font-bold' : '', styles.layout === 'minimal' ? 'border-t-2 border-gray-300 pt-3 text-lg' : '', styles.tableHeaderBgClass, styles.tableHeaderTextClass)}>
-                    <span className={cn('uppercase', styles.layout === 'minimal' ? 'font-bold text-gray-900' : '')}>{t.total}</span>
-                    <span className={cn(styles.layout === 'minimal' ? 'text-2xl font-bold text-gray-900' : 'text-lg')}>{currencySymbol}{total.toFixed(2)}</span>
-                  </div>
-                  {ronBreakdown && (
-                     <div className="space-y-1 mt-2 text-sm text-gray-600">
-                        <div className="flex justify-between"><span>{t.subtotalRon}</span><span className="font-semibold">{ronBreakdown.subtotal.toFixed(2)} RON</span></div>
-                        {hasVat && <div className="flex justify-between"><span>{t.vatRon}</span><span className="font-semibold">{ronBreakdown.vat.toFixed(2)} RON</span></div>}
-                        <div className="flex justify-between"><span>{t.totalRon}</span><span className="font-semibold">{ronBreakdown.total.toFixed(2)} RON</span></div>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* Elegant layout */}
-              {styles.layout === 'elegant' && (
-                <>
-                  <div className="space-y-2 mb-4">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">{t.subtotal}</span>
-                      <span className="font-semibold text-gray-800">{currencySymbol}{subtotal.toFixed(2)}</span>
-                    </div>
-                    {hasVat && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">{t.vat} ({((vatRate || 0) * 100).toFixed(0)}%)</span>
-                        <span className="font-semibold text-gray-800">{currencySymbol}{(vatAmount || 0).toFixed(2)}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className={cn('border-t-2 pt-4', styles.accentClass)}>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xl font-bold text-gray-900 uppercase" style={{ letterSpacing: '0.05em' }}>{t.total}</span>
-                      <span className="text-3xl font-bold text-gray-900">{currencySymbol}{total.toFixed(2)}</span>
-                    </div>
-                  </div>
-                  {ronBreakdown && (
-                     <div className="space-y-1 mt-3 text-sm text-gray-600">
-                        <div className="flex justify-between"><span>{t.subtotalRon}</span><span className="font-semibold">{ronBreakdown.subtotal.toFixed(2)} RON</span></div>
-                        {hasVat && <div className="flex justify-between"><span>{t.vatRon}</span><span className="font-semibold">{ronBreakdown.vat.toFixed(2)} RON</span></div>}
-                        <div className="flex justify-between"><span>{t.totalRon}</span><span className="font-semibold">{ronBreakdown.total.toFixed(2)} RON</span></div>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* Modern layout */}
-              {styles.layout === 'modern' && (
-                <>
+        {/* Total Section */}
+        <div className="flex justify-end" style={{padding: '0 48px', marginTop: '40px'}}>
+            <div className='w-64'>
                   <div className="space-y-2 mb-3">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">{t.subtotal}</span>
@@ -1032,65 +727,22 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                         <div className="flex justify-between font-bold"><span>{t.totalRon}</span><span className='font-bold'>{ronBreakdown.total.toFixed(2)} RON</span></div>
                     </div>
                   )}
-                </>
-              )}
-
-              {/* Bold layout */}
-              {styles.layout === 'bold' && (
-                <>
-                  <div className="space-y-3 mb-4">
-                    <div className="flex justify-between text-base font-semibold">
-                      <span className="text-gray-600">{t.subtotal}</span>
-                      <span className="text-gray-900">{currencySymbol}{subtotal.toFixed(2)}</span>
-                    </div>
-                     {hasVat && (
-                      <div className="flex justify-between text-base font-semibold">
-                        <span className="text-gray-600">{t.vat} ({((vatRate || 0) * 100).toFixed(0)}%)</span>
-                        <span className="text-gray-900">{currencySymbol}{(vatAmount || 0).toFixed(2)}</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className={cn('py-6 px-8', styles.totalBgClass, styles.totalTextClass)}>
-                    <div className="flex justify-between items-center">
-                      <span className="text-2xl font-black uppercase">{t.total}</span>
-                      <span className="text-4xl font-black">{currencySymbol}{total.toFixed(2)}</span>
-                    </div>
-                  </div>
-                  {ronBreakdown && (
-                    <div className="space-y-1 mt-2 text-base font-semibold text-gray-600 px-4 py-2">
-                        <div className="flex justify-between"><span>{t.subtotalRon}</span><span>{ronBreakdown.subtotal.toFixed(2)} RON</span></div>
-                        {hasVat && <div className="flex justify-between"><span>{t.vatRon}</span><span>{ronBreakdown.vat.toFixed(2)} RON</span></div>}
-                        <div className="flex justify-between"><span>{t.totalRon}</span><span>{ronBreakdown.total.toFixed(2)} RON</span></div>
-                    </div>
-                  )}
-                </>
-              )}
             </div>
         </div>
       </main>
 
-      {/* Footer - varies by layout */}
-      <footer className={cn(
-        'mt-auto text-center text-xs text-gray-500',
-        styles.layout === 'modern' || styles.layout === 'bold' ? 'px-12 py-6 border-t-2 border-gray-200' : 'pt-6 border-t border-gray-200',
-        styles.layout === 'elegant' ? 'pt-8' : 'pt-6'
-      )}>
+      {/* Footer */}
+      <footer className='mt-auto text-center text-xs text-gray-500 px-12 py-6 border-t-2 border-gray-200'>
         {invoice.exchangeRate && invoice.totalRon && invoice.currency !== 'RON' && invoice.exchangeRateDate ? (
-            <p className={cn(styles.layout === 'elegant' ? 'italic' : '', styles.layout === 'bold' ? 'font-semibold' : '')}>
+            <p>
               {invoice.usedMaxExchangeRate
                 ? t.footerMaxRate(formatDateWithOrdinal(invoice.exchangeRateDate), invoice.currency, invoice.exchangeRate)
                 : t.footerExchange(formatDateWithOrdinal(invoice.exchangeRateDate), invoice.currency, invoice.exchangeRate)}
             </p>
         ) : (
-          <p className={cn(styles.layout === 'elegant' ? 'italic' : 'font-medium', styles.layout === 'bold' ? 'font-semibold' : '')}>{t.footerThanks}</p>
+          <p className='font-medium'>{t.footerThanks}</p>
         )}
       </footer>
     </div>
   );
 }
-
-
-
-
-
-    
