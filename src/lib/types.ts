@@ -49,15 +49,14 @@ export type Project = {
   clientName: string;
   invoiceTheme?: InvoiceTheme;
   order?: number;
-  // Moved from client
   currency?: string;
   invoiceNumberPrefix?: string;
   hasVat?: boolean;
   maxExchangeRate?: number;
   maxExchangeRateDate?: string;
-  // New project-specific rates
-  ratePerDay?: number;
-  ratePerHour?: number;
+  rate?: number;
+  rateType?: 'daily' | 'hourly';
+  hoursPerDay?: number;
 };
 
 export type Timecard = {

@@ -134,11 +134,18 @@
                     "format": "date",
                     "description": "Date the max exchange rate was set."
                 },
-                "ratePerDay": {
-                    "type": "number"
+                "rate": {
+                    "type": "number",
+                    "description": "The billing rate for the project."
                 },
-                "ratePerHour": {
-                    "type": "number"
+                "rateType": {
+                    "type": "string",
+                    "enum": ["daily", "hourly"],
+                    "description": "The type of billing rate (daily or hourly)."
+                },
+                "hoursPerDay": {
+                    "type": "number",
+                    "description": "How many hours constitute a 'day' for billing."
                 }
             },
             "required": [

@@ -259,18 +259,28 @@ export function CreateInvoiceDialog() {
     const lastDate = max(timecardDates);
     
     let items: Invoice['items'], subtotal: number, billedTimecardIds: string[] = [];
-    const projectRate = currentProject.ratePerDay;
+    const projectRate = currentProject.rate;
     
     const totalHours = currentlySelectedTimecards.reduce((acc, tc) => acc + tc.hours, 0);
     billedTimecardIds = currentlySelectedTimecards.map(tc => tc.id);
 
     if (billedTimecardIds.length === 0 || typeof projectRate !== 'number') return null;
     
-    const quantity = totalHours / 8; // Assuming 8 hours/day
-    const unit = 'days';
+    let quantity: number;
+    let unit: string;
+
+    if (currentProject.rateType === 'hourly') {
+        quantity = totalHours;
+        unit = 'hours';
+    } else { // daily
+        const hoursPerDay = currentProject.hoursPerDay || 8;
+        quantity = totalHours / hoursPerDay;
+        unit = 'days';
+    }
+
     subtotal = quantity * projectRate;
 
-    const description = `${currentProject.name}: IT Consultancy services for period ${format(firstDate, 'dd.MM.yyyy')} - ${format(lastDate, 'dd.MM.yyyy')} (${quantity.toFixed(2)} days)`;
+    const description = `${currentProject.name}: IT Consultancy services for period ${format(firstDate, 'dd.MM.yyyy')} - ${format(lastDate, 'dd.MM.yyyy')} (${quantity.toFixed(2)} ${unit})`;
     
     items = [{
       description,

@@ -50,7 +50,9 @@ const projectSchema = z.object({
   hasVat: z.boolean().default(false),
   maxExchangeRate: z.coerce.number().optional(),
   maxExchangeRateDate: z.date().optional(),
-  ratePerDay: z.coerce.number().optional(),
+  rate: z.coerce.number().optional(),
+  rateType: z.enum(['daily', 'hourly']).default('daily'),
+  hoursPerDay: z.coerce.number().optional(),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -82,7 +84,9 @@ export function AddProjectDialog() {
       currency: 'EUR',
       invoiceNumberPrefix: '',
       hasVat: false,
-      ratePerDay: undefined,
+      rate: undefined,
+      rateType: 'daily',
+      hoursPerDay: 8,
       maxExchangeRate: undefined,
       maxExchangeRateDate: undefined,
     },
@@ -90,6 +94,7 @@ export function AddProjectDialog() {
 
   const watchedClientId = useWatch({ control: form.control, name: 'clientId' });
   const watchedProjectName = useWatch({ control: form.control, name: 'name' });
+  const watchedRateType = useWatch({ control: form.control, name: 'rateType' });
 
   const suggestedPrefix = useMemo(() => {
     const client = clients?.find(c => c.id === watchedClientId);
@@ -185,19 +190,58 @@ export function AddProjectDialog() {
               )}
             />
             
-            <FormField
-              control={form.control}
-              name="ratePerDay"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Default Rate per Day</FormLabel>
-                  <FormControl>
-                    <Input type="number" placeholder="e.g., 500" {...field} value={field.value ?? ''} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-3 gap-4 items-end">
+                <FormField
+                  control={form.control}
+                  name="rate"
+                  render={({ field }) => (
+                    <FormItem className='col-span-2'>
+                      <FormLabel>Default Rate</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="e.g., 500" {...field} value={field.value ?? ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="rateType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select rate type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectItem value="daily">per day</SelectItem>
+                            <SelectItem value="hourly">per hour</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
+            
+            {watchedRateType === 'daily' && (
+                 <FormField
+                  control={form.control}
+                  name="hoursPerDay"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Hours per Day</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="e.g., 8" {...field} value={field.value ?? ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            )}
+
 
             <div className="grid grid-cols-2 gap-4">
                 <FormField
