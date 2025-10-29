@@ -294,8 +294,6 @@ export function CreateInvoiceDialog() {
     const clientVatRate = selectedClient.vatRate;
     const hasVat = selectedClient.hasVat || false;
     
-    let total = subtotal;
-
     const creationDate = parseISO(format(invoiceCreationDate, 'yyyy-MM-dd'));
     
     const data: Omit<Invoice, 'id'> = {
@@ -314,12 +312,12 @@ export function CreateInvoiceDialog() {
       projectId: currentProject.id,
       projectName: currentProject.name,
       date: format(creationDate, 'yyyy-MM-dd'),
-      dueDate: format(addDays(creationDate, selectedClient.paymentTerms || 7), 'yyyy-MM-dd'),
+      dueDate: format(addDays(creationDate, selectedClient.paymentTerms), 'yyyy-MM-dd'),
       currency: invoiceConfig.currency,
       language: selectedClient.language || 'English',
       items,
       subtotal,
-      total,
+      total: subtotal,
       status: 'Created' as const,
       usedMaxExchangeRate: invoiceConfig.usedMaxRate,
       theme: invoiceConfig.invoiceTheme,
@@ -388,8 +386,10 @@ export function CreateInvoiceDialog() {
 
     // 1. Add the new invoice
     const newInvoiceRef = doc(collection(firestore, `users/${user.uid}/invoices`));
-    const dataToSave: Partial<Invoice> = { ...invoiceData };
-    delete (dataToSave as any).hasVat; // Remove temporary field
+    
+    // Create a clean object to save, removing temporary fields like `hasVat`
+    const { hasVat, ...dataToSave } = invoiceData;
+    
     batch.set(newInvoiceRef, dataToSave);
 
     // 2. Update status of billed timecards
@@ -782,5 +782,3 @@ export function CreateInvoiceDialog() {
     </>
   );
 }
-
-    
