@@ -291,13 +291,16 @@ export function CreateInvoiceDialog() {
       amount: subtotal,
     }];
 
-    const clientVatRate = selectedClient.vatRate || 0;
-    const vatAmount = currentProject.hasVat ? subtotal * clientVatRate : 0;
-    const total = subtotal + vatAmount;
+    const clientVatRate = selectedClient.vatRate;
+    const hasVat = currentProject.hasVat || false;
+    
+    const vatAmount = hasVat ? subtotal * clientVatRate : undefined;
+    const total = subtotal + (vatAmount || 0);
+
     const totalRon = invoiceConfig.exchangeRate ? total * invoiceConfig.exchangeRate : undefined;
     const creationDate = parseISO(format(invoiceCreationDate, 'yyyy-MM-dd'));
     
-    const data: Omit<Invoice, 'id'> & { vatRate?: number } = {
+    const data: Omit<Invoice, 'id'> = {
       invoiceNumber: generateInvoiceNumber(currentProject, invoices),
       companyName: myCompany.companyName!,
       companyAddress: myCompany.companyAddress!,
@@ -319,6 +322,7 @@ export function CreateInvoiceDialog() {
       items,
       subtotal,
       vatAmount,
+      vatRate: hasVat ? clientVatRate : undefined,
       total,
       status: 'Created' as const,
       totalRon,
@@ -327,11 +331,8 @@ export function CreateInvoiceDialog() {
       usedMaxExchangeRate: invoiceConfig.usedMaxRate,
       theme: invoiceConfig.invoiceTheme,
       billedTimecardIds,
+      hasVat,
     };
-    
-    if (currentProject.hasVat) {
-        data.vatRate = clientVatRate;
-    }
 
     return data;
   }, [
@@ -381,10 +382,8 @@ export function CreateInvoiceDialog() {
 
     // 1. Add the new invoice
     const newInvoiceRef = doc(collection(firestore, `users/${user.uid}/invoices`));
-    const dataToSave = { ...invoiceData };
-    if (dataToSave.vatRate === undefined) {
-      delete (dataToSave as Partial<typeof dataToSave>).vatRate;
-    }
+    const dataToSave: Partial<Invoice> = { ...invoiceData };
+    delete (dataToSave as any).hasVat; // Remove temporary field
     batch.set(newInvoiceRef, dataToSave);
 
     // 2. Update status of billed timecards
@@ -466,7 +465,7 @@ export function CreateInvoiceDialog() {
 
 
   const ronBreakdown = useMemo(() => {
-    if (!invoiceData || !invoiceConfig.exchangeRate || invoiceConfig.currency === 'RON') {
+    if (!invoiceData || !invoiceConfig.exchangeRate || invoiceConfig.currency === 'RON' || !invoiceData.hasVat) {
         return null;
     }
     const subtotalRon = invoiceData.subtotal * invoiceConfig.exchangeRate;
@@ -679,12 +678,12 @@ export function CreateInvoiceDialog() {
                       <span className="text-muted-foreground">Subtotal:</span>
                       <span className='font-medium text-foreground'>{invoiceData.currency} {invoiceData.subtotal.toFixed(2)}</span>
                     </div>
-                    {invoiceData.vatAmount !== undefined ? (
+                    {invoiceData.hasVat && (
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">VAT ({(invoiceData.vatRate! * 100).toFixed(0)}%):</span>
-                        <span className='font-medium text-foreground'>{invoiceData.currency} {invoiceData.vatAmount.toFixed(2)}</span>
+                        <span className='font-medium text-foreground'>{invoiceData.currency} {(invoiceData.vatAmount || 0).toFixed(2)}</span>
                       </div>
-                    ) : null}
+                    )}
                     <div className="flex justify-between font-bold">
                       <span className="text-foreground">Total:</span>
                       <span className='text-foreground'>{invoiceData.currency} {invoiceData.total.toFixed(2)}</span>
