@@ -48,7 +48,9 @@ const projectSchema = z.object({
   hasVat: z.boolean().default(false),
   maxExchangeRate: z.coerce.number().optional(),
   maxExchangeRateDate: z.date().optional(),
-  rate: z.coerce.number().optional(),
+  rate: z.coerce.number().optional().refine(val => val === undefined || val > 0, {
+    message: 'Rate must be greater than 0.',
+  }),
   rateType: z.enum(['daily', 'hourly']).default('daily'),
   hoursPerDay: z.coerce.number().optional(),
 }).superRefine((data, ctx) => {
@@ -56,7 +58,7 @@ const projectSchema = z.object({
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ['hoursPerDay'],
-            message: 'Hours per day must be greater than 0.',
+            message: 'Hours per day must be > 0.',
         });
     }
 });
@@ -149,7 +151,7 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
     }
     
     if (data.rateType === 'hourly') {
-        delete dataToSave.hoursPerDay;
+        dataToSave.hoursPerDay = null; // Explicitly nullify
     }
 
     Object.keys(dataToSave).forEach(key => {
@@ -247,6 +249,30 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
                 />
                 <FormField
                   control={form.control}
+                  name="currency"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Currency</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select currency" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {currencies.map(currency => (
+                            <SelectItem key={currency} value={currency}>
+                              {currency}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
                   name="rateType"
                   render={({ field }) => (
                     <FormItem>
@@ -281,30 +307,6 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
                     )}
                     />
                 )}
-                 <FormField
-                  control={form.control}
-                  name="currency"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Currency</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select currency" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {currencies.map(currency => (
-                            <SelectItem key={currency} value={currency}>
-                              {currency}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
 
              <div className="space-y-2 rounded-lg border p-3 shadow-sm">
