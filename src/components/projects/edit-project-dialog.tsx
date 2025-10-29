@@ -202,7 +202,7 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
                 </FormItem>
               )}
             />
-            <div className="grid grid-cols-4 gap-4 items-end">
+            <div className={cn("grid gap-4 items-end", watchedRateType === 'daily' ? 'grid-cols-5' : 'grid-cols-4')}>
                 <FormField
                   control={form.control}
                   name="rate"
@@ -237,6 +237,21 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
                     </FormItem>
                   )}
                 />
+                {watchedRateType === 'daily' && (
+                    <FormField
+                    control={form.control}
+                    name="hoursPerDay"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Hours/Day</FormLabel>
+                        <FormControl>
+                            <Input type="number" placeholder="e.g., 8" {...field} value={field.value ?? ''} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                )}
                  <FormField
                   control={form.control}
                   name="currency"
@@ -276,21 +291,6 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
                 />
               </div>
 
-              {watchedRateType === 'daily' && (
-                <FormField
-                  control={form.control}
-                  name="hoursPerDay"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Hours per Day</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="e.g., 8" {...field} value={field.value ?? ''} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
              <div className="space-y-2 rounded-lg border p-3 shadow-sm">
                 <div className="grid grid-cols-2 items-end gap-4">
                      <FormField
