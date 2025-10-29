@@ -36,6 +36,7 @@ const translations = {
         consultancyServices: (projectName: string, period: string, quantity: string) => `${projectName}: IT Consultancy services for period ${period} (${quantity})`,
         unit: {
             days: 'days',
+            hours: 'hours'
         }
     },
     ro: {
@@ -61,6 +62,7 @@ const translations = {
         consultancyServices: (projectName: string, period: string, quantity: string) => `${projectName}: Servicii de consultanță IT pentru perioada ${period} (${quantity})`,
         unit: {
             days: 'zile',
+            hours: 'ore'
         }
     }
 };
@@ -590,12 +592,12 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
   const translateDescription = (description: string, quantity: number, unit: string) => {
       if (lang === 'en') return description;
   
-      const regex = /(.*?): IT Consultancy services for period ([\d\.]+\s*-\s*[\d\.]+) \(([\d\.]+)\s+days\)/;
+      const regex = /(.*?): IT Consultancy services for period ([\d\.]+\s*-\s*[\d\.]+) \(([\d\.]+)\s+(days|hours)\)/;
       const match = description.match(regex);
   
       if (match) {
-          const [, projectName, period, ,] = match;
-          const translatedUnit = t.unit[unit as keyof typeof t.unit] || unit;
+          const [, projectName, period, , matchedUnit] = match;
+          const translatedUnit = t.unit[matchedUnit as keyof typeof t.unit] || matchedUnit;
           const quantityText = `${quantity.toFixed(2)} ${translatedUnit}`;
           return t.consultancyServices(projectName, period, quantityText);
       }
@@ -1013,3 +1015,5 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
     </div>
   );
 }
+
+    
