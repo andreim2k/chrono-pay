@@ -25,8 +25,8 @@ import { useRouter } from 'next/navigation';
 
 const mainNav = [
     { name: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard /> },
-    { name: 'Invoices', href: '/invoices', icon: <FileText /> },
     { name: 'Timecards', href: '/timecards', icon: <Clock /> },
+    { name: 'Invoices', href: '/invoices', icon: <FileText /> },
     { name: 'Reports', href: '/reports', icon: <BarChart /> },
     { name: 'Settings', href: '/settings', icon: <SettingsIcon /> },
 ];
