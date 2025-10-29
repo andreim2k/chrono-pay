@@ -28,7 +28,11 @@ const mainNav = [
     { name: 'Timecards', href: '/timecards', icon: <Clock /> },
     { name: 'Invoices', href: '/invoices', icon: <FileText /> },
     { name: 'Reports', href: '/reports', icon: <BarChart /> },
-    { name: 'Settings', href: '/settings', icon: <SettingsIcon /> },
+];
+
+const mobileNav = [
+  ...mainNav,
+  { name: 'Settings', href: '/settings', icon: <SettingsIcon /> },
 ];
 
 
@@ -78,11 +82,11 @@ export function Header() {
               <ChronoPayLogo className="h-8 w-8 text-primary" />
               <span className="">ChronoPay</span>
             </Link>
-            {mainNav.map(item => (
+            {mobileNav.map(item => (
                 <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 transition-colors hover:text-foreground ${pathname === item.href ? 'text-foreground' : 'text-muted-foreground'}`}
+                className={`flex items-center gap-3 transition-colors hover:text-foreground ${pathname.startsWith(item.href) ? 'text-foreground' : 'text-muted-foreground'}`}
               >
                 {React.cloneElement(item.icon, { className: 'h-4 w-4' })}
                 {item.name}
@@ -95,6 +99,16 @@ export function Header() {
 
       <div className="ml-auto flex items-center gap-2">
         <ThemeToggle />
+         <Link href="/settings">
+            <Button
+                variant={pathname.startsWith('/settings') ? 'secondary' : 'ghost'}
+                size="icon"
+                className="hidden md:inline-flex"
+            >
+                <SettingsIcon className="h-5 w-5" />
+                <span className="sr-only">Settings</span>
+            </Button>
+        </Link>
         {user && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
