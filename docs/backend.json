@@ -37,8 +37,9 @@
                 "companyIban": { "type": "string", "description": "The user's company IBAN." },
                 "companyBankName": { "type": "string", "description": "The user's company bank name." },
                 "companySwift": { "type": "string", "description": "The user's company SWIFT/BIC code." },
-                "companyVatRate": { "type": "number", "description": "The user's company VAT rate." },
-                "companyLogoUrl": { "type": "string", "description": "URL for the user's company logo." }
+                "companyLogoUrl": { "type": "string", "description": "URL for the user's company logo." },
+                "companyPhone": { "type": "string", "description": "The user's company phone number." },
+                "companyEmail": { "type": "string", "description": "The user's company email address.", "format": "email" }
             },
             "required": [
                 "id",
@@ -81,15 +82,27 @@
                 "order": {
                     "type": "number",
                     "description": "The display order of the client."
+                },
+                "vatRate": {
+                    "type": "number",
+                    "description": "The VAT rate specific to this client."
+                },
+                "paymentTerms": {
+                    "type": "number",
+                    "description": "Number of days until an invoice is due."
+                },
+                "hasVat": {
+                    "type": "boolean",
+                    "description": "Indicates if VAT should be applied for this client's invoices."
                 }
             },
             "required": [
                 "name",
                 "address",
                 "vat",
-                "iban",
-                "bankName",
-                "swift"
+                "vatRate",
+                "paymentTerms",
+                "hasVat"
             ]
         },
         "Project": {
@@ -121,10 +134,6 @@
                 "invoiceNumberPrefix": {
                     "type": "string"
                 },
-                "hasVat": {
-                    "type": "boolean",
-                    "description": "Indicates if VAT should be applied for this project."
-                },
                 "maxExchangeRate": {
                     "type": "number",
                     "description": "Maximum exchange rate cap in RON."
@@ -151,7 +160,8 @@
             "required": [
                 "name",
                 "clientId",
-                "clientName"
+                "clientName",
+                "invoiceNumberPrefix"
             ]
         },
         "Timecard": {
@@ -226,6 +236,8 @@
                 "companySwift": {
                     "type": "string"
                 },
+                 "companyPhone": { "type": "string" },
+                "companyEmail": { "type": "string", "format": "email" },
                 "clientName": {
                     "type": "string"
                 },
@@ -235,6 +247,9 @@
                 "clientVat": {
                     "type": "string"
                 },
+                "clientBankName": { "type": "string" },
+                "clientIban": { "type": "string" },
+                "clientSwift": { "type": "string" },
                 "projectId": {
                     "type": "string",
                     "description": "The ID of the associated project."
@@ -244,6 +259,10 @@
                     "description": "The name of the associated project (denormalized)."
                 },
                 "date": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "dueDate": {
                     "type": "string",
                     "format": "date"
                 },
@@ -332,6 +351,7 @@
                 "clientName",
                 "projectId",
                 "date",
+                "dueDate",
                 "currency",
                 "items",
                 "total",

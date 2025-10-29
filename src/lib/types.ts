@@ -89,6 +89,9 @@ export type Invoice = {
   clientName: string;
   clientAddress: string;
   clientVat: string;
+  clientBankName?: string;
+  clientIban?: string;
+  clientSwift?: string;
   projectId: string;
   projectName?: string;
   date: string;

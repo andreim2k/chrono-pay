@@ -293,8 +293,7 @@ export function CreateInvoiceDialog() {
     const clientVatRate = selectedClient.vatRate;
     const hasVat = selectedClient.hasVat || false;
     
-    const creationDate = new Date(); // Local timezone
-    const creationDateString = format(creationDate, 'yyyy-MM-dd'); // '2024-01-15'
+    const creationDateString = new Date().toLocaleDateString('en-CA');
     
     const data: Omit<Invoice, 'id'> = {
       invoiceNumber: generateInvoiceNumber(currentProject, invoices),
@@ -309,10 +308,13 @@ export function CreateInvoiceDialog() {
       clientName: selectedClient.name,
       clientAddress: selectedClient.address,
       clientVat: selectedClient.vat,
+      clientBankName: selectedClient.bankName,
+      clientIban: selectedClient.iban,
+      clientSwift: selectedClient.swift,
       projectId: currentProject.id,
       projectName: currentProject.name,
       date: creationDateString,
-      dueDate: format(addDays(creationDate, selectedClient.paymentTerms), 'yyyy-MM-dd'),
+      dueDate: format(addDays(new Date(creationDateString), selectedClient.paymentTerms), 'yyyy-MM-dd'),
       currency: invoiceConfig.currency,
       language: selectedClient.language || 'English',
       items,
@@ -387,7 +389,6 @@ export function CreateInvoiceDialog() {
     const newInvoiceRef = doc(collection(firestore, `users/${user.uid}/invoices`));
     
     // Create a clean object to save.
-    // Firestore does not support `undefined` values.
     const dataToSave: { [key: string]: any } = {};
     for (const [key, value] of Object.entries(invoiceData)) {
         if (value !== undefined) {
@@ -396,6 +397,12 @@ export function CreateInvoiceDialog() {
     }
     delete dataToSave.hasVat; // a temporary field
     
+    // Explicitly check for vatAmount and vatRate
+    if (!invoiceData.hasVat) {
+        delete dataToSave.vatAmount;
+        delete dataToSave.vatRate;
+    }
+
     batch.set(newInvoiceRef, dataToSave);
 
     // 2. Update status of billed timecards
@@ -788,4 +795,3 @@ export function CreateInvoiceDialog() {
     </>
   );
 }
-
