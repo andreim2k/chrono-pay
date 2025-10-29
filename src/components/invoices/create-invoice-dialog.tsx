@@ -465,7 +465,7 @@ export function CreateInvoiceDialog() {
 
 
   const ronBreakdown = useMemo(() => {
-    if (!invoiceData || !invoiceConfig.exchangeRate || invoiceConfig.currency === 'RON' || !invoiceData.hasVat) {
+    if (!invoiceData || !invoiceConfig.exchangeRate || invoiceConfig.currency === 'RON') {
         return null;
     }
     const subtotalRon = invoiceData.subtotal * invoiceConfig.exchangeRate;
@@ -695,10 +695,12 @@ export function CreateInvoiceDialog() {
                                 <span className="text-muted-foreground">Subtotal (RON):</span>
                                 <span className='font-medium text-foreground'>{ronBreakdown.subtotal} RON</span>
                             </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">VAT (RON):</span>
-                                <span className='font-medium text-foreground'>{ronBreakdown.vat} RON</span>
-                            </div>
+                            {invoiceData.hasVat && (
+                              <div className="flex justify-between">
+                                  <span className="text-muted-foreground">VAT (RON):</span>
+                                  <span className='font-medium text-foreground'>{ronBreakdown.vat} RON</span>
+                              </div>
+                            )}
                             <div className="flex justify-between font-bold">
                                 <span className="text-foreground">Total (RON):</span>
                                 <span className='text-foreground'>{ronBreakdown.total} RON</span>

@@ -640,7 +640,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
   };
   
   const ronBreakdown = React.useMemo(() => {
-    if (!exchangeRate || currency === 'RON' || !hasVat) {
+    if (!exchangeRate || currency === 'RON') {
         return null;
     }
     const subtotalRon = subtotal * exchangeRate;
@@ -933,17 +933,15 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
               {/* Classic & Minimal layout */}
               {(styles.layout === 'classic' || styles.layout === 'minimal') && (
                 <>
+                  <div className="flex justify-between py-2 text-sm">
+                    <span className="text-gray-600">{t.subtotal}</span>
+                    <span className={styles.layout === 'classic' ? 'font-semibold' : ''}>{currencySymbol}{subtotal.toFixed(2)}</span>
+                  </div>
                   {hasVat && (
-                    <>
-                      <div className="flex justify-between py-2 text-sm">
-                        <span className="text-gray-600">{t.subtotal}</span>
-                        <span className={styles.layout === 'classic' ? 'font-semibold' : ''}>{currencySymbol}{subtotal.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between py-2 text-sm">
-                        <span className="text-gray-600">{t.vat} ({((vatRate || 0) * 100).toFixed(0)}%)</span>
-                        <span className={styles.layout === 'classic' ? 'font-semibold' : ''}>{currencySymbol}{(vatAmount || 0).toFixed(2)}</span>
-                      </div>
-                    </>
+                    <div className="flex justify-between py-2 text-sm">
+                      <span className="text-gray-600">{t.vat} ({((vatRate || 0) * 100).toFixed(0)}%)</span>
+                      <span className={styles.layout === 'classic' ? 'font-semibold' : ''}>{currencySymbol}{(vatAmount || 0).toFixed(2)}</span>
+                    </div>
                   )}
                   <div className={cn('flex justify-between items-center py-3 px-4 mt-2', styles.layout === 'classic' ? 'text-base font-bold' : '', styles.layout === 'minimal' ? 'border-t-2 border-gray-300 pt-3 text-lg' : '', styles.tableHeaderBgClass, styles.tableHeaderTextClass)}>
                     <span className={cn('uppercase', styles.layout === 'minimal' ? 'font-bold text-gray-900' : '')}>{t.total}</span>
@@ -952,7 +950,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                   {ronBreakdown && (
                      <div className="space-y-1 mt-2 text-sm text-gray-600">
                         <div className="flex justify-between"><span>{t.subtotalRon}</span><span className="font-semibold">{ronBreakdown.subtotal.toFixed(2)} RON</span></div>
-                        <div className="flex justify-between"><span>{t.vatRon}</span><span className="font-semibold">{ronBreakdown.vat.toFixed(2)} RON</span></div>
+                        {hasVat && <div className="flex justify-between"><span>{t.vatRon}</span><span className="font-semibold">{ronBreakdown.vat.toFixed(2)} RON</span></div>}
                         <div className="flex justify-between"><span>{t.totalRon}</span><span className="font-semibold">{ronBreakdown.total.toFixed(2)} RON</span></div>
                     </div>
                   )}
@@ -962,18 +960,18 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
               {/* Elegant layout */}
               {styles.layout === 'elegant' && (
                 <>
-                  {hasVat && (
-                    <div className="space-y-2 mb-4">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">{t.subtotal}</span>
-                        <span className="font-semibold text-gray-800">{currencySymbol}{subtotal.toFixed(2)}</span>
-                      </div>
+                  <div className="space-y-2 mb-4">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">{t.subtotal}</span>
+                      <span className="font-semibold text-gray-800">{currencySymbol}{subtotal.toFixed(2)}</span>
+                    </div>
+                    {hasVat && (
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">{t.vat} ({((vatRate || 0) * 100).toFixed(0)}%)</span>
                         <span className="font-semibold text-gray-800">{currencySymbol}{(vatAmount || 0).toFixed(2)}</span>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                   <div className={cn('border-t-2 pt-4', styles.accentClass)}>
                     <div className="flex justify-between items-center">
                       <span className="text-xl font-bold text-gray-900 uppercase" style={{ letterSpacing: '0.05em' }}>{t.total}</span>
@@ -983,7 +981,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                   {ronBreakdown && (
                      <div className="space-y-1 mt-3 text-sm text-gray-600">
                         <div className="flex justify-between"><span>{t.subtotalRon}</span><span className="font-semibold">{ronBreakdown.subtotal.toFixed(2)} RON</span></div>
-                        <div className="flex justify-between"><span>{t.vatRon}</span><span className="font-semibold">{ronBreakdown.vat.toFixed(2)} RON</span></div>
+                        {hasVat && <div className="flex justify-between"><span>{t.vatRon}</span><span className="font-semibold">{ronBreakdown.vat.toFixed(2)} RON</span></div>}
                         <div className="flex justify-between"><span>{t.totalRon}</span><span className="font-semibold">{ronBreakdown.total.toFixed(2)} RON</span></div>
                     </div>
                   )}
@@ -993,18 +991,18 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
               {/* Modern layout */}
               {styles.layout === 'modern' && (
                 <>
-                  {hasVat && (
-                    <div className="space-y-2 mb-3">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">{t.subtotal}</span>
-                        <span className="font-semibold">{currencySymbol}{subtotal.toFixed(2)}</span>
-                      </div>
+                  <div className="space-y-2 mb-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">{t.subtotal}</span>
+                      <span className="font-semibold">{currencySymbol}{subtotal.toFixed(2)}</span>
+                    </div>
+                    {hasVat && (
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">{t.vat} ({((vatRate || 0) * 100).toFixed(0)}%)</span>
                         <span className="font-semibold">{currencySymbol}{(vatAmount || 0).toFixed(2)}</span>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                   <div className={cn('flex justify-between items-center py-4 px-6', styles.totalBgClass, styles.totalTextClass)}>
                     <span className="text-lg font-bold uppercase">{t.total}</span>
                     <span className="text-2xl font-bold">{currencySymbol}{total.toFixed(2)}</span>
@@ -1012,7 +1010,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                    {ronBreakdown && (
                      <div className="space-y-1 mt-2 text-sm text-gray-600 px-2">
                         <div className="flex justify-between"><span>{t.subtotalRon}</span><span className="font-semibold">{ronBreakdown.subtotal.toFixed(2)} RON</span></div>
-                        <div className="flex justify-between"><span>{t.vatRon}</span><span className="font-semibold">{ronBreakdown.vat.toFixed(2)} RON</span></div>
+                        {hasVat && <div className="flex justify-between"><span>{t.vatRon}</span><span className="font-semibold">{ronBreakdown.vat.toFixed(2)} RON</span></div>}
                         <div className="flex justify-between"><span>{t.totalRon}</span><span className="font-semibold">{ronBreakdown.total.toFixed(2)} RON</span></div>
                     </div>
                   )}
@@ -1022,18 +1020,18 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
               {/* Bold layout */}
               {styles.layout === 'bold' && (
                 <>
-                  {hasVat && (
-                    <div className="space-y-3 mb-4">
-                      <div className="flex justify-between text-base font-semibold">
-                        <span className="text-gray-600">{t.subtotal}</span>
-                        <span className="text-gray-900">{currencySymbol}{subtotal.toFixed(2)}</span>
-                      </div>
+                  <div className="space-y-3 mb-4">
+                    <div className="flex justify-between text-base font-semibold">
+                      <span className="text-gray-600">{t.subtotal}</span>
+                      <span className="text-gray-900">{currencySymbol}{subtotal.toFixed(2)}</span>
+                    </div>
+                     {hasVat && (
                       <div className="flex justify-between text-base font-semibold">
                         <span className="text-gray-600">{t.vat} ({((vatRate || 0) * 100).toFixed(0)}%)</span>
                         <span className="text-gray-900">{currencySymbol}{(vatAmount || 0).toFixed(2)}</span>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                   <div className={cn('py-6 px-8', styles.totalBgClass, styles.totalTextClass)}>
                     <div className="flex justify-between items-center">
                       <span className="text-2xl font-black uppercase">{t.total}</span>
@@ -1043,7 +1041,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                   {ronBreakdown && (
                     <div className="space-y-1 mt-2 text-base font-semibold text-gray-600 px-4 py-2">
                         <div className="flex justify-between"><span>{t.subtotalRon}</span><span>{ronBreakdown.subtotal.toFixed(2)} RON</span></div>
-                        <div className="flex justify-between"><span>{t.vatRon}</span><span>{ronBreakdown.vat.toFixed(2)} RON</span></div>
+                        {hasVat && <div className="flex justify-between"><span>{t.vatRon}</span><span>{ronBreakdown.vat.toFixed(2)} RON</span></div>}
                         <div className="flex justify-between"><span>{t.totalRon}</span><span>{ronBreakdown.total.toFixed(2)} RON</span></div>
                     </div>
                   )}
