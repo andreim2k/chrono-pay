@@ -11,13 +11,14 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
 interface ExportMenuProps {
-  data: Record<string, any>[];
+  uiData: Record<string, any>[];
+  rawData: Record<string, any>[];
   filename: string;
   buttonLabel?: string;
   disabled?: boolean;
 }
 
-export function ExportMenu({ data, filename, buttonLabel = 'Export Data', disabled = false }: ExportMenuProps) {
+export function ExportMenu({ uiData, rawData, filename, buttonLabel = 'Export Data', disabled = false }: ExportMenuProps) {
   const { toast } = useToast();
 
   const getFinalFilename = (extension: string) => {
@@ -27,7 +28,7 @@ export function ExportMenu({ data, filename, buttonLabel = 'Export Data', disabl
 
   const handleJsonExport = () => {
     try {
-      const jsonString = JSON.stringify(data, null, 2);
+      const jsonString = JSON.stringify(rawData, null, 2);
       const blob = new Blob([jsonString], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const finalFileName = getFinalFilename('json');
@@ -57,17 +58,8 @@ export function ExportMenu({ data, filename, buttonLabel = 'Export Data', disabl
   const handlePdfExport = () => {
     try {
       const doc = new jsPDF();
-      const tableData = data.map(row => {
-        // Flatten nested 'items' array
-        const itemsDescription = Array.isArray(row.items) 
-          ? row.items.map((item: any) => item.description).join('; ') 
-          : '';
-        const { items, ...rest } = row;
-        return { ...rest, items: itemsDescription };
-      });
-      
-      const headers = Object.keys(tableData[0] || {});
-      const body = tableData.map(row => headers.map(header => row[header]));
+      const headers = Object.keys(uiData[0] || {});
+      const body = uiData.map(row => headers.map(header => row[header]));
 
       (doc as any).autoTable({
         head: [headers],
@@ -95,7 +87,7 @@ export function ExportMenu({ data, filename, buttonLabel = 'Export Data', disabl
 
   const handleExcelExport = () => {
     try {
-      const worksheet = XLSX.utils.json_to_sheet(data);
+      const worksheet = XLSX.utils.json_to_sheet(uiData);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Data');
       const finalFileName = getFinalFilename('xlsx');
@@ -115,7 +107,7 @@ export function ExportMenu({ data, filename, buttonLabel = 'Export Data', disabl
     }
   };
 
-  const hasData = data.length > 0;
+  const hasData = uiData.length > 0;
 
   return (
     <DropdownMenu>
@@ -126,17 +118,17 @@ export function ExportMenu({ data, filename, buttonLabel = 'Export Data', disabl
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuItem onSelect={handleJsonExport}>
-          <FileJson className="mr-2 h-4 w-4" />
-          Export as JSON
-        </DropdownMenuItem>
         <DropdownMenuItem onSelect={handlePdfExport}>
           <FileText className="mr-2 h-4 w-4" />
-          Export as PDF
+          Export as PDF (UI View)
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={handleExcelExport}>
           <FileSpreadsheet className="mr-2 h-4 w-4" />
-          Export as Excel
+          Export as Excel (UI View)
+        </DropdownMenuItem>
+         <DropdownMenuItem onSelect={handleJsonExport}>
+          <FileJson className="mr-2 h-4 w-4" />
+          Export as JSON (Raw Data)
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

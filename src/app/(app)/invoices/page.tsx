@@ -9,9 +9,15 @@ import { collection } from 'firebase/firestore';
 import { DataImport } from '@/components/data/data-import';
 import { CreateInvoiceDialog } from '@/components/invoices/create-invoice-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getYear, parseISO } from 'date-fns';
+import { getYear, parseISO, format } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
 import { ExportMenu } from '@/components/data/export-menu';
+
+const currencySymbols: { [key: string]: string } = {
+  EUR: '€',
+  USD: '$',
+  GBP: '£',
+};
 
 export default function InvoicesPage() {
   const firestore = useFirestore();
@@ -71,20 +77,22 @@ export default function InvoicesPage() {
     return filteredInvoices.filter(inv => selectedRows[inv.id]);
   }, [filteredInvoices, selectedRows]);
 
-  const exportableData = useMemo(() => {
+  const exportableUiData = useMemo(() => {
     const invoicesToExport = selectedInvoices.length > 0 ? selectedInvoices : [];
-    return invoicesToExport.map(({
-      id,
-      companyName,
-      companyAddress,
-      companyVat,
-      companyIban,
-      companyBankName,
-      companySwift,
-      billedTimecardIds,
-      theme,
-      ...rest
-    }) => rest);
+    return invoicesToExport.map(inv => ({
+      'Invoice #': inv.invoiceNumber,
+      'Client': inv.clientName,
+      'Project': inv.projectName,
+      'Date': format(new Date(inv.date), 'MMM d, yyyy'),
+      'Subtotal': `${currencySymbols[inv.currency] || inv.currency}${inv.subtotal.toFixed(2)}`,
+      ...(inv.vatAmount && inv.vatAmount > 0 ? { 'VAT': `${currencySymbols[inv.currency] || inv.currency}${inv.vatAmount.toFixed(2)}` } : {}),
+      'Total': `${currencySymbols[inv.currency] || inv.currency}${inv.total.toFixed(2)}`,
+      'Status': inv.status,
+    }));
+  }, [selectedInvoices]);
+  
+  const exportableRawData = useMemo(() => {
+    return selectedInvoices.length > 0 ? selectedInvoices : [];
   }, [selectedInvoices]);
 
 
@@ -99,7 +107,8 @@ export default function InvoicesPage() {
         </div>
         <div className='flex items-center gap-2'>
           <ExportMenu 
-            data={exportableData} 
+            uiData={exportableUiData} 
+            rawData={exportableRawData}
             filename='invoices'
             buttonLabel='Export'
             disabled={selectedInvoices.length === 0}
