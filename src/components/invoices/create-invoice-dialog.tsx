@@ -259,7 +259,7 @@ export function CreateInvoiceDialog() {
     const lastDate = max(timecardDates);
     
     let items: Invoice['items'], subtotal: number, billedTimecardIds: string[] = [];
-    const projectRate = currentProject.rate;
+    const projectRate = currentProject.ratePerDay;
     
     const totalHours = currentlySelectedTimecards.reduce((acc, tc) => acc + tc.hours, 0);
     billedTimecardIds = currentlySelectedTimecards.map(tc => tc.id);
@@ -689,7 +689,7 @@ export function CreateInvoiceDialog() {
               <DialogTrigger asChild>
                 <Button variant="outline" disabled={buttonsDisabled}>
                   <Eye className="mr-2 h-4 w-4" />
-                  Preview & Save
+                  Preview Invoice
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
