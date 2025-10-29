@@ -95,7 +95,6 @@ export function CreateInvoiceDialog() {
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user } = useUser();
-  const invoiceCreationDate = useMemo(() => new Date(), []);
   
   const userDocRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, `users/${user.uid}`) : null),
@@ -294,7 +293,8 @@ export function CreateInvoiceDialog() {
     const clientVatRate = selectedClient.vatRate;
     const hasVat = selectedClient.hasVat || false;
     
-    const creationDate = parseISO(format(invoiceCreationDate, 'yyyy-MM-dd'));
+    const creationDate = new Date(); // Local timezone
+    const creationDateString = format(creationDate, 'yyyy-MM-dd'); // '2024-01-15'
     
     const data: Omit<Invoice, 'id'> = {
       invoiceNumber: generateInvoiceNumber(currentProject, invoices),
@@ -311,7 +311,7 @@ export function CreateInvoiceDialog() {
       clientVat: selectedClient.vat,
       projectId: currentProject.id,
       projectName: currentProject.name,
-      date: format(creationDate, 'yyyy-MM-dd'),
+      date: creationDateString,
       dueDate: format(addDays(creationDate, selectedClient.paymentTerms), 'yyyy-MM-dd'),
       currency: invoiceConfig.currency,
       language: selectedClient.language || 'English',
@@ -326,10 +326,9 @@ export function CreateInvoiceDialog() {
     };
 
     if (hasVat) {
-        const vatAmount = subtotal * clientVatRate;
-        data.vatAmount = vatAmount;
+        data.vatAmount = subtotal * clientVatRate;
         data.vatRate = clientVatRate;
-        data.total = subtotal + vatAmount;
+        data.total = data.subtotal + data.vatAmount;
     }
 
     if (invoiceConfig.exchangeRate) {
@@ -341,7 +340,7 @@ export function CreateInvoiceDialog() {
     return data;
   }, [
       selectedClient, currentProject, invoices, invoiceConfig,
-      myCompany, invoiceCreationDate, 
+      myCompany, 
       filteredTimecards, selectedTimecards
     ]);
   
@@ -387,8 +386,15 @@ export function CreateInvoiceDialog() {
     // 1. Add the new invoice
     const newInvoiceRef = doc(collection(firestore, `users/${user.uid}/invoices`));
     
-    // Create a clean object to save, removing temporary fields like `hasVat`
-    const { hasVat, ...dataToSave } = invoiceData;
+    // Create a clean object to save.
+    // Firestore does not support `undefined` values.
+    const dataToSave: { [key: string]: any } = {};
+    for (const [key, value] of Object.entries(invoiceData)) {
+        if (value !== undefined) {
+            dataToSave[key] = value;
+        }
+    }
+    delete dataToSave.hasVat; // a temporary field
     
     batch.set(newInvoiceRef, dataToSave);
 
@@ -476,7 +482,7 @@ export function CreateInvoiceDialog() {
     }
     const subtotalRon = invoiceData.subtotal * invoiceConfig.exchangeRate;
     const vatAmountRon = (invoiceData.vatAmount || 0) * invoiceConfig.exchangeRate;
-    const totalRon = subtotalRon + vatAmountRon;
+    const totalRon = invoiceData.total * invoiceConfig.exchangeRate;
 
     return {
         subtotal: subtotalRon.toFixed(2),
@@ -782,3 +788,4 @@ export function CreateInvoiceDialog() {
     </>
   );
 }
+
