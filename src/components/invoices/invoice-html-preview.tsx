@@ -642,14 +642,14 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
             <div className="grid grid-cols-2 gap-6 mb-10 mt-8">
                 <div style={{ backgroundColor: styles.secondaryBg }} className='p-6 rounded'>
                     <p className={cn('text-xs font-bold uppercase mb-3', styles.headerTextClass)}>{t.billedTo}</p>
-                    <p className='font-bold text-gray-900 leading-tight'>{clientName}</p>
-                    <div className='text-gray-600 text-sm'>
-                        <p className='leading-tight'>{clientAddress}</p>
-                        <p className='leading-tight mt-2'>{t.vatId}: {clientVat}</p>
-                        <p className='leading-tight'>{t.bank}: {clientBankName}</p>
-                        <p className='leading-tight'>{t.iban}: {clientIban}</p>
-                        <p className='leading-tight'>{t.swift}: {clientSwift}</p>
-                        {invoice.projectName && <p className="text-gray-700 mt-2 leading-tight"><span className='font-semibold'>Project:</span> {invoice.projectName}</p>}
+                    <p className='font-bold text-gray-900 m-0' style={{ lineHeight: '1.5' }}>{clientName}</p>
+                    <div className='text-gray-600 text-sm' style={{ lineHeight: '1.5' }}>
+                        <p className='m-0'>{clientAddress}</p>
+                        {clientVat && <p className='m-0' style={{ marginTop: '8px' }}>{t.vatId}: {clientVat}</p>}
+                        {clientBankName && <p className='m-0'>{t.bank}: {clientBankName}</p>}
+                        {clientIban && <p className='m-0'>{t.iban}: {clientIban}</p>}
+                        {clientSwift && <p className='m-0'>{t.swift}: {clientSwift}</p>}
+                        {invoice.projectName && <p className="text-gray-700 m-0" style={{ marginTop: '8px' }}><span className='font-semibold'>Project:</span> {invoice.projectName}</p>}
                     </div>
                 </div>
                 <div style={{ backgroundColor: styles.secondaryBg }} className='p-6 rounded text-right'>
