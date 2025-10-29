@@ -292,7 +292,7 @@ export function CreateInvoiceDialog() {
     }];
 
     const clientVatRate = selectedClient.vatRate;
-    const hasVat = currentProject.hasVat || false;
+    const hasVat = selectedClient.hasVat || false;
     
     const vatAmount = hasVat ? subtotal * clientVatRate : undefined;
     const total = subtotal + (vatAmount || 0);
@@ -331,7 +331,7 @@ export function CreateInvoiceDialog() {
       usedMaxExchangeRate: invoiceConfig.usedMaxRate,
       theme: invoiceConfig.invoiceTheme,
       billedTimecardIds,
-      hasVat,
+      hasVat: hasVat,
     };
 
     return data;

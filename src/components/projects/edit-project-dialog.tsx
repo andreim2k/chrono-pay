@@ -22,7 +22,6 @@ import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebas
 import { collection, doc, setDoc } from 'firebase/firestore';
 import type { Client, Project, InvoiceTheme } from '@/lib/types';
 import { themeStyles } from '../invoices/invoice-html-preview';
-import { Switch } from '../ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
@@ -45,7 +44,6 @@ const projectSchema = z.object({
   invoiceTheme: z.string().min(1, 'Please select a theme') as z.ZodType<InvoiceTheme>,
   currency: z.string().min(1, 'Currency is required'),
   invoiceNumberPrefix: z.string().min(1, 'Prefix is required'),
-  hasVat: z.boolean().default(false),
   maxExchangeRate: z.coerce.number().optional(),
   maxExchangeRateDate: z.date().optional(),
   rate: z.coerce.number().optional().refine(val => val === undefined || val > 0, {
@@ -94,7 +92,6 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
       invoiceTheme: project.invoiceTheme || 'Classic',
       currency: project.currency || 'EUR',
       invoiceNumberPrefix: project.invoiceNumberPrefix || '',
-      hasVat: project.hasVat || false,
       maxExchangeRate: project.maxExchangeRate || undefined,
       maxExchangeRateDate: project.maxExchangeRateDate ? parseISO(project.maxExchangeRateDate) : undefined,
       rate: project.rate || undefined,
@@ -124,7 +121,6 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
             invoiceTheme: project.invoiceTheme || 'Classic',
             currency: project.currency || 'EUR',
             invoiceNumberPrefix: project.invoiceNumberPrefix || '',
-            hasVat: project.hasVat || false,
             maxExchangeRate: project.maxExchangeRate || undefined,
             maxExchangeRateDate: project.maxExchangeRateDate ? parseISO(project.maxExchangeRateDate) : undefined,
             rate: project.rate || undefined,
@@ -368,26 +364,6 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
                  </div>
                  <p className="text-xs text-muted-foreground px-1">If set, this rate will always be used for this project's invoices.</p>
             </div>
-            <FormField
-                control={form.control}
-                name="hasVat"
-                render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                            <FormLabel>Apply VAT</FormLabel>
-                            <p className="text-xs text-muted-foreground">
-                                If checked, VAT will be added to this project's invoices.
-                            </p>
-                        </div>
-                        <FormControl>
-                            <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                            />
-                        </FormControl>
-                    </FormItem>
-                )}
-            />
             <FormField
               control={form.control}
               name="invoiceTheme"

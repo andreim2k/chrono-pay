@@ -90,6 +90,10 @@
                 "paymentTerms": {
                     "type": "number",
                     "description": "Number of days until an invoice is due."
+                },
+                "hasVat": {
+                    "type": "boolean",
+                    "description": "Indicates if VAT should be applied for this client's invoices."
                 }
             },
             "required": [
@@ -97,7 +101,8 @@
                 "address",
                 "vat",
                 "vatRate",
-                "paymentTerms"
+                "paymentTerms",
+                "hasVat"
             ]
         },
         "Project": {
@@ -128,10 +133,6 @@
                 },
                 "invoiceNumberPrefix": {
                     "type": "string"
-                },
-                "hasVat": {
-                    "type": "boolean",
-                    "description": "Indicates if VAT should be applied for this project."
                 },
                 "maxExchangeRate": {
                     "type": "number",

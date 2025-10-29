@@ -24,6 +24,7 @@ export type Client = {
   address: string;
   vat: string;
   vatRate: number;
+  hasVat: boolean;
   iban?: string;
   logoUrl?: string;
   bankName?: string;
@@ -54,7 +55,6 @@ export type Project = {
   order?: number;
   currency?: string;
   invoiceNumberPrefix?: string;
-  hasVat?: boolean;
   maxExchangeRate?: number;
   maxExchangeRateDate?: string;
   rate?: number;
@@ -113,7 +113,7 @@ export type Invoice = {
   usedMaxExchangeRate?: boolean;
   theme?: InvoiceTheme;
   billedTimecardIds?: string[];
-  hasVat?: boolean; // Temporary field for creation logic
+  hasVat?: boolean; // This is now on the client, but kept for invoice generation phase
 };
 
 export type InvoiceTheme = 'Classic' | 'Modern' | 'Sunset' | 'Ocean' | 'Monochrome' | 'Minty' | 'Velvet' | 'Corporate Blue' | 'Earthy Tones' | 'Creative' | 'Slate Gray' | 'Dark Charcoal' | 'Navy Blue' | 'Forest Green' | 'Burgundy' | 'Teal' | 'Coral' | 'Lavender' | 'Golden' | 'Steel Blue' | 'Light Blue' | 'Sky Blue' | 'Mint Green' | 'Lime' | 'Peach' | 'Rose' | 'Lilac' | 'Sand' | 'Olive' | 'Maroon' | 'Deep Purple' | 'Turquoise' | 'Charcoal' | 'Crimson' | 'Sapphire';

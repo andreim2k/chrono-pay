@@ -21,6 +21,7 @@ import type { Client } from '@/lib/types';
 import { useFirestore, useUser } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useEffect } from 'react';
+import { Switch } from '../ui/switch';
 
 const languages = ['English', 'Romanian'];
 
@@ -34,6 +35,7 @@ const clientSchema = z.object({
   language: z.string().min(1, 'Language is required'),
   vatRate: z.coerce.number().min(0, "VAT rate must be 0 or greater."),
   paymentTerms: z.coerce.number().int().min(0, "Payment terms must be 0 or greater"),
+  hasVat: z.boolean().default(false),
 });
 
 type ClientFormValues = z.infer<typeof clientSchema>;
@@ -61,6 +63,7 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
       language: client.language || 'English',
       vatRate: client.vatRate * 100, // Display as percentage
       paymentTerms: client.paymentTerms ?? 7,
+      hasVat: client.hasVat || false,
     },
   });
 
@@ -76,6 +79,7 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
             language: client.language || 'English',
             vatRate: client.vatRate * 100, // Display as percentage
             paymentTerms: client.paymentTerms ?? 7,
+            hasVat: client.hasVat || false,
         });
     }
   }, [isOpen, client, form]);
@@ -251,6 +255,26 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
                 )}
               />
             </div>
+            <FormField
+                control={form.control}
+                name="hasVat"
+                render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                            <FormLabel>Apply VAT</FormLabel>
+                            <p className="text-xs text-muted-foreground">
+                                If checked, VAT will be added to this client's invoices.
+                            </p>
+                        </div>
+                        <FormControl>
+                            <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                            />
+                        </FormControl>
+                    </FormItem>
+                )}
+            />
             
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

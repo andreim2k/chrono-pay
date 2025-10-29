@@ -23,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useFirestore, addDocumentNonBlocking, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query } from 'firebase/firestore';
 import type { Client } from '@/lib/types';
+import { Switch } from '../ui/switch';
 
 const languages = ['English', 'Romanian'];
 
@@ -36,6 +37,7 @@ const clientSchema = z.object({
   language: z.string().min(1, 'Language is required'),
   vatRate: z.coerce.number().min(0, "VAT rate must be 0 or greater."),
   paymentTerms: z.coerce.number().int().min(0, "Payment terms must be 0 or greater"),
+  hasVat: z.boolean().default(false),
 });
 
 type ClientFormValues = z.infer<typeof clientSchema>;
@@ -64,6 +66,7 @@ export function AddClientDialog() {
       language: 'English',
       vatRate: 0,
       paymentTerms: 7,
+      hasVat: false,
     },
   });
 
@@ -238,6 +241,26 @@ export function AddClientDialog() {
                 )}
               />
             </div>
+             <FormField
+                control={form.control}
+                name="hasVat"
+                render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                            <FormLabel>Apply VAT</FormLabel>
+                            <p className="text-xs text-muted-foreground">
+                                If checked, VAT will be added to this client's invoices.
+                            </p>
+                        </div>
+                        <FormControl>
+                            <Switch
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                            />
+                        </FormControl>
+                    </FormItem>
+                )}
+            />
             
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>

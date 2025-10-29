@@ -24,12 +24,10 @@ import { useCollection, useFirestore, addDocumentNonBlocking, useMemoFirebase, u
 import { collection, query } from 'firebase/firestore';
 import type { Client, InvoiceTheme, Project } from '@/lib/types';
 import { themeStyles } from '../invoices/invoice-html-preview';
-import { Switch } from '../ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Calendar } from '../ui/calendar';
-import { Label } from '../ui/label';
 
 const currencies = ['EUR', 'USD', 'GBP', 'RON'];
 const invoiceThemes: InvoiceTheme[] = [
@@ -47,7 +45,6 @@ const projectSchema = z.object({
   invoiceTheme: z.string().min(1, 'Please select a theme') as z.ZodType<InvoiceTheme>,
   currency: z.string().min(1, 'Currency is required'),
   invoiceNumberPrefix: z.string().min(1, 'Prefix is required'),
-  hasVat: z.boolean().default(false),
   maxExchangeRate: z.coerce.number().optional(),
   maxExchangeRateDate: z.date().optional(),
   rate: z.coerce.number().optional().refine(val => val === undefined || val > 0, {
@@ -95,7 +92,6 @@ export function AddProjectDialog() {
       invoiceTheme: 'Classic',
       currency: 'EUR',
       invoiceNumberPrefix: '',
-      hasVat: false,
       rate: undefined,
       rateType: 'daily',
       hoursPerDay: 8,
@@ -356,26 +352,6 @@ export function AddProjectDialog() {
                  </div>
                  <p className="text-xs text-muted-foreground px-1">If set, this rate will always be used for this project's invoices.</p>
             </div>
-            <FormField
-                control={form.control}
-                name="hasVat"
-                render={({ field }) => (
-                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                        <div className="space-y-0.5">
-                            <FormLabel>Apply VAT</FormLabel>
-                            <p className="text-xs text-muted-foreground">
-                                If checked, VAT will be added to this project's invoices.
-                            </p>
-                        </div>
-                        <FormControl>
-                            <Switch
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                            />
-                        </FormControl>
-                    </FormItem>
-                )}
-            />
             <FormField
               control={form.control}
               name="invoiceTheme"

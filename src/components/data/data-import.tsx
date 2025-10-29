@@ -37,10 +37,13 @@ const migrateProjectData = (projectData: any): Omit<Project, 'id' | 'clientName'
     delete migrated.hoursPerDay; // Not applicable for hourly
   }
 
+  // Remove hasVat from project if it exists
+  delete migrated.hasVat;
+
   return migrated;
 }
 
-const migrateClientData = (clientData: any): Omit<Client, 'id'> => {
+const migrateClientData = (clientData: any, projectDataForClient: any[]): Omit<Client, 'id'> => {
     const migrated = { ...clientData };
 
     // Move companyVatRate to client.vatRate if it exists on myCompany
@@ -51,6 +54,18 @@ const migrateClientData = (clientData: any): Omit<Client, 'id'> => {
     // For now, we'll just ensure the new structure is respected.
     if (migrated.vatRate === undefined) {
         migrated.vatRate = 0; // Default if not present
+    }
+    
+    // Migrate hasVat from the first associated project if it exists
+    if (migrated.hasVat === undefined && projectDataForClient.length > 0) {
+        const firstProject = projectDataForClient.find(p => p.clientId === clientData.id || p.clientName === clientData.name);
+        if (firstProject && firstProject.hasVat !== undefined) {
+            migrated.hasVat = firstProject.hasVat;
+        } else {
+            migrated.hasVat = false;
+        }
+    } else if (migrated.hasVat === undefined) {
+        migrated.hasVat = false;
     }
     
     return migrated;
@@ -173,7 +188,7 @@ export function DataImport({
               finalDocData = migrateProjectData(docData);
             }
             if (collectionName === 'clients') {
-              finalDocData = migrateClientData(docData);
+              finalDocData = migrateClientData(docData, dataToImport.projects || []);
             }
             const newDocRef = doc(collection(firestore, `users/${user.uid}/${collectionName}`));
             batch.set(newDocRef, finalDocData);
