@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -24,7 +24,7 @@ import { useFirestore, addDocumentNonBlocking, useUser, setDocumentNonBlocking }
 import { collection, doc } from 'firebase/firestore';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { cn } from '@/lib/utils';
-import { format, eachDayOfInterval, isWeekend } from 'date-fns';
+import { format, eachDayOfInterval, isWeekend, startOfMonth, endOfMonth } from 'date-fns';
 import { Calendar } from '../ui/calendar';
 import type { Client, Project, Timecard } from '@/lib/types';
 import { Textarea } from '../ui/textarea';
@@ -69,7 +69,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
     resolver: zodResolver(timecardSchema),
     defaultValues: {
       projectId: '',
-      dateRange: { from: new Date(), to: new Date() },
+      dateRange: { from: new Date(), to: undefined },
       hours: 8,
       description: '',
     },
@@ -79,7 +79,10 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
     if (timecardToEdit) {
         form.reset({
             projectId: timecardToEdit.projectId,
-            dateRange: { from: new Date(timecardToEdit.startDate.replace(/-/g, '/')), to: new Date(timecardToEdit.endDate.replace(/-/g, '/')) },
+            dateRange: { 
+                from: new Date(timecardToEdit.startDate.replace(/-/g, '/')), 
+                to: new Date(timecardToEdit.endDate.replace(/-/g, '/')) 
+            },
             hours: timecardToEdit.hours,
             description: timecardToEdit.description || '',
         });
@@ -87,7 +90,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
         const today = new Date();
         form.reset({
             projectId: '',
-            dateRange: { from: today, to: today },
+            dateRange: { from: today, to: undefined },
             hours: 8,
             description: '',
         });
@@ -105,6 +108,15 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
            form.setValue('hours', 8);
       }
   }, [watchedDateRange, form]);
+  
+  const disabledDates = useMemo(() => {
+    if (watchedDateRange?.from) {
+      const start = startOfMonth(watchedDateRange.from);
+      const end = endOfMonth(watchedDateRange.from);
+      return (date: Date) => date < start || date > end;
+    }
+    return undefined;
+  }, [watchedDateRange?.from]);
 
   const onSubmit = (data: TimecardFormValues) => {
     if (!firestore || !user || !data.dateRange.from) return;
@@ -232,6 +244,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
                             selected={{from: field.value.from, to: field.value.to}}
                             onSelect={field.onChange}
                             numberOfMonths={2}
+                            disabled={disabledDates}
                           />
                         </PopoverContent>
                       </Popover>
