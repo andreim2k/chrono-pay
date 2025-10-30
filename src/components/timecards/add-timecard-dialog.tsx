@@ -223,11 +223,11 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
                                {field.value.from ? (
                                     field.value.to && field.value.from.getTime() !== field.value.to.getTime() ? (
                                     <>
-                                        {format(field.value.from, "PPP")} -{" "}
-                                        {format(field.value.to, "PPP")}
+                                        {format(field.value.from, "MMM d, yyyy")} -{" "}
+                                        {format(field.value.to, "MMM d, yyyy")}
                                     </>
                                     ) : (
-                                    format(field.value.from, "PPP")
+                                    format(field.value.from, "MMM d, yyyy")
                                     )
                                 ) : (
                                     <span>Pick a date range</span>
