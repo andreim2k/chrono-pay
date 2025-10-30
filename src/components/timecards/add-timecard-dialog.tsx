@@ -24,7 +24,7 @@ import { useFirestore, addDocumentNonBlocking, useUser, setDocumentNonBlocking }
 import { collection, doc } from 'firebase/firestore';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { cn } from '@/lib/utils';
-import { format, eachDayOfInterval, isWeekend, startOfMonth, endOfMonth } from 'date-fns';
+import { format, eachDayOfInterval, isWeekend, startOfMonth, endOfMonth, isSameMonth, isSameYear } from 'date-fns';
 import { Calendar } from '../ui/calendar';
 import type { Client, Project, Timecard } from '@/lib/types';
 import { Textarea } from '../ui/textarea';
@@ -159,6 +159,17 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
     
     onOpenChange(false);
   };
+  
+  const formatDateDisplay = (from: Date, to?: Date) => {
+    if (!to || from.getTime() === to.getTime()) {
+      return format(from, "MMM d, yyyy");
+    }
+    if (isSameMonth(from, to) && isSameYear(from, to)) {
+      return `${format(from, "MMM d")} - ${format(to, "d, yyyy")}`;
+    }
+    return `${format(from, "MMM d, yyyy")} - ${format(to, "MMM d, yyyy")}`;
+  };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -221,14 +232,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
                               )}
                             >
                                {field.value.from ? (
-                                    field.value.to && field.value.from.getTime() !== field.value.to.getTime() ? (
-                                    <>
-                                        {format(field.value.from, "MMM d, yyyy")} -{" "}
-                                        {format(field.value.to, "MMM d, yyyy")}
-                                    </>
-                                    ) : (
-                                    format(field.value.from, "MMM d, yyyy")
-                                    )
+                                    formatDateDisplay(field.value.from, field.value.to)
                                 ) : (
                                     <span>Pick a date range</span>
                                 )}
@@ -243,7 +247,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
                             defaultMonth={field.value.from}
                             selected={{from: field.value.from, to: field.value.to}}
                             onSelect={field.onChange}
-                            numberOfMonths={2}
+                            numberOfMonths={1}
                             disabled={disabledDates}
                           />
                         </PopoverContent>
@@ -273,7 +277,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Worked on feature X, attended meeting Y..." {...field} />
+                    <Textarea placeholder="Worked on feature X, attended meeting Y..." {...field} value={field.value ?? ''}/>
                   </FormControl>
                    <FormDescription>
                     Optional notes about the work performed.
