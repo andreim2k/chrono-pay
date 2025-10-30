@@ -30,6 +30,16 @@ import type { Client, Project, Timecard } from '@/lib/types';
 import { Textarea } from '../ui/textarea';
 import type { DateRange } from 'react-day-picker';
 
+function calculateWorkHours(startDate?: Date, endDate?: Date): number {
+    if (!startDate) return 0;
+    const effectiveEndDate = endDate || startDate;
+
+    const days = eachDayOfInterval({ start: startDate, end: effectiveEndDate });
+    const workdays = days.filter(day => !isWeekend(day));
+    
+    return workdays.length * 8;
+}
+
 const timecardSchema = z.object({
   projectId: z.string().min(1, 'Please select a project'),
   dateRange: z.object({
@@ -38,6 +48,17 @@ const timecardSchema = z.object({
   }),
   hours: z.coerce.number().min(0.25, 'Minimum hours is 0.25').max(1000, 'Maximum hours is 1000'),
   description: z.string().optional(),
+}).superRefine((data, ctx) => {
+    if (data.dateRange.from) {
+        const maxHours = calculateWorkHours(data.dateRange.from, data.dateRange.to);
+        if (data.hours > maxHours) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ['hours'],
+                message: `Hours cannot exceed the maximum for the selected period (${maxHours}h).`,
+            });
+        }
+    }
 });
 
 type TimecardFormValues = z.infer<typeof timecardSchema>;
@@ -50,15 +71,6 @@ interface AddTimecardDialogProps {
     onOpenChange: (isOpen: boolean) => void;
 }
 
-function calculateWorkHours(startDate?: Date, endDate?: Date): number {
-    if (!startDate) return 0;
-    const effectiveEndDate = endDate || startDate;
-
-    const days = eachDayOfInterval({ start: startDate, end: effectiveEndDate });
-    const workdays = days.filter(day => !isWeekend(day));
-    
-    return workdays.length * 8;
-}
 
 export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, onOpenChange }: AddTimecardDialogProps) {
   const { toast } = useToast();
@@ -67,6 +79,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
 
   const form = useForm<TimecardFormValues>({
     resolver: zodResolver(timecardSchema),
+    mode: 'onChange',
     defaultValues: {
       projectId: '',
       dateRange: { from: new Date(), to: undefined },
@@ -90,7 +103,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
         const today = new Date();
         form.reset({
             projectId: '',
-            dateRange: { from: today, to: today },
+            dateRange: { from: today, to: undefined },
             hours: 8,
             description: '',
         });
@@ -105,7 +118,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
       if (calculatedHours > 0) {
           form.setValue('hours', calculatedHours, { shouldValidate: true });
       } else if (from && !to) {
-           form.setValue('hours', 8);
+           form.setValue('hours', 8, { shouldValidate: true });
       }
   }, [watchedDateRange, form]);
   
