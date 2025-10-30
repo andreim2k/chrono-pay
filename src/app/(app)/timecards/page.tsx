@@ -24,7 +24,7 @@ export default function TimecardsPage() {
   const [selectedMonth, setSelectedMonth] = useState('all');
 
   const timecardsQuery = useMemoFirebase(
-    () => (firestore && user ? query(collection(firestore, `users/${user.uid}/timecards`), orderBy('date', 'desc')) : null),
+    () => (firestore && user ? query(collection(firestore, `users/${user.uid}/timecards`), orderBy('startDate', 'desc')) : null),
     [firestore, user]
   );
   const { data: timecards } = useCollection<Timecard>(timecardsQuery, `users/${user?.uid}/timecards`);
@@ -54,7 +54,7 @@ export default function TimecardsPage() {
 
   const availableYears = useMemo(() => {
     if (!timecards) return [];
-    const years = new Set(timecards.map(tc => getYear(parseISO(tc.date))));
+    const years = new Set(timecards.map(tc => getYear(parseISO(tc.startDate))));
     return Array.from(years).sort((a, b) => b - a);
   }, [timecards]);
 
@@ -66,9 +66,9 @@ export default function TimecardsPage() {
   const filteredTimecards = useMemo(() => {
     if (!timecards) return [];
     return timecards.filter(timecard => {
-      const date = parseISO(timecard.date);
-      const yearMatch = selectedYear === 'all' || getYear(date) === Number(selectedYear);
-      const monthMatch = selectedMonth === 'all' || getMonth(date) === Number(selectedMonth);
+      const startDate = parseISO(timecard.startDate);
+      const yearMatch = selectedYear === 'all' || getYear(startDate) === Number(selectedYear);
+      const monthMatch = selectedMonth === 'all' || getMonth(startDate) === Number(selectedMonth);
       const clientMatch = selectedClientId === 'all' || timecard.clientId === selectedClientId;
       const projectMatch = selectedProjectId === 'all' || timecard.projectId === selectedProjectId;
       return yearMatch && monthMatch && clientMatch && projectMatch;

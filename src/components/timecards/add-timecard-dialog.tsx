@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CalendarIcon, PlusCircle } from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -24,17 +24,19 @@ import { useFirestore, addDocumentNonBlocking, useUser, setDocumentNonBlocking }
 import { collection, doc } from 'firebase/firestore';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, eachDayOfInterval, isWeekend } from 'date-fns';
 import { Calendar } from '../ui/calendar';
 import type { Client, Project, Timecard } from '@/lib/types';
 import { Textarea } from '../ui/textarea';
+import type { DateRange } from 'react-day-picker';
 
 const timecardSchema = z.object({
   projectId: z.string().min(1, 'Please select a project'),
-  date: z.date({
-    required_error: "A date for the time entry is required.",
+  dateRange: z.object({
+    from: z.date({ required_error: "A start date is required." }),
+    to: z.date({ required_error: "An end date is required." }),
   }),
-  hours: z.coerce.number().min(0.25, 'Minimum hours is 0.25').max(24, 'Maximum hours is 24'),
+  hours: z.coerce.number().min(0.25, 'Minimum hours is 0.25').max(1000, 'Maximum hours is 1000'),
   description: z.string().optional(),
 });
 
@@ -48,6 +50,15 @@ interface AddTimecardDialogProps {
     onOpenChange: (isOpen: boolean) => void;
 }
 
+function calculateWorkHours(startDate?: Date, endDate?: Date): number {
+    if (!startDate || !endDate) return 0;
+
+    const days = eachDayOfInterval({ start: startDate, end: endDate });
+    const workdays = days.filter(day => !isWeekend(day));
+    
+    return workdays.length * 8;
+}
+
 export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, onOpenChange }: AddTimecardDialogProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -57,7 +68,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
     resolver: zodResolver(timecardSchema),
     defaultValues: {
       projectId: '',
-      date: new Date(),
+      dateRange: { from: new Date(), to: new Date() },
       hours: 8,
       description: '',
     },
@@ -67,22 +78,35 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
     if (timecardToEdit) {
         form.reset({
             projectId: timecardToEdit.projectId,
-            date: new Date(timecardToEdit.date),
+            dateRange: { from: new Date(timecardToEdit.startDate), to: new Date(timecardToEdit.endDate) },
             hours: timecardToEdit.hours,
             description: timecardToEdit.description || '',
         });
     } else {
+        const today = new Date();
         form.reset({
             projectId: '',
-            date: new Date(),
+            dateRange: { from: today, to: today },
             hours: 8,
             description: '',
         });
     }
   }, [timecardToEdit, form, isOpen]);
 
+  const watchedDateRange = form.watch("dateRange");
+
+  useEffect(() => {
+      const { from, to } = watchedDateRange || {};
+      const calculatedHours = calculateWorkHours(from, to);
+      if (calculatedHours > 0) {
+          form.setValue('hours', calculatedHours, { shouldValidate: true });
+      } else if (from && to && from.getTime() === to.getTime()) {
+           form.setValue('hours', 8);
+      }
+  }, [watchedDateRange, form]);
+
   const onSubmit = (data: TimecardFormValues) => {
-    if (!firestore || !user) return;
+    if (!firestore || !user || !data.dateRange.from || !data.dateRange.to) return;
     
     const project = projects.find(p => p.id === data.projectId);
     const client = clients.find(c => c.id === project?.clientId);
@@ -97,7 +121,8 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
       projectName: project.name,
       clientId: client.id,
       clientName: client.name,
-      date: format(data.date, 'yyyy-MM-dd'),
+      startDate: format(data.dateRange.from, 'yyyy-MM-dd'),
+      endDate: format(data.dateRange.to, 'yyyy-MM-dd'),
       hours: data.hours,
       description: data.description,
       status: 'Unbilled' as const,
@@ -167,45 +192,51 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
             
             <div className="grid grid-cols-2 gap-4 items-end">
                 <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
+                  control={form.control}
+                  name="dateRange"
+                  render={({ field }) => (
                     <FormItem className="flex flex-col">
-                    <FormLabel>Date</FormLabel>
-                    <Popover>
+                      <FormLabel>Date Range</FormLabel>
+                      <Popover>
                         <PopoverTrigger asChild>
-                        <FormControl>
+                          <FormControl>
                             <Button
-                            variant={"outline"}
-                            className={cn(
+                              variant={"outline"}
+                              className={cn(
                                 "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                            )}
+                                !field.value.from && "text-muted-foreground"
+                              )}
                             >
-                            {field.value ? (
-                                format(field.value, "PPP")
-                            ) : (
-                                <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                               {field.value.from ? (
+                                    field.value.to ? (
+                                    <>
+                                        {format(field.value.from, "LLL d, y")} -{" "}
+                                        {format(field.value.to, "LLL d, y")}
+                                    </>
+                                    ) : (
+                                    format(field.value.from, "LLL d, y")
+                                    )
+                                ) : (
+                                    <span>Pick a date range</span>
+                                )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                             </Button>
-                        </FormControl>
+                          </FormControl>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                            mode="single"
+                          <Calendar
+                            initialFocus
+                            mode="range"
+                            defaultMonth={field.value.from}
                             selected={field.value}
                             onSelect={field.onChange}
-                            disabled={(date) =>
-                            date > new Date() || date < new Date("1900-01-01")
-                            }
-                            initialFocus
-                        />
+                            numberOfMonths={2}
+                          />
                         </PopoverContent>
-                    </Popover>
-                    <FormMessage />
+                      </Popover>
+                      <FormMessage />
                     </FormItem>
-                )}
+                  )}
                 />
                 <FormField
                 control={form.control}

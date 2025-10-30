@@ -68,7 +68,8 @@ export type Timecard = {
     projectName: string;
     clientId: string;
     clientName: string;
-    date: string; // YYYY-MM-DD
+    startDate: string; // YYYY-MM-DD
+    endDate: string; // YYYY-MM-DD
     hours: number;
     description?: string;
     status: 'Unbilled' | 'Billed';

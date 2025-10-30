@@ -89,7 +89,7 @@ export function TimecardList({ timecards }: TimecardListProps) {
     deleteDocumentNonBlocking(timecardRef);
     toast({
       title: 'Timecard Deleted',
-      description: `The time entry for ${format(new Date(timecardToDelete.date.replace(/-/g, '/')), 'MMM d, yyyy')} has been deleted.`,
+      description: `The time entry for ${format(new Date(timecardToDelete.startDate.replace(/-/g, '/')), 'MMM d, yyyy')} has been deleted.`,
     });
     setTimecardToDelete(null);
     setIsAlertOpen(false);
@@ -206,11 +206,13 @@ export function TimecardList({ timecards }: TimecardListProps) {
                      <Checkbox
                         checked={selectedRows[timecard.id] || false}
                         onCheckedChange={(checked) => handleRowSelect(timecard.id, Boolean(checked))}
-                        aria-label={`Select timecard on ${timecard.date}`}
+                        aria-label={`Select timecard on ${timecard.startDate}`}
                         disabled={timecard.status === 'Billed'}
                       />
                   </TableCell>
-                  <TableCell className="font-medium">{format(new Date(timecard.date.replace(/-/g, '/')), 'MMM d, yyyy')}</TableCell>
+                  <TableCell className="font-medium">
+                    {format(new Date(timecard.startDate.replace(/-/g, '/')), 'MMM d')} - {format(new Date(timecard.endDate.replace(/-/g, '/')), 'MMM d, yyyy')}
+                  </TableCell>
                   <TableCell>{timecard.clientName}</TableCell>
                   <TableCell>{timecard.projectName}</TableCell>
                   <TableCell>{timecard.hours.toFixed(2)}</TableCell>
@@ -267,7 +269,7 @@ export function TimecardList({ timecards }: TimecardListProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the time entry for <span className="font-semibold">{timecardToDelete?.projectName}</span> on <span className="font-semibold">{timecardToDelete ? format(new Date(timecardToDelete.date.replace(/-/g, '/')), 'MMM d, yyyy') : ''}</span>.
+              This action cannot be undone. This will permanently delete the time entry for <span className="font-semibold">{timecardToDelete?.projectName}</span> on <span className="font-semibold">{timecardToDelete ? format(new Date(timecardToDelete.startDate.replace(/-/g, '/')), 'MMM d, yyyy') : ''}</span>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
