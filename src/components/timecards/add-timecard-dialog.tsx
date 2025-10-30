@@ -30,17 +30,17 @@ import type { Client, Project, Timecard } from '@/lib/types';
 import { Textarea } from '../ui/textarea';
 import type { DateRange } from 'react-day-picker';
 
-function calculateWorkHours(startDate?: Date, endDate?: Date): number {
+function calculateWorkHours(startDate?: Date, endDate?: Date, hoursPerDay: number = 8): number {
     if (!startDate) return 0;
     const effectiveEndDate = endDate || startDate;
 
     const days = eachDayOfInterval({ start: startDate, end: effectiveEndDate });
     const workdays = days.filter(day => !isWeekend(day));
     
-    return workdays.length * 8;
+    return workdays.length * hoursPerDay;
 }
 
-const timecardSchema = z.object({
+const getTimecardSchema = (projects: Project[]) => z.object({
   projectId: z.string().min(1, 'Please select a project'),
   dateRange: z.object({
     from: z.date({ required_error: "A start date is required." }),
@@ -49,8 +49,11 @@ const timecardSchema = z.object({
   hours: z.coerce.number().min(0.25, 'Minimum hours is 0.25').max(1000, 'Maximum hours is 1000'),
   description: z.string().optional(),
 }).superRefine((data, ctx) => {
-    if (data.dateRange.from) {
-        const maxHours = calculateWorkHours(data.dateRange.from, data.dateRange.to);
+    if (data.dateRange.from && data.projectId) {
+        const project = projects.find(p => p.id === data.projectId);
+        const hoursPerDay = project?.hoursPerDay || 8;
+        const maxHours = calculateWorkHours(data.dateRange.from, data.dateRange.to, hoursPerDay);
+
         if (data.hours > maxHours) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
@@ -61,7 +64,6 @@ const timecardSchema = z.object({
     }
 });
 
-type TimecardFormValues = z.infer<typeof timecardSchema>;
 
 interface AddTimecardDialogProps {
     projects: Project[];
@@ -76,6 +78,9 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user } = useUser();
+  
+  const timecardSchema = useMemo(() => getTimecardSchema(projects || []), [projects]);
+  type TimecardFormValues = z.infer<typeof timecardSchema>;
 
   const form = useForm<TimecardFormValues>({
     resolver: zodResolver(timecardSchema),
@@ -111,16 +116,22 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
   }, [timecardToEdit, form, isOpen]);
 
   const watchedDateRange = form.watch("dateRange");
+  const watchedProjectId = form.watch("projectId");
 
   useEffect(() => {
       const { from, to } = watchedDateRange || {};
-      const calculatedHours = calculateWorkHours(from, to);
+      if (!from) return;
+      
+      const project = projects.find(p => p.id === watchedProjectId);
+      const hoursPerDay = project?.hoursPerDay || 8;
+
+      const calculatedHours = calculateWorkHours(from, to, hoursPerDay);
       if (calculatedHours > 0) {
           form.setValue('hours', calculatedHours, { shouldValidate: true });
       } else if (from && !to) {
-           form.setValue('hours', 8, { shouldValidate: true });
+           form.setValue('hours', hoursPerDay, { shouldValidate: true });
       }
-  }, [watchedDateRange, form]);
+  }, [watchedDateRange, watchedProjectId, projects, form]);
   
   const disabledDates = useMemo(() => {
     if (watchedDateRange?.from) {
@@ -173,7 +184,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
     onOpenChange(false);
   };
   
-  const formatDateDisplay = (from: Date, to?: Date) => {
+ const formatDateDisplay = (from: Date, to?: Date) => {
     if (!to || from.getTime() === to.getTime()) {
       return `${getDate(from)} of ${format(from, "MMM yyyy")}`;
     }
