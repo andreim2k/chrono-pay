@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CalendarIcon, PlusCircle } from 'lucide-react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -34,7 +34,7 @@ const timecardSchema = z.object({
   projectId: z.string().min(1, 'Please select a project'),
   dateRange: z.object({
     from: z.date({ required_error: "A start date is required." }),
-    to: z.date({ required_error: "An end date is required." }),
+    to: z.date().optional(),
   }),
   hours: z.coerce.number().min(0.25, 'Minimum hours is 0.25').max(1000, 'Maximum hours is 1000'),
   description: z.string().optional(),
@@ -51,9 +51,10 @@ interface AddTimecardDialogProps {
 }
 
 function calculateWorkHours(startDate?: Date, endDate?: Date): number {
-    if (!startDate || !endDate) return 0;
+    if (!startDate) return 0;
+    const effectiveEndDate = endDate || startDate;
 
-    const days = eachDayOfInterval({ start: startDate, end: endDate });
+    const days = eachDayOfInterval({ start: startDate, end: effectiveEndDate });
     const workdays = days.filter(day => !isWeekend(day));
     
     return workdays.length * 8;
@@ -78,7 +79,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
     if (timecardToEdit) {
         form.reset({
             projectId: timecardToEdit.projectId,
-            dateRange: { from: new Date(timecardToEdit.startDate), to: new Date(timecardToEdit.endDate) },
+            dateRange: { from: new Date(timecardToEdit.startDate.replace(/-/g, '/')), to: new Date(timecardToEdit.endDate.replace(/-/g, '/')) },
             hours: timecardToEdit.hours,
             description: timecardToEdit.description || '',
         });
@@ -100,13 +101,13 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
       const calculatedHours = calculateWorkHours(from, to);
       if (calculatedHours > 0) {
           form.setValue('hours', calculatedHours, { shouldValidate: true });
-      } else if (from && to && from.getTime() === to.getTime()) {
+      } else if (from && !to) {
            form.setValue('hours', 8);
       }
   }, [watchedDateRange, form]);
 
   const onSubmit = (data: TimecardFormValues) => {
-    if (!firestore || !user || !data.dateRange.from || !data.dateRange.to) return;
+    if (!firestore || !user || !data.dateRange.from) return;
     
     const project = projects.find(p => p.id === data.projectId);
     const client = clients.find(c => c.id === project?.clientId);
@@ -122,7 +123,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
       clientId: client.id,
       clientName: client.name,
       startDate: format(data.dateRange.from, 'yyyy-MM-dd'),
-      endDate: format(data.dateRange.to, 'yyyy-MM-dd'),
+      endDate: format(data.dateRange.to || data.dateRange.from, 'yyyy-MM-dd'),
       hours: data.hours,
       description: data.description,
       status: 'Unbilled' as const,
@@ -208,13 +209,13 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
                               )}
                             >
                                {field.value.from ? (
-                                    field.value.to ? (
+                                    field.value.to && field.value.from.getTime() !== field.value.to.getTime() ? (
                                     <>
-                                        {format(field.value.from, "LLL d, y")} -{" "}
-                                        {format(field.value.to, "LLL d, y")}
+                                        {format(field.value.from, "PPP")} -{" "}
+                                        {format(field.value.to, "PPP")}
                                     </>
                                     ) : (
-                                    format(field.value.from, "LLL d, y")
+                                    format(field.value.from, "PPP")
                                     )
                                 ) : (
                                     <span>Pick a date range</span>
@@ -228,7 +229,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
                             initialFocus
                             mode="range"
                             defaultMonth={field.value.from}
-                            selected={field.value}
+                            selected={{from: field.value.from, to: field.value.to}}
                             onSelect={field.onChange}
                             numberOfMonths={2}
                           />
