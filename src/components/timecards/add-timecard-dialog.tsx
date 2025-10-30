@@ -90,7 +90,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
         const today = new Date();
         form.reset({
             projectId: '',
-            dateRange: { from: today, to: undefined },
+            dateRange: { from: today, to: today },
             hours: 8,
             description: '',
         });
@@ -166,10 +166,9 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
     }
     
     if (isSameMonth(from, to) && isSameYear(from, to)) {
-      return `${getDate(from)}-${getDate(to)} of ${format(from, "MMM yyyy")}`;
+      return `${getDate(from)} - ${getDate(to)} of ${format(from, "MMM yyyy")}`;
     }
     
-    // Fallback for different months (though disabled in UI)
     return `${format(from, "MMM d, yyyy")} - ${format(to, "MMM d, yyyy")}`;
   };
 
