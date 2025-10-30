@@ -136,6 +136,7 @@ export function CreateInvoiceDialog() {
   const filteredTimecards = useMemo(() => {
     if (!unbilledTimecards) return [];
     return unbilledTimecards.filter(tc => {
+        if (!tc.startDate) return false;
         const tcStartDate = new Date(tc.startDate.replace(/-/g, '/'));
         return tcStartDate.getFullYear() === invoicedYear && tcStartDate.getMonth() === invoicedMonth;
     });
