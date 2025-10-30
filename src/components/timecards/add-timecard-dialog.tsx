@@ -24,7 +24,7 @@ import { useFirestore, addDocumentNonBlocking, useUser, setDocumentNonBlocking }
 import { collection, doc } from 'firebase/firestore';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { cn } from '@/lib/utils';
-import { format, eachDayOfInterval, isWeekend, startOfMonth, endOfMonth, isSameMonth, isSameYear } from 'date-fns';
+import { format, eachDayOfInterval, isWeekend, startOfMonth, endOfMonth, isSameMonth, isSameYear, getDate } from 'date-fns';
 import { Calendar } from '../ui/calendar';
 import type { Client, Project, Timecard } from '@/lib/types';
 import { Textarea } from '../ui/textarea';
@@ -162,11 +162,14 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
   
   const formatDateDisplay = (from: Date, to?: Date) => {
     if (!to || from.getTime() === to.getTime()) {
-      return format(from, "MMM d, yyyy");
+      return `${getDate(from)} of ${format(from, "MMM yyyy")}`;
     }
+    
     if (isSameMonth(from, to) && isSameYear(from, to)) {
-      return `${format(from, "MMM d")} - ${format(to, "d, yyyy")}`;
+      return `${getDate(from)}-${getDate(to)} of ${format(from, "MMM yyyy")}`;
     }
+    
+    // Fallback for different months (though disabled in UI)
     return `${format(from, "MMM d, yyyy")} - ${format(to, "MMM d, yyyy")}`;
   };
 
