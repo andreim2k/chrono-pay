@@ -136,8 +136,8 @@ export function CreateInvoiceDialog() {
   const filteredTimecards = useMemo(() => {
     if (!unbilledTimecards) return [];
     return unbilledTimecards.filter(tc => {
-        const tcDate = new Date(tc.date.replace(/-/g, '/'));
-        return tcDate.getFullYear() === invoicedYear && tcDate.getMonth() === invoicedMonth;
+        const tcStartDate = new Date(tc.startDate.replace(/-/g, '/'));
+        return tcStartDate.getFullYear() === invoicedYear && tcStartDate.getMonth() === invoicedMonth;
     });
   }, [unbilledTimecards, invoicedYear, invoicedMonth]);
 
@@ -253,9 +253,11 @@ export function CreateInvoiceDialog() {
     const currentlySelectedTimecards = filteredTimecards.filter(tc => selectedTimecards[tc.id]);
     if (currentlySelectedTimecards.length === 0) return null;
 
-    const timecardDates = currentlySelectedTimecards.map(tc => parseISO(tc.date));
-    const firstDate = min(timecardDates);
-    const lastDate = max(timecardDates);
+    const allStartDates = currentlySelectedTimecards.map(tc => parseISO(tc.startDate));
+    const allEndDates = currentlySelectedTimecards.map(tc => parseISO(tc.endDate));
+
+    const earliestStartDate = min(allStartDates);
+    const latestEndDate = max(allEndDates);
     
     let items: Invoice['items'], subtotal: number, billedTimecardIds: string[] = [];
     const projectRate = currentProject.rate;
@@ -272,12 +274,12 @@ export function CreateInvoiceDialog() {
     if (currentProject.rateType === 'hourly') {
         quantity = totalHours;
         unit = 'hours';
-        description = `IT Consultancy services for period ${format(firstDate, 'dd.MM.yyyy')} - ${format(lastDate, 'dd.MM.yyyy')} (${quantity.toFixed(2)} ${unit})`;
+        description = `IT Consultancy services for period ${format(earliestStartDate, 'dd.MM.yyyy')} - ${format(latestEndDate, 'dd.MM.yyyy')} (${quantity.toFixed(2)} ${unit})`;
     } else { // daily
         const hoursPerDay = currentProject.hoursPerDay || 8;
         quantity = totalHours / hoursPerDay;
         unit = 'days';
-        description = `IT Consultancy services for period ${format(firstDate, 'dd.MM.yyyy')} - ${format(lastDate, 'dd.MM.yyyy')}`;
+        description = `IT Consultancy services for period ${format(earliestStartDate, 'dd.MM.yyyy')} - ${format(latestEndDate, 'dd.MM.yyyy')}`;
     }
 
     subtotal = quantity * projectRate;
@@ -622,7 +624,7 @@ export function CreateInvoiceDialog() {
                                   <div className='flex items-center gap-3'>
                                     <Checkbox id={`tc-${tc.id}`} checked={!!selectedTimecards[tc.id]} onCheckedChange={(checked) => setSelectedTimecards(prev => ({ ...prev, [tc.id]: !!checked }))} />
                                     <div>
-                                      <p className='font-medium'>{format(new Date(tc.date.replace(/-/g, '/')), 'MMM d, yyyy')}</p>
+                                      <p className='font-medium'>{format(new Date(tc.startDate.replace(/-/g, '/')), 'MMM d')} - {format(new Date(tc.endDate.replace(/-/g, '/')), 'MMM d, yyyy')}</p>
                                       <p className='text-xs text-muted-foreground'>{tc.description || 'No description'}</p>
                                     </div>
                                   </div>
