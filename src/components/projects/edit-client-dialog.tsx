@@ -91,6 +91,12 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
     const dataToSave: any = {
       ...client, // Preserve existing fields like order, logoUrl
       ...data,
+      name: data.name.trim(),
+      address: data.address.trim(),
+      vat: data.vat.trim(),
+      iban: data.iban?.trim(),
+      bankName: data.bankName?.trim(),
+      swift: data.swift?.trim(),
       vatRate: data.vatRate / 100, // Store as a decimal
     };
 
@@ -105,7 +111,7 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
     
     toast({
       title: 'Client Updated',
-      description: `${data.name} has been updated.`,
+      description: `${data.name.trim()} has been updated.`,
     });
     onOpenChange(false);
   };

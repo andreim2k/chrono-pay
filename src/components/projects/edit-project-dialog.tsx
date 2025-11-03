@@ -139,6 +139,8 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
     const dataToSave: any = {
       ...project,
       ...data,
+      name: data.name.trim(),
+      invoiceNumberPrefix: data.invoiceNumberPrefix.trim(),
       clientName: client?.name
     };
 
@@ -160,7 +162,7 @@ export function EditProjectDialog({ project, isOpen, onOpenChange }: EditProject
 
     toast({
       title: 'Project Updated',
-      description: `${data.name} has been updated.`,
+      description: `${data.name.trim()} has been updated.`,
     });
     onOpenChange(false);
   };

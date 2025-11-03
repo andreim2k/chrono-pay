@@ -120,6 +120,8 @@ export function AddProjectDialog() {
     
     const dataToSave: any = {
       ...data,
+      name: data.name.trim(),
+      invoiceNumberPrefix: data.invoiceNumberPrefix.trim(),
       clientName: client?.name,
       order: projects?.length || 0,
     };
@@ -142,7 +144,7 @@ export function AddProjectDialog() {
 
     toast({
       title: 'Project Added',
-      description: `${data.name} has been added for ${client?.name}.`,
+      description: `${data.name.trim()} has been added for ${client?.name}.`,
     });
     form.reset();
     setIsOpen(false);

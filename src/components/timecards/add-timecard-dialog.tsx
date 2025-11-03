@@ -153,7 +153,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
       startDate: format(data.dateRange.from, 'yyyy-MM-dd'),
       endDate: format(data.dateRange.to || data.dateRange.from, 'yyyy-MM-dd'),
       hours: data.hours,
-      description: data.description,
+      description: data.description?.trim(),
       status: 'Unbilled' as const,
     };
 
@@ -215,7 +215,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
                   <FormLabel>Project</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="justify-start">
                         <SelectValue placeholder="Select a project">
                           {field.value ? projects.find(p => p.id === field.value)?.name.trim() : "Select a project"}
                         </SelectValue>

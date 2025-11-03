@@ -76,8 +76,14 @@ export function AddClientDialog() {
     
     const dataToSave: any = {
       ...data,
+      name: data.name.trim(),
+      address: data.address.trim(),
+      vat: data.vat.trim(),
+      iban: data.iban?.trim(),
+      bankName: data.bankName?.trim(),
+      swift: data.swift?.trim(),
       vatRate: data.vatRate / 100, // Store as a decimal
-      logoUrl: `https://picsum.photos/seed/${data.name}/40/40`,
+      logoUrl: `https://picsum.photos/seed/${data.name.trim()}/40/40`,
       order: clients?.length || 0,
     };
     
@@ -85,7 +91,7 @@ export function AddClientDialog() {
     
     toast({
       title: 'Client Added',
-      description: `${data.name} has been added.`,
+      description: `${data.name.trim()} has been added.`,
     });
     form.reset();
     setIsOpen(false);

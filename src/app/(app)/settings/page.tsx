@@ -119,7 +119,14 @@ export default function SettingsPage() {
         const userRef = doc(firestore, `users/${user.uid}`);
 
         const companyData: Partial<User> = {
-            ...data,
+            companyName: data.companyName.trim(),
+            companyAddress: data.companyAddress.trim(),
+            companyVat: data.companyVat.trim(),
+            companyIban: data.companyIban.trim(),
+            companyBankName: data.companyBankName.trim(),
+            companySwift: data.companySwift.trim(),
+            companyPhone: data.companyPhone?.trim(),
+            companyEmail: data.companyEmail?.trim(),
             companyLogoUrl: myCompany?.companyLogoUrl || `https://picsum.photos/seed/my-company/40/40`
         };
 
