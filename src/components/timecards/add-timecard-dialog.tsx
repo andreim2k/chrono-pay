@@ -215,7 +215,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
                   <FormLabel>Project</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="justify-start">
                         <SelectValue placeholder="Select a project" />
                       </SelectTrigger>
                     </FormControl>
@@ -245,7 +245,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
                             <Button
                               variant={"outline"}
                               className={cn(
-                                "w-full pl-3 text-left font-normal",
+                                "w-full justify-start text-left font-normal",
                                 !field.value.from && "text-muted-foreground"
                               )}
                             >
