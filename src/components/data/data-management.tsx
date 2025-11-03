@@ -26,7 +26,7 @@ export function DataManagement({ data }: DataManagementProps) {
       </CardHeader>
       <CardContent className="flex items-center gap-4">
         <DataExport data={data} />
-        <DataImport allowedCollections={['clients', 'projects', 'invoices', 'timecards', 'myCompany']} defaultImportMode='overwrite' />
+        <DataImport allowedCollections={['clients', 'projects', 'invoices', 'timecards', 'myCompany']} defaultImportMode='overwrite' existingData={data} />
       </CardContent>
     </Card>
   );

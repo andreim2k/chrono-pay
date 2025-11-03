@@ -181,6 +181,17 @@ export function DataImport({
                     return !existingTimecardSignatures.has(signature);
                 });
              }
+             if (collectionName === 'clients' && existingData?.clients) {
+                const existingClientNames = new Set(existingData.clients.map((c: Client) => c.name.toLowerCase().trim()));
+                docsToProcess = docsToProcess.filter((docData: any) => !existingClientNames.has(docData.name.toLowerCase().trim()));
+             }
+             if (collectionName === 'projects' && existingData?.projects) {
+                const existingProjectSignatures = new Set(existingData.projects.map((p: Project) => `${p.clientId}-${p.name.toLowerCase().trim()}`));
+                docsToProcess = docsToProcess.filter((docData: any) => {
+                    const signature = `${docData.clientId}-${docData.name.toLowerCase().trim()}`;
+                    return !existingProjectSignatures.has(signature);
+                });
+             }
           }
 
           docsToProcess.forEach((docData: any) => {
