@@ -175,9 +175,9 @@ export function DataImport({
                 docsToProcess = docsToProcess.filter((docData: any) => !existingInvoiceNumbers.has(docData.invoiceNumber));
             }
              if (collectionName === 'timecards' && existingData?.timecards) {
-                const existingTimecardSignatures = new Set(existingData.timecards.map((tc: Timecard) => `${tc.projectId}-${tc.date}-${tc.hours}`));
+                const existingTimecardSignatures = new Set(existingData.timecards.map((tc: Timecard) => `${tc.projectId}-${tc.startDate}-${tc.hours}`));
                 docsToProcess = docsToProcess.filter((docData: any) => {
-                    const signature = `${docData.projectId}-${docData.date}-${docData.hours}`;
+                    const signature = `${docData.projectId}-${docData.startDate}-${docData.hours}`;
                     return !existingTimecardSignatures.has(signature);
                 });
              }
