@@ -82,9 +82,9 @@ export function InvoiceList({ invoices, selectedRows, onSelectedRowsChange }: In
 
     const hasTimecards = invoice.billedTimecardIds && invoice.billedTimecardIds.length > 0;
 
-    if (hasTimecards) {
+    if (hasTimecards && invoice.billedTimecardIds) {
         const newTimecardStatus = newStatus === 'Paid' ? 'Billed' : 'Unbilled';
-        
+
         invoice.billedTimecardIds.forEach(tcId => {
             const timecardRef = doc(firestore, `users/${user.uid}/timecards`, tcId);
             batch.update(timecardRef, { status: newTimecardStatus });
