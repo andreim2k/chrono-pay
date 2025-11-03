@@ -544,9 +544,7 @@ export function CreateInvoiceDialog() {
                   <Label htmlFor="project-select" className="mb-2 block">Project</Label>
                    <Select onValueChange={setSelectedProjectId} value={selectedProjectId || ''}>
                       <SelectTrigger id="project-select">
-                          <SelectValue placeholder="Select a project">
-                              {selectedProjectId ? projectsForClient?.find(p => p.id === selectedProjectId)?.name.trim() : "Select a project"}
-                          </SelectValue>
+                          <SelectValue placeholder="Select a project" />
                       </SelectTrigger>
                       <SelectContent>
                           {projectsForClient?.map(project => (
@@ -800,3 +798,5 @@ export function CreateInvoiceDialog() {
     </>
   );
 }
+
+    
