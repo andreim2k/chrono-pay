@@ -215,7 +215,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
                   <FormLabel>Project</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger className="justify-start">
+                      <SelectTrigger>
                         <SelectValue placeholder="Select a project" />
                       </SelectTrigger>
                     </FormControl>
