@@ -132,7 +132,12 @@ export default function ReportsPage() {
         )}
       </div>
 
-       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <RevenueChart invoices={filteredInvoices || []} />
+        <InvoiceStatusChart invoices={filteredInvoices || []} />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <StatCard
             title="Total VAT Collected (RON)"
             value={formatRon(vatStats.totalVatCollectedRon)}
@@ -149,8 +154,6 @@ export default function ReportsPage() {
        </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <RevenueChart invoices={filteredInvoices || []} />
-        <InvoiceStatusChart invoices={filteredInvoices || []} />
         <VatChart invoices={filteredInvoices || []} selectedYear={selectedYear} />
         <VatChartYearly invoices={allInvoices} />
         <HoursPerProjectChart timecards={filteredTimecards || []} projects={projects || []} />
