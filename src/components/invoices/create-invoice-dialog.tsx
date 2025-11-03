@@ -136,9 +136,9 @@ export function CreateInvoiceDialog() {
   const filteredTimecards = useMemo(() => {
     if (!unbilledTimecards) return [];
     return unbilledTimecards.filter(tc => {
-        if (!tc.startDate) return false;
-        const tcStartDate = new Date(tc.startDate.replace(/-/g, '/'));
-        return tcStartDate.getFullYear() === invoicedYear && tcStartDate.getMonth() === invoicedMonth;
+      if (!tc.startDate) return false;
+      const tcStartDate = new Date(tc.startDate.replace(/-/g, '/'));
+      return tcStartDate.getFullYear() === invoicedYear && tcStartDate.getMonth() === invoicedMonth;
     });
   }, [unbilledTimecards, invoicedYear, invoicedMonth]);
 
@@ -549,7 +549,7 @@ export function CreateInvoiceDialog() {
                     <SelectContent>
                       {projectsForClient?.map(project => (
                         <SelectItem key={project.id} value={project.id}>
-                          {project.name}
+                          {project.name.trim()}
                         </SelectItem>
                       ))}
                     </SelectContent>
