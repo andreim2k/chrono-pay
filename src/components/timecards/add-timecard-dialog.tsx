@@ -133,14 +133,6 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
       }
   }, [watchedDateRange, watchedProjectId, projects, form]);
   
-  const disabledDates = useMemo(() => {
-    if (watchedDateRange?.from) {
-      const start = startOfMonth(watchedDateRange.from);
-      const end = endOfMonth(watchedDateRange.from);
-      return (date: Date) => date < start || date > end;
-    }
-    return undefined;
-  }, [watchedDateRange?.from]);
 
   const onSubmit = (data: TimecardFormValues) => {
     if (!firestore || !user || !data.dateRange.from) return;
@@ -184,7 +176,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
     onOpenChange(false);
   };
   
- const formatDateDisplay = (from: Date, to?: Date) => {
+  const formatDateDisplay = (from: Date, to?: Date) => {
     if (!to || from.getTime() === to.getTime()) {
       return `${getDate(from)} of ${format(from, "MMM yyyy")}`;
     }
@@ -274,7 +266,6 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
                             selected={{from: field.value.from, to: field.value.to}}
                             onSelect={field.onChange}
                             numberOfMonths={1}
-                            disabled={disabledDates}
                           />
                         </PopoverContent>
                       </Popover>
