@@ -57,11 +57,6 @@ export function TimecardList({ timecards }: TimecardListProps) {
 
   const selectedRowCount = useMemo(() => Object.values(selectedRows).filter(Boolean).length, [selectedRows]);
 
-  useEffect(() => {
-    setSelectedRows({});
-  }, [timecards]);
-
-
   const getBadgeVariant = (status: Timecard['status']) => {
     switch (status) {
       case 'Billed':

@@ -60,11 +60,6 @@ export function InvoiceList({ invoices, selectedRows, onSelectedRowsChange }: In
   const showVatColumn = useMemo(() => invoices.some(invoice => invoice.vatAmount && invoice.vatAmount > 0), [invoices]);
   const selectedRowCount = useMemo(() => Object.values(selectedRows).filter(Boolean).length, [selectedRows]);
 
-  useEffect(() => {
-    // Clear selection when invoices change
-    onSelectedRowsChange({});
-  }, [invoices, onSelectedRowsChange]);
-
   const getBadgeVariant = (status: Invoice['status']) => {
     switch (status) {
       case 'Paid':
