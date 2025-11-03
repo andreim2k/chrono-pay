@@ -241,7 +241,7 @@ export function CreateInvoiceDialog() {
   }, [currentProject, toast]);
   
   const generateInvoiceNumber = (project: Project, allInvoices: Invoice[]) => {
-    const prefix = project.invoiceNumberPrefix || project.name.split(' ').map(word => word[0]).join('').toUpperCase();
+    const prefix = project.invoiceNumberPrefix || project.name.trim().split(' ').map(word => word[0]).join('').toUpperCase();
     const projectInvoicesWithPrefix = allInvoices.filter(inv => inv.projectId === project.id && inv.invoiceNumber.startsWith(prefix));
     const nextInvoiceNum = projectInvoicesWithPrefix.length + 1;
     const paddedNumber = String(nextInvoiceNum).padStart(3, '0');
@@ -315,7 +315,7 @@ export function CreateInvoiceDialog() {
       clientIban: selectedClient.iban,
       clientSwift: selectedClient.swift,
       projectId: currentProject.id,
-      projectName: currentProject.name,
+      projectName: currentProject.name.trim(),
       date: creationDateString,
       dueDate: format(addDays(new Date(creationDateString), selectedClient.paymentTerms), 'yyyy-MM-dd'),
       currency: invoiceConfig.currency,
@@ -543,7 +543,7 @@ export function CreateInvoiceDialog() {
                 <div className="space-y-2">
                   <Label htmlFor="project-select" className="mb-2 block">Project</Label>
                    <Select onValueChange={setSelectedProjectId} value={selectedProjectId || ''}>
-                      <SelectTrigger id="project-select">
+                      <SelectTrigger id="project-select" className="justify-start">
                           <SelectValue placeholder="Select a project" />
                       </SelectTrigger>
                       <SelectContent>
@@ -798,5 +798,3 @@ export function CreateInvoiceDialog() {
     </>
   );
 }
-
-    

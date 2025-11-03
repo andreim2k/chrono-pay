@@ -147,7 +147,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
 
     const timecardData = {
       projectId: project.id,
-      projectName: project.name,
+      projectName: project.name.trim(),
       clientId: client.id,
       clientName: client.name,
       startDate: format(data.dateRange.from, 'yyyy-MM-dd'),
@@ -169,7 +169,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
         addDocumentNonBlocking(timecardsCollection, timecardData);
         toast({
             title: 'Timecard Logged',
-            description: `${data.hours} hours logged for ${project.name}.`,
+            description: `${data.hours} hours logged for ${project.name.trim()}.`,
         });
     }
     
@@ -216,9 +216,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
                   <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="justify-start">
-                        <SelectValue placeholder="Select a project">
-                          {field.value ? projects.find(p => p.id === field.value)?.name.trim() : "Select a project"}
-                        </SelectValue>
+                        <SelectValue placeholder="Select a project" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
