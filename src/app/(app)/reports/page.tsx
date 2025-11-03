@@ -65,7 +65,7 @@ export default function ReportsPage() {
   const filteredTimecards = useMemo(() => {
     if (allTimecards.length === 0) return [];
     if (selectedYear === 'all') return allTimecards;
-    return allTimecards.filter(tc => getYear(parseISO(tc.date)) === selectedYear);
+    return allTimecards.filter(tc => tc.startDate && getYear(parseISO(tc.startDate)) === selectedYear);
   }, [allTimecards, selectedYear]);
 
 
