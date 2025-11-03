@@ -147,7 +147,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
 
     const timecardData = {
       projectId: project.id,
-      projectName: project.name.trim(),
+      projectName: project.name,
       clientId: client.id,
       clientName: client.name,
       startDate: format(data.dateRange.from, 'yyyy-MM-dd'),
@@ -169,7 +169,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
         addDocumentNonBlocking(timecardsCollection, timecardData);
         toast({
             title: 'Timecard Logged',
-            description: `${data.hours} hours logged for ${project.name.trim()}.`,
+            description: `${data.hours} hours logged for ${project.name}.`,
         });
     }
     
@@ -215,14 +215,14 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
                   <FormLabel>Project</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="justify-start">
                         <SelectValue placeholder="Select a project" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {projects.map(project => (
                         <SelectItem key={project.id} value={project.id}>
-                          {project.name.trim()} ({project.clientName})
+                          {project.name} ({project.clientName})
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -245,7 +245,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
                             <Button
                               variant={"outline"}
                               className={cn(
-                                "w-full justify-start text-left font-normal",
+                                "w-full justify-start text-left font-normal pl-3",
                                 !field.value.from && "text-muted-foreground"
                               )}
                             >
