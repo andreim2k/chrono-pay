@@ -213,16 +213,18 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Project</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a project" />
+                        <SelectValue placeholder="Select a project">
+                          {field.value ? projects.find(p => p.id === field.value)?.name.trim() : "Select a project"}
+                        </SelectValue>
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {projects.map(project => (
                         <SelectItem key={project.id} value={project.id}>
-                          {project.name} ({project.clientName})
+                          {project.name.trim()} ({project.clientName})
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -265,7 +267,6 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
                             defaultMonth={field.value.from}
                             selected={{from: field.value.from, to: field.value.to}}
                             onSelect={field.onChange}
-                            numberOfMonths={1}
                           />
                         </PopoverContent>
                       </Popover>
