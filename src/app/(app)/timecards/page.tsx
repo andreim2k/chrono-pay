@@ -117,7 +117,7 @@ export default function TimecardsPage() {
               <SelectTrigger className="justify-start"><SelectValue placeholder="Filter by Project" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Projects</SelectItem>
-                {projectsForClient?.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                {projectsForClient?.map(p => <SelectItem key={p.id} value={p.id}>{p.name.trim()}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={selectedYear} onValueChange={setSelectedYear}>

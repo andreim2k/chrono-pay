@@ -549,7 +549,7 @@ export function CreateInvoiceDialog() {
                       <SelectContent>
                           {projectsForClient?.map(project => (
                               <SelectItem key={project.id} value={project.id}>
-                                  {project.name}
+                                  {project.name.trim()}
                               </SelectItem>
                           ))}
                       </SelectContent>

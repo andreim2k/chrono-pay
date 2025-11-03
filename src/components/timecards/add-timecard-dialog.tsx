@@ -222,7 +222,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
                     <SelectContent>
                       {projects.map(project => (
                         <SelectItem key={project.id} value={project.id}>
-                          {project.name} ({project.clientName})
+                          {project.name.trim()} ({project.clientName})
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -245,7 +245,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
                             <Button
                               variant={"outline"}
                               className={cn(
-                                "w-full justify-start text-left font-normal pl-3",
+                                "w-full justify-start text-left font-normal",
                                 !field.value.from && "text-muted-foreground"
                               )}
                             >
