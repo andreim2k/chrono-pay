@@ -45,7 +45,9 @@ const translations = {
         unit: {
             days: 'days',
             hours: 'hours'
-        }
+        },
+        payoutDetails: 'Payout Details',
+        project: 'Project'
     },
     ro: {
         address: 'Adresă',
@@ -78,7 +80,9 @@ const translations = {
         unit: {
             days: 'zile',
             hours: 'ore'
-        }
+        },
+        payoutDetails: 'Detalii Plată',
+        project: 'Proiect'
     }
 };
 
@@ -679,7 +683,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
               {clientIban && <><br/>{t.iban}: {clientIban}</>}
               {clientSwift && <><br/>{t.swift}: {clientSwift}</>}
             </div>
-            {invoice.projectName && <p className='text-gray-600 text-sm mt-2'>Project: {invoice.projectName}</p>}
+            {invoice.projectName && <p className='text-gray-600 text-sm mt-2'>{t.project}: {invoice.projectName}</p>}
         </div>
         <div className="text-right">
           <div>
@@ -691,7 +695,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
             <p className="text-gray-700 font-medium mt-1">{formatDateWithOrdinal(dueDate)}</p>
           </div>
            <div className='mt-4 text-sm'>
-             <p className="text-gray-500 uppercase tracking-wider font-semibold">Payout Details</p>
+             <p className="text-gray-500 uppercase tracking-wider font-semibold">{t.payoutDetails}</p>
              <div className='text-gray-700 mt-1' style={{lineHeight: '1.2'}}>
               {t.bank}: {companyBankName}
               <br/>{t.iban}: {companyIban}
@@ -731,7 +735,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                 {clientIban && <><br/>{t.iban}: {clientIban}</>}
                 {clientSwift && <><br/>{t.swift}: {clientSwift}</>}
             </div>
-            {invoice.projectName && <div className='mt-2'><p>Project: {invoice.projectName}</p></div>}
+            {invoice.projectName && <div className='mt-2'><p>{t.project}: {invoice.projectName}</p></div>}
           </div>
         </div>
         <div className={cn('p-4 rounded-lg', styles.secondaryBg)}>
@@ -747,7 +751,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
           </div>
           <div className='border-t my-3'></div>
           <div className='text-sm'>
-            <p className="font-semibold uppercase tracking-wide">Payout Details</p>
+            <p className="font-semibold uppercase tracking-wide">{t.payoutDetails}</p>
              <div className='text-gray-700 mt-2' style={{lineHeight: '1.2'}}>
               {t.bank}: {companyBankName}
               <br/>{t.iban}: {companyIban}
@@ -793,7 +797,7 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
                     {clientIban && <><br/>{t.iban}: {clientIban}</>}
                     {clientSwift && <><br/>{t.swift}: {clientSwift}</>}
                 </div>
-                 {invoice.projectName && <div className='mt-2'><p>Project: {invoice.projectName}</p></div>}
+                 {invoice.projectName && <div className='mt-2'><p>{t.project}: {invoice.projectName}</p></div>}
             </div>
             <div className="text-right">
                 <p className={cn('text-xs font-bold uppercase', styles.headerTextClass)}>{t.invoiceDate}</p>
