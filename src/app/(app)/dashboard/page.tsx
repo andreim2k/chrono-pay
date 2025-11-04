@@ -63,7 +63,7 @@ export default function DashboardPage() {
         return acc + vatInRon;
     }, 0);
     
-    const unbilledHours = safeTimecards.filter(tc => tc.status === 'Unbilled').reduce((acc, tc) => acc + tc.hours, 0);
+    const unbilledHours = safeTimecards.filter(tc => tc.status === 'Billable').reduce((acc, tc) => acc + tc.hours, 0);
     
     const paidEurNoVat = paidInvoices
       .filter(inv => inv.currency === 'EUR' && (!inv.vatAmount || inv.vatAmount === 0))

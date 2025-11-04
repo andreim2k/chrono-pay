@@ -130,11 +130,24 @@ export function DataImport({
       });
       return;
     }
-    
+
     setIsImporting(true);
     try {
       const fileContent = await fileToImport.text();
-      const dataToImport = JSON.parse(fileContent);
+
+      let dataToImport;
+      try {
+        dataToImport = JSON.parse(fileContent);
+      } catch (parseError) {
+        toast({
+          variant: 'destructive',
+          title: 'Invalid File Format',
+          description: 'The selected file is not a valid JSON file. Please check the file and try again.',
+        });
+        setIsImporting(false);
+        setFileToImport(null);
+        return;
+      }
 
       const batch = writeBatch(firestore);
       let importCount = 0;

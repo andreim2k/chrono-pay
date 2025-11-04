@@ -443,19 +443,34 @@ export function CreateInvoiceDialog() {
     if (!previewRef.current || !invoiceData) return;
 
     setIsGenerating(true);
-    const canvas = await html2canvas(previewRef.current, {
+    try {
+      const canvas = await html2canvas(previewRef.current, {
         scale: 4, // Higher scale for better resolution
         useCORS: true,
         backgroundColor: '#ffffff',
-    });
-    const imgData = canvas.toDataURL('image/png');
+      });
+      const imgData = canvas.toDataURL('image/png');
 
-    const doc = new jsPDF('p', 'mm', 'a4');
-    const pdfWidth = doc.internal.pageSize.getWidth();
-    const pdfHeight = doc.internal.pageSize.getHeight();
-    doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, '', 'FAST');
-    doc.save(`invoice-${invoiceData.invoiceNumber}.pdf`);
-    setIsGenerating(false);
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = doc.internal.pageSize.getWidth();
+      const pdfHeight = doc.internal.pageSize.getHeight();
+      doc.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, '', 'FAST');
+      doc.save(`invoice-${invoiceData.invoiceNumber}.pdf`);
+
+      toast({
+        title: 'PDF Downloaded',
+        description: `Invoice ${invoiceData.invoiceNumber} has been downloaded successfully.`,
+      });
+    } catch (error) {
+      console.error('PDF download failed:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Download Failed',
+        description: 'Could not download the invoice PDF. Please try again.',
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   }
   
   // Reset state when dialog is closed

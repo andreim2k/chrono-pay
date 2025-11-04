@@ -57,8 +57,17 @@ export function ExportMenu({ uiData, rawData, filename, buttonLabel = 'Export Da
 
   const handlePdfExport = () => {
     try {
+      if (uiData.length === 0) {
+        toast({
+          variant: 'destructive',
+          title: 'Export Failed',
+          description: 'No data available to export.',
+        });
+        return;
+      }
+
       const doc = new jsPDF();
-      const headers = Object.keys(uiData[0] || {});
+      const headers = Object.keys(uiData[0]);
       const body = uiData.map(row => headers.map(header => row[header]));
 
       (doc as any).autoTable({

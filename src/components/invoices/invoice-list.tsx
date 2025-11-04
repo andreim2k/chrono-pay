@@ -113,31 +113,48 @@ export function InvoiceList({ invoices, selectedRows, onSelectedRowsChange }: In
   const handleDownloadPdf = async (invoice: Invoice) => {
     setInvoiceToView(invoice);
     setIsGenerating(true);
-    
-    // We need a short timeout to allow the hidden preview to render with the correct invoice data
-    setTimeout(async () => {
-      if (!previewRef.current) {
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Could not generate PDF. Preview element not found.',
-        });
-        setIsGenerating(false);
-        return;
-      }
 
-      const canvas = await html2canvas(previewRef.current, { scale: 4, useCORS: true, backgroundColor: '#ffffff' });
-      const imgData = canvas.toDataURL('image/png');
+    // Use requestAnimationFrame to wait for DOM update, then wait one more frame to ensure rendering
+    requestAnimationFrame(() => {
+      requestAnimationFrame(async () => {
+        try {
+          if (!previewRef.current) {
+            toast({
+              variant: 'destructive',
+              title: 'Error',
+              description: 'Could not generate PDF. Preview element not found.',
+            });
+            setIsGenerating(false);
+            setInvoiceToView(null);
+            return;
+          }
 
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, '', 'FAST');
-      pdf.save(`invoice-${invoice.invoiceNumber}.pdf`);
-      
-      setIsGenerating(false);
-      setInvoiceToView(null);
-    }, 100);
+          const canvas = await html2canvas(previewRef.current, { scale: 4, useCORS: true, backgroundColor: '#ffffff' });
+          const imgData = canvas.toDataURL('image/png');
+
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = pdf.internal.pageSize.getHeight();
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, '', 'FAST');
+          pdf.save(`invoice-${invoice.invoiceNumber}.pdf`);
+
+          toast({
+            title: 'PDF Downloaded',
+            description: `Invoice ${invoice.invoiceNumber} has been downloaded.`,
+          });
+        } catch (error) {
+          console.error('PDF generation failed:', error);
+          toast({
+            variant: 'destructive',
+            title: 'PDF Generation Failed',
+            description: 'Could not generate the PDF. Please try again.',
+          });
+        } finally {
+          setIsGenerating(false);
+          setInvoiceToView(null);
+        }
+      });
+    });
   }
 
   const generatePreview = useCallback(async () => {
