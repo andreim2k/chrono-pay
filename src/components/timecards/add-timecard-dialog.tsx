@@ -199,7 +199,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
             </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{timecardToEdit ? 'Edit Time Entry' : 'Add New Time Entry'}</DialogTitle>
           <DialogDescription>
@@ -216,13 +216,13 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
                   <FormLabel>Project</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a project" className="truncate" />
+                      <SelectTrigger className="[&>span]:max-w-[calc(100%-2rem)]">
+                        <SelectValue placeholder="Select a project" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {projects.map(project => (
-                        <SelectItem key={project.id} value={project.id} className="truncate">
+                        <SelectItem key={project.id} value={project.id}>
                           {project.name.trim()} ({project.clientName})
                         </SelectItem>
                       ))}
