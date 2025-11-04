@@ -413,7 +413,7 @@ export function CreateInvoiceDialog() {
       invoiceData.billedTimecardIds.forEach(timecardId => {
         const timecardRef = doc(firestore, `users/${user.uid}/timecards`, timecardId);
         batch.update(timecardRef, {
-          status: 'Billed',
+          status: 'Pending',
           invoiceId: newInvoiceRef.id,
         });
       });
@@ -543,7 +543,7 @@ export function CreateInvoiceDialog() {
                 <div className="space-y-2">
                   <Label htmlFor="project-select" className="mb-2 block">Project</Label>
                    <Select onValueChange={setSelectedProjectId} value={selectedProjectId || ''}>
-                      <SelectTrigger id="project-select">
+                      <SelectTrigger id="project-select" className="justify-start">
                           <SelectValue placeholder="Select a project" />
                       </SelectTrigger>
                       <SelectContent>

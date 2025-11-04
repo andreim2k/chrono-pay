@@ -83,7 +83,10 @@ export function InvoiceList({ invoices, selectedRows, onSelectedRowsChange }: In
     const hasTimecards = invoice.billedTimecardIds && invoice.billedTimecardIds.length > 0;
 
     if (hasTimecards && invoice.billedTimecardIds) {
-        const newTimecardStatus = newStatus === 'Paid' ? 'Billed' : 'Unbilled';
+        let newTimecardStatus: 'Billed' | 'Pending' = 'Pending';
+        if (newStatus === 'Paid') {
+            newTimecardStatus = 'Billed';
+        }
 
         invoice.billedTimecardIds.forEach(tcId => {
             const timecardRef = doc(firestore, `users/${user.uid}/timecards`, tcId);
@@ -434,3 +437,4 @@ export function InvoiceList({ invoices, selectedRows, onSelectedRowsChange }: In
     
 
     
+

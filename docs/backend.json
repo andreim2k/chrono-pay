@@ -1,4 +1,5 @@
 
+
 {
     "entities": {
         "User": {
@@ -185,10 +186,15 @@
                     "type": "string",
                     "description": "The name of the associated client."
                 },
-                "date": {
+                "startDate": {
                     "type": "string",
                     "format": "date",
-                    "description": "The date the work was performed."
+                    "description": "The start date the work was performed."
+                },
+                "endDate": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "The end date the work was performed."
                 },
                 "hours": {
                     "type": "number",
@@ -200,7 +206,7 @@
                 },
                 "status": {
                     "type": "string",
-                    "enum": ["Unbilled", "Billed"],
+                    "enum": ["Unbilled", "Pending", "Billed"],
                     "description": "The billing status of the timecard."
                 },
                 "invoiceId": {
@@ -208,7 +214,7 @@
                     "description": "The ID of the invoice this timecard is associated with, once billed."
                 }
             },
-            "required": ["projectId", "projectName", "clientId", "clientName", "date", "hours", "status"]
+            "required": ["projectId", "projectName", "clientId", "clientName", "startDate", "endDate", "hours", "status"]
         },
         "Invoice": {
             "title": "Invoice",

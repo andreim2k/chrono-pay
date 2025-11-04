@@ -72,7 +72,7 @@ export type Timecard = {
     endDate: string; // YYYY-MM-DD
     hours: number;
     description?: string;
-    status: 'Unbilled' | 'Billed';
+    status: 'Unbilled' | 'Pending' | 'Billed';
     invoiceId?: string; // ID of the invoice this timecard is billed on
 }
 

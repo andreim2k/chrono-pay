@@ -61,6 +61,8 @@ export function TimecardList({ timecards }: TimecardListProps) {
     switch (status) {
       case 'Billed':
         return 'default';
+      case 'Pending':
+        return 'outline';
       case 'Unbilled':
         return 'secondary';
       default:
@@ -202,7 +204,7 @@ export function TimecardList({ timecards }: TimecardListProps) {
                         checked={selectedRows[timecard.id] || false}
                         onCheckedChange={(checked) => handleRowSelect(timecard.id, Boolean(checked))}
                         aria-label={`Select timecard on ${timecard.startDate}`}
-                        disabled={timecard.status === 'Billed'}
+                        disabled={timecard.status !== 'Unbilled'}
                       />
                   </TableCell>
                   <TableCell className="font-medium">
@@ -223,10 +225,10 @@ export function TimecardList({ timecards }: TimecardListProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
-                        <DropdownMenuItem onSelect={() => openEditDialog(timecard)} disabled={timecard.status === 'Billed'}>
+                        <DropdownMenuItem onSelect={() => openEditDialog(timecard)} disabled={timecard.status !== 'Unbilled'}>
                           <Edit className="mr-2 h-4 w-4" /> Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => openDeleteDialog(timecard)} disabled={timecard.status === 'Billed'}>
+                        <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => openDeleteDialog(timecard)} disabled={timecard.status !== 'Unbilled'}>
                           <Trash2 className="mr-2 h-4 w-4" /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
