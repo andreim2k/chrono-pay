@@ -130,11 +130,10 @@ body {
       hsla(var(--card), 0.85) 100%) !important;
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border-color: hsla(var(--border), 0.4) !important;
+    border-color: hsl(var(--border)) !important;
     box-shadow:
-      0 8px 32px -8px rgba(103, 58, 183, 0.15),
-      0 12px 48px -12px rgba(0, 188, 212, 0.1),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.15) !important;
+      0 8px 32px -8px rgba(103, 58, 183, 0.08),
+      0 12px 48px -12px rgba(0, 188, 212, 0.05) !important;
     position: relative;
     overflow: hidden;
   }
@@ -169,12 +168,11 @@ body {
       hsla(var(--card), 0.5) 100%) !important;
     backdrop-filter: blur(24px) saturate(200%);
     -webkit-backdrop-filter: blur(24px) saturate(200%);
-    border-color: hsla(var(--border), 0.6) !important;
+    border-color: hsl(var(--border)) !important;
     box-shadow:
-      0 8px 32px -8px rgba(79, 143, 247, 0.3),
-      0 12px 48px -12px rgba(139, 92, 246, 0.2),
-      0 20px 60px -20px rgba(0, 188, 212, 0.15),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.1) !important;
+      0 8px 32px -8px rgba(79, 143, 247, 0.12),
+      0 12px 48px -12px rgba(139, 92, 246, 0.08),
+      0 20px 60px -20px rgba(0, 188, 212, 0.06) !important;
   }
 
   .dark .bg-card::before {
@@ -190,18 +188,16 @@ body {
   .bg-card:hover {
     transform: translateY(-2px);
     box-shadow:
-      0 12px 40px -8px rgba(103, 58, 183, 0.2),
-      0 16px 56px -12px rgba(0, 188, 212, 0.15),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.25) !important;
+      0 12px 40px -8px rgba(103, 58, 183, 0.12),
+      0 16px 56px -12px rgba(0, 188, 212, 0.08) !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .dark .bg-card:hover {
     box-shadow:
-      0 12px 40px -8px rgba(79, 143, 247, 0.4),
-      0 16px 56px -12px rgba(139, 92, 246, 0.3),
-      0 24px 72px -20px rgba(0, 188, 212, 0.2),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.15) !important;
+      0 12px 40px -8px rgba(79, 143, 247, 0.18),
+      0 16px 56px -12px rgba(139, 92, 246, 0.12),
+      0 24px 72px -20px rgba(0, 188, 212, 0.08) !important;
   }
 
   /* Ensure content is above background */
