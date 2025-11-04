@@ -275,7 +275,7 @@ export function CreateInvoiceDialog() {
     if (currentProject.rateType === 'hourly') {
         quantity = totalHours;
         unit = 'hours';
-        description = `IT Consultancy services for period ${format(earliestStartDate, 'dd.MM.yyyy')} - ${format(latestEndDate, 'dd.MM.yyyy')} (${quantity.toFixed(2)} ${unit})`;
+        description = `IT Consultancy services for period ${format(earliestStartDate, 'dd.MM.yyyy')} - ${format(latestEndDate, 'dd.MM.yyyy')}`;
     } else { // daily
         const hoursPerDay = currentProject.hoursPerDay || 8;
         quantity = totalHours / hoursPerDay;
@@ -543,7 +543,7 @@ export function CreateInvoiceDialog() {
                 <div className="space-y-2">
                   <Label htmlFor="project-select" className="mb-2 block">Project</Label>
                    <Select onValueChange={setSelectedProjectId} value={selectedProjectId || ''}>
-                      <SelectTrigger id="project-select">
+                      <SelectTrigger id="project-select" className="justify-start">
                           <SelectValue placeholder="Select a project" />
                       </SelectTrigger>
                       <SelectContent>
