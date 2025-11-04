@@ -63,9 +63,9 @@ export function TimecardList({ timecards }: TimecardListProps) {
       case 'Billed':
         return 'default';
       case 'Pending':
-        return 'outline';
-      case 'Unbilled':
         return 'secondary';
+      case 'Created':
+        return 'outline';
       default:
         return 'outline';
     }
@@ -97,7 +97,7 @@ export function TimecardList({ timecards }: TimecardListProps) {
     const newSelectedRows: Record<string, boolean> = {};
     if (checked) {
       timecards.forEach(tc => {
-        if(tc.status === 'Unbilled') newSelectedRows[tc.id] = true
+        if(tc.status === 'Created') newSelectedRows[tc.id] = true
       });
     }
     setSelectedRows(newSelectedRows);
@@ -183,7 +183,7 @@ export function TimecardList({ timecards }: TimecardListProps) {
               <TableRow>
                 <TableHead className="w-[50px]">
                     <Checkbox
-                        checked={timecards.filter(t => t.status === 'Unbilled').length > 0 && selectedRowCount === timecards.filter(t => t.status === 'Unbilled').length}
+                        checked={timecards.filter(t => t.status === 'Created').length > 0 && selectedRowCount === timecards.filter(t => t.status === 'Created').length}
                         onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
                         aria-label="Select all unbilled"
                     />
@@ -205,7 +205,7 @@ export function TimecardList({ timecards }: TimecardListProps) {
                         checked={selectedRows[timecard.id] || false}
                         onCheckedChange={(checked) => handleRowSelect(timecard.id, Boolean(checked))}
                         aria-label={`Select timecard on ${timecard.startDate}`}
-                        disabled={timecard.status !== 'Unbilled'}
+                        disabled={timecard.status !== 'Created'}
                       />
                   </TableCell>
                   <TableCell className="font-medium">
@@ -221,15 +221,15 @@ export function TimecardList({ timecards }: TimecardListProps) {
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" disabled={timecard.status !== 'Unbilled'}>
+                        <Button variant="ghost" size="icon" disabled={timecard.status !== 'Created'}>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
-                        <DropdownMenuItem onSelect={() => openEditDialog(timecard)} disabled={timecard.status !== 'Unbilled'}>
+                        <DropdownMenuItem onSelect={() => openEditDialog(timecard)} disabled={timecard.status !== 'Created'}>
                           <Edit className="mr-2 h-4 w-4" /> Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => openDeleteDialog(timecard)} disabled={timecard.status !== 'Unbilled'}>
+                        <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => openDeleteDialog(timecard)} disabled={timecard.status !== 'Created'}>
                           <Trash2 className="mr-2 h-4 w-4" /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>

@@ -1,6 +1,7 @@
 
 
 
+
 export type User = {
   id: string;
   name: string;
@@ -73,7 +74,7 @@ export type Timecard = {
     endDate: string; // YYYY-MM-DD
     hours: number;
     description?: string;
-    status: 'Unbilled' | 'Pending' | 'Billed';
+    status: 'Created' | 'Pending' | 'Billed';
     invoiceId?: string; // ID of the invoice this timecard is billed on
 }
 

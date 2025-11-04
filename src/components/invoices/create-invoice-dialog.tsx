@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
@@ -128,7 +129,7 @@ export function CreateInvoiceDialog() {
     return query(
         collection(firestore, `users/${user.uid}/timecards`),
         where('projectId', '==', selectedProjectId),
-        where('status', '==', 'Unbilled')
+        where('status', '==', 'Created')
     );
   }, [firestore, user, selectedProjectId]);
   const { data: unbilledTimecards } = useCollection<Timecard>(unbilledTimecardsQuery, `users/${user?.uid}/timecards`);
@@ -610,7 +611,7 @@ export function CreateInvoiceDialog() {
                     
                     <Card>
                       <CardHeader className='flex-row items-center justify-between py-3 px-4'>
-                        <CardTitle className='text-base'>Unbilled Timecards</CardTitle>
+                        <CardTitle className='text-base'>Timecards to Invoice</CardTitle>
                         <div className='flex items-center space-x-2'>
                           <Label htmlFor='select-all-timecards' className='text-sm font-normal'>Select All</Label>
                           <Checkbox id='select-all-timecards' onCheckedChange={handleSelectAllTimecards} />
@@ -634,7 +635,7 @@ export function CreateInvoiceDialog() {
                               ))
                             ) : (
                               <div className='text-center text-sm text-muted-foreground py-10'>
-                                No unbilled time for this project in {months[invoicedMonth].label} {invoicedYear}.
+                                No timecards with status 'Created' for this project in {months[invoicedMonth].label} {invoicedYear}.
                               </div>
                             )}
                           </div>

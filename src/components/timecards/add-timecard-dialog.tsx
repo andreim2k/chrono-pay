@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -154,7 +155,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
       endDate: format(data.dateRange.to || data.dateRange.from, 'yyyy-MM-dd'),
       hours: data.hours,
       description: data.description?.trim(),
-      status: 'Unbilled' as const,
+      status: 'Created' as const,
     };
 
     if (timecardToEdit) {
