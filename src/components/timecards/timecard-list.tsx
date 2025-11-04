@@ -64,7 +64,7 @@ export function TimecardList({ timecards }: TimecardListProps) {
         return 'default';
       case 'Pending':
         return 'secondary';
-      case 'Created':
+      case 'Billable':
         return 'outline';
       default:
         return 'outline';
@@ -97,7 +97,7 @@ export function TimecardList({ timecards }: TimecardListProps) {
     const newSelectedRows: Record<string, boolean> = {};
     if (checked) {
       timecards.forEach(tc => {
-        if(tc.status === 'Created') newSelectedRows[tc.id] = true
+        if(tc.status === 'Billable') newSelectedRows[tc.id] = true
       });
     }
     setSelectedRows(newSelectedRows);
@@ -183,9 +183,9 @@ export function TimecardList({ timecards }: TimecardListProps) {
               <TableRow>
                 <TableHead className="w-[50px]">
                     <Checkbox
-                        checked={timecards.filter(t => t.status === 'Created').length > 0 && selectedRowCount === timecards.filter(t => t.status === 'Created').length}
+                        checked={timecards.filter(t => t.status === 'Billable').length > 0 && selectedRowCount === timecards.filter(t => t.status === 'Billable').length}
                         onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
-                        aria-label="Select all unbilled"
+                        aria-label="Select all billable"
                     />
                 </TableHead>
                 <TableHead>Date</TableHead>
@@ -205,7 +205,7 @@ export function TimecardList({ timecards }: TimecardListProps) {
                         checked={selectedRows[timecard.id] || false}
                         onCheckedChange={(checked) => handleRowSelect(timecard.id, Boolean(checked))}
                         aria-label={`Select timecard on ${timecard.startDate}`}
-                        disabled={timecard.status !== 'Created'}
+                        disabled={timecard.status !== 'Billable'}
                       />
                   </TableCell>
                   <TableCell className="font-medium">
@@ -221,15 +221,15 @@ export function TimecardList({ timecards }: TimecardListProps) {
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" disabled={timecard.status !== 'Created'}>
+                        <Button variant="ghost" size="icon" disabled={timecard.status !== 'Billable'}>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
-                        <DropdownMenuItem onSelect={() => openEditDialog(timecard)} disabled={timecard.status !== 'Created'}>
+                        <DropdownMenuItem onSelect={() => openEditDialog(timecard)} disabled={timecard.status !== 'Billable'}>
                           <Edit className="mr-2 h-4 w-4" /> Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => openDeleteDialog(timecard)} disabled={timecard.status !== 'Created'}>
+                        <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => openDeleteDialog(timecard)} disabled={timecard.status !== 'Billable'}>
                           <Trash2 className="mr-2 h-4 w-4" /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -279,5 +279,3 @@ export function TimecardList({ timecards }: TimecardListProps) {
     </>
   );
 }
-
-    

@@ -206,7 +206,7 @@
                 },
                 "status": {
                     "type": "string",
-                    "enum": ["Created", "Pending", "Billed"],
+                    "enum": ["Billable", "Pending", "Billed"],
                     "description": "The billing status of the timecard."
                 },
                 "invoiceId": {

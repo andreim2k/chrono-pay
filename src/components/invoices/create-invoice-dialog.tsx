@@ -129,7 +129,7 @@ export function CreateInvoiceDialog() {
     return query(
         collection(firestore, `users/${user.uid}/timecards`),
         where('projectId', '==', selectedProjectId),
-        where('status', '==', 'Created')
+        where('status', '==', 'Billable')
     );
   }, [firestore, user, selectedProjectId]);
   const { data: unbilledTimecards } = useCollection<Timecard>(unbilledTimecardsQuery, `users/${user?.uid}/timecards`);
@@ -635,7 +635,7 @@ export function CreateInvoiceDialog() {
                               ))
                             ) : (
                               <div className='text-center text-sm text-muted-foreground py-10'>
-                                No timecards with status 'Created' for this project in {months[invoicedMonth].label} {invoicedYear}.
+                                No timecards with status 'Billable' for this project in {months[invoicedMonth].label} {invoicedYear}.
                               </div>
                             )}
                           </div>

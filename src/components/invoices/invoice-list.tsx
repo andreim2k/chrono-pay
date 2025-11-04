@@ -191,7 +191,7 @@ export function InvoiceList({ invoices, selectedRows, onSelectedRowsChange }: In
     if (invoiceToDelete.billedTimecardIds && invoiceToDelete.billedTimecardIds.length > 0) {
         invoiceToDelete.billedTimecardIds.forEach(tcId => {
             const timecardRef = doc(firestore, `users/${user.uid}/timecards`, tcId);
-            batch.update(timecardRef, { status: 'Created', invoiceId: '' });
+            batch.update(timecardRef, { status: 'Billable', invoiceId: '' });
         });
     }
 
@@ -240,7 +240,7 @@ export function InvoiceList({ invoices, selectedRows, onSelectedRowsChange }: In
         if (invoice?.billedTimecardIds) {
             invoice.billedTimecardIds.forEach(tcId => {
                 const timecardRef = doc(firestore, `users/${user.uid}/timecards`, tcId);
-                batch.update(timecardRef, { status: 'Created', invoiceId: '' });
+                batch.update(timecardRef, { status: 'Billable', invoiceId: '' });
             });
         }
     });
@@ -422,7 +422,7 @@ export function InvoiceList({ invoices, selectedRows, onSelectedRowsChange }: In
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete invoice <span className="font-semibold">{invoiceToDelete?.invoiceNumber}</span>. Associated timecards will be marked as 'Created'. This action cannot be undone.
+              This will permanently delete invoice <span className="font-semibold">{invoiceToDelete?.invoiceNumber}</span>. Associated timecards will be marked as 'Billable'. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -434,11 +434,3 @@ export function InvoiceList({ invoices, selectedRows, onSelectedRowsChange }: In
     </>
   );
 }
-
-    
-
-    
-
-
-
-    

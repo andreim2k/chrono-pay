@@ -2,6 +2,7 @@
 
 
 
+
 export type User = {
   id: string;
   name: string;
@@ -74,7 +75,7 @@ export type Timecard = {
     endDate: string; // YYYY-MM-DD
     hours: number;
     description?: string;
-    status: 'Created' | 'Pending' | 'Billed';
+    status: 'Billable' | 'Pending' | 'Billed';
     invoiceId?: string; // ID of the invoice this timecard is billed on
 }
 
@@ -123,7 +124,3 @@ export type Invoice = {
 };
 
 export type InvoiceTheme = 'Classic' | 'Modern' | 'Sunset' | 'Ocean' | 'Monochrome' | 'Minty' | 'Velvet' | 'Corporate Blue' | 'Earthy Tones' | 'Creative' | 'Slate Gray' | 'Dark Charcoal' | 'Navy Blue' | 'Forest Green' | 'Burgundy' | 'Teal' | 'Coral' | 'Lavender' | 'Golden' | 'Steel Blue' | 'Light Blue' | 'Sky Blue' | 'Mint Green' | 'Lime' | 'Peach' | 'Rose' | 'Lilac' | 'Sand' | 'Olive' | 'Maroon' | 'Deep Purple' | 'Turquoise' | 'Charcoal' | 'Crimson' | 'Sapphire';
-
-    
-
-    

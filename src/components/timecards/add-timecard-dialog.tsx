@@ -155,7 +155,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
       endDate: format(data.dateRange.to || data.dateRange.from, 'yyyy-MM-dd'),
       hours: data.hours,
       description: data.description?.trim(),
-      status: 'Created' as const,
+      status: 'Billable' as const,
     };
 
     if (timecardToEdit) {
