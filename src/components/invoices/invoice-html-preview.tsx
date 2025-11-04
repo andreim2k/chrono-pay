@@ -39,8 +39,7 @@ const translations = {
         footerExchange: (date: string, currency: string, rate: number) => `Exchange rate from BNR for ${date}: 1 ${currency} = ${rate.toFixed(4)} RON.`,
         footerMaxRate: (date: string, currency: string, rate: number) => `Using fixed client exchange rate set on ${date}: 1 ${currency} = ${rate.toFixed(4)} RON.`,
         footerThanks: 'Thank you for your business!',
-        consultancyServices: (period: string, quantity: string) => `IT Consultancy services for period ${period} (${quantity})`,
-        consultancyServicesDays: (period: string) => `IT Consultancy services for period ${period}`,
+        consultancyServices: (period: string) => `IT Consultancy services for period ${period}`,
         reverseCharge: 'Reversal of VAT liability on EU cross-border transactions',
         unit: {
             days: 'days',
@@ -74,8 +73,7 @@ const translations = {
         footerExchange: (date: string, currency: string, rate: number) => `Curs valutar BNR pentru ${date}: 1 ${currency} = ${rate.toFixed(4)} RON.`,
         footerMaxRate: (date: string, currency: string, rate: number) => `Folosind cursul fix al clientului setat la data de ${date}: 1 ${currency} = ${rate.toFixed(4)} RON.`,
         footerThanks: 'Vă mulțumim!',
-        consultancyServices: (period: string, quantity: string) => `Servicii de consultanță IT pentru perioada ${period} (${quantity})`,
-        consultancyServicesDays: (period: string) => `Servicii de consultanță IT pentru perioada ${period}`,
+        consultancyServices: (period: string) => `Servicii de consultanță IT pentru perioada ${period}`,
         reverseCharge: 'Taxare inversă - neimpozabil în România',
         unit: {
             days: 'zile',
@@ -278,8 +276,7 @@ export const themeStyles: { [key in InvoiceTheme]: {
     totalBgClass: 'bg-blue-900',
     totalTextClass: 'text-white',
     accentColor: '#1E3A8A',
-    tableHeaderBgColor: '#1E3A8A',
-    secondaryBg: '#EFF6FF',
+    tableHeaderBgColor: '#EFF6FF',
   },
   'Forest Green': {
     layout: 'classic',
@@ -606,22 +603,15 @@ export function InvoiceHtmlPreview({ invoice }: InvoiceHtmlPreviewProps) {
   }
 
   const translateDescription = (item: Invoice['items'][0]) => {
-      const { description, quantity, unit } = item;
+      const { description } = item;
       if (lang === 'en') return description;
 
-      const translatedUnit = t.unit[unit as keyof typeof t.unit] || unit;
-
-      // Regex for description
       const descRegex = /IT Consultancy services for period ([\d\.]+\s*-\s*[\d\.]+)/;
       const match = description.match(descRegex);
 
       if (match) {
           const [, period] = match;
-          if (unit === 'hours') {
-            const quantityText = `${quantity.toFixed(2)} ${translatedUnit}`;
-            return t.consultancyServices(period, quantityText);
-          }
-          return t.consultancyServicesDays(period);
+          return t.consultancyServices(period);
       }
 
       return description; // Fallback
