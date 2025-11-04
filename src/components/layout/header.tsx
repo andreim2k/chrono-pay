@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ThemeToggle } from './theme-toggle';
 import { LogOut, Menu, LayoutDashboard, FileText, BarChart, Settings as SettingsIcon, Clock } from 'lucide-react';
 import { ChronoPayLogo } from '../icons';
-import { Sheet, SheetContent, SheetTrigger } from '../ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '../ui/sheet';
 import { MainNav } from './main-nav';
 import { useAuth, useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
@@ -74,14 +74,21 @@ export function Header() {
           </Button>
         </SheetTrigger>
         <SheetContent side="left">
-          <nav className="grid gap-6 text-lg font-medium">
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-2 text-lg font-semibold"
-            >
-              <ChronoPayLogo className="h-8 w-8 text-primary" />
-              <span className="">ChronoPay</span>
-            </Link>
+           <SheetHeader>
+            <SheetTitle>
+                <Link
+                href="/dashboard"
+                className="flex items-center gap-2 text-lg font-semibold"
+                >
+                <ChronoPayLogo className="h-8 w-8 text-primary" />
+                <span className="">ChronoPay</span>
+                </Link>
+            </SheetTitle>
+            <SheetDescription>
+                Navigate through your invoicing application.
+            </SheetDescription>
+          </SheetHeader>
+          <nav className="grid gap-6 text-lg font-medium mt-6">
             {mobileNav.map(item => (
                 <Link
                 key={item.name}
