@@ -134,32 +134,6 @@ body {
     box-shadow:
       0 8px 32px -8px rgba(103, 58, 183, 0.08),
       0 12px 48px -12px rgba(0, 188, 212, 0.05) !important;
-    position: relative;
-    overflow: hidden;
-  }
-
-  /* Subtle shimmer effect on cards */
-  .bg-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.1),
-      transparent
-    );
-    animation: shimmer 3s infinite;
-    z-index: 0;
-  }
-
-  /* Ensure card content is above shimmer */
-  .bg-card > * {
-    position: relative;
-    z-index: 1;
   }
 
   .dark .bg-card {
@@ -173,15 +147,6 @@ body {
       0 8px 32px -8px rgba(79, 143, 247, 0.12),
       0 12px 48px -12px rgba(139, 92, 246, 0.08),
       0 20px 60px -20px rgba(0, 188, 212, 0.06) !important;
-  }
-
-  .dark .bg-card::before {
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(79, 143, 247, 0.15),
-      transparent
-    );
   }
 
   /* Enhanced card hover effect */
@@ -216,16 +181,6 @@ body {
     }
     100% {
       background-position: 0% 50%;
-    }
-  }
-
-  /* Shimmer animation for cards */
-  @keyframes shimmer {
-    0% {
-      left: -100%;
-    }
-    100% {
-      left: 100%;
     }
   }
 }
