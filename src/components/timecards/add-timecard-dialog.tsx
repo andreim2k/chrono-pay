@@ -259,7 +259,7 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
+                        <PopoverContent className="w-auto p-0 bg-background/95 backdrop-blur-sm border-2" align="start">
                           <Calendar
                             initialFocus
                             mode="range"
