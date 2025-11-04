@@ -543,7 +543,7 @@ export function CreateInvoiceDialog() {
                 <div className="space-y-2">
                   <Label htmlFor="project-select" className="mb-2 block">Project</Label>
                    <Select onValueChange={setSelectedProjectId} value={selectedProjectId || ''}>
-                      <SelectTrigger id="project-select" className="justify-start">
+                      <SelectTrigger id="project-select">
                           <SelectValue placeholder="Select a project" />
                       </SelectTrigger>
                       <SelectContent>
