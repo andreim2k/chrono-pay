@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
@@ -220,7 +221,7 @@ export function TimecardList({ timecards }: TimecardListProps) {
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" disabled={timecard.status !== 'Unbilled'}>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -278,3 +279,5 @@ export function TimecardList({ timecards }: TimecardListProps) {
     </>
   );
 }
+
+    
