@@ -216,13 +216,13 @@ export function AddTimecardDialog({ projects, clients, timecardToEdit, isOpen, o
                   <FormLabel>Project</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                     <FormControl>
-                      <SelectTrigger className="justify-start">
-                        <SelectValue placeholder="Select a project" />
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a project" className="truncate" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
                       {projects.map(project => (
-                        <SelectItem key={project.id} value={project.id}>
+                        <SelectItem key={project.id} value={project.id} className="truncate">
                           {project.name.trim()} ({project.clientName})
                         </SelectItem>
                       ))}
