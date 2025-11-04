@@ -6,8 +6,34 @@ import { ThemeProvider } from '@/components/layout/theme-provider';
 import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
-  title: 'ChronoPay',
-  description: 'Invoicing made easy',
+  title: 'ChronoPay - Timesheet & Invoice Management',
+  description: 'Professional timesheet tracking and invoice generation made easy. Manage your projects, clients, and billing efficiently.',
+  applicationName: 'ChronoPay',
+  keywords: ['timesheet', 'invoice', 'billing', 'time tracking', 'project management', 'freelance'],
+  authors: [{ name: 'ChronoPay' }],
+  creator: 'ChronoPay',
+  publisher: 'ChronoPay',
+  metadataBase: new URL('https://chronopay.app'),
+  openGraph: {
+    title: 'ChronoPay - Timesheet & Invoice Management',
+    description: 'Professional timesheet tracking and invoice generation made easy',
+    type: 'website',
+    locale: 'en_US',
+    siteName: 'ChronoPay',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'ChronoPay - Timesheet & Invoice Management',
+    description: 'Professional timesheet tracking and invoice generation made easy',
+  },
+  icons: {
+    icon: [
+      { url: '/icon.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
 };
 
 export default function RootLayout({
