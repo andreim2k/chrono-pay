@@ -43,6 +43,7 @@ interface InvoiceListProps {
   onSelectedRowsChange: (selectedRows: Record<string, boolean>) => void;
   sortConfig: SortConfig;
   onSort: (config: SortConfig) => void;
+  selectedInvoicesTotals: Record<string, number>;
 }
 
 const currencySymbols: { [key: string]: string } = {
@@ -51,7 +52,7 @@ const currencySymbols: { [key: string]: string } = {
   GBP: '£',
 };
 
-export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRowsChange, sortConfig, onSort }: InvoiceListProps) {
+export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRowsChange, sortConfig, onSort, selectedInvoicesTotals }: InvoiceListProps) {
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
@@ -303,9 +304,15 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
     return <ArrowUpDown className="ml-2 h-4 w-4" />;
   };
 
+  const totalsString = useMemo(() => {
+    const entries = Object.entries(selectedInvoicesTotals);
+    if (entries.length === 0) return '';
+    return `(${entries.map(([currency, total]) => `${(currencySymbols[currency] || currency)}${total.toFixed(2)}`).join(', ')} total)`;
+  }, [selectedInvoicesTotals]);
+
   const SortableHeader = ({ sortKey, children }: { sortKey: keyof Invoice, children: React.ReactNode }) => (
     <TableHead>
-      <Button variant="ghost" onClick={() => requestSort(sortKey)} className="p-0 hover:text-primary hover:bg-transparent">
+      <Button variant="ghost" onClick={() => requestSort(sortKey)} className="p-0 hover:bg-transparent hover:text-primary">
         {children}
         {getSortIndicator(sortKey)}
       </Button>
@@ -326,7 +333,7 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
                 <CardTitle>{isFiltered ? 'Filtered Invoices' : 'All Invoices'}</CardTitle>
                 <CardDescription>
                   Displaying {invoices.length} invoice(s).
-                  {selectedRowCount > 0 && ` (${selectedRowCount} selected)`}
+                  {selectedRowCount > 0 && ` (${selectedRowCount} selected ${totalsString})`}
                 </CardDescription>
             </div>
             {selectedRowCount > 0 && (

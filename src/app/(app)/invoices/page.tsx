@@ -144,6 +144,18 @@ export default function InvoicesPage() {
     return selectedInvoices.length > 0 ? selectedInvoices : sortedInvoices;
   }, [selectedInvoices, sortedInvoices]);
 
+  const selectedInvoicesTotals = useMemo(() => {
+    if (selectedInvoices.length === 0) return {};
+
+    return selectedInvoices.reduce((acc, inv) => {
+      if (!acc[inv.currency]) {
+        acc[inv.currency] = 0;
+      }
+      acc[inv.currency] += inv.total;
+      return acc;
+    }, {} as Record<string, number>);
+  }, [selectedInvoices]);
+
 
   return (
     <div className="space-y-6">
@@ -219,6 +231,7 @@ export default function InvoicesPage() {
         onSelectedRowsChange={setSelectedRows}
         sortConfig={sortConfig}
         onSort={setSortConfig}
+        selectedInvoicesTotals={selectedInvoicesTotals}
       />
     </div>
   );
