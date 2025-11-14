@@ -305,7 +305,7 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
 
   const SortableHeader = ({ sortKey, children }: { sortKey: keyof Invoice, children: React.ReactNode }) => (
     <TableHead>
-      <Button variant="ghost" onClick={() => requestSort(sortKey)} className="px-0 hover:bg-transparent">
+      <Button variant="ghost" onClick={() => requestSort(sortKey)} className="p-0">
         {children}
         {getSortIndicator(sortKey)}
       </Button>
@@ -371,7 +371,7 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
                 {showVatColumn && <SortableHeader sortKey="vatAmount">VAT</SortableHeader>}
                 <SortableHeader sortKey="total">Total</SortableHeader>
                 <SortableHeader sortKey="status">Status</SortableHeader>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-right px-4">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

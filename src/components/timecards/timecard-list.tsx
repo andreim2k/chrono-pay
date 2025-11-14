@@ -161,7 +161,7 @@ export function TimecardList({ timecards, isFiltered, sortConfig, onSort }: Time
 
   const SortableHeader = ({ sortKey, children }: { sortKey: keyof Timecard, children: React.ReactNode }) => (
     <TableHead>
-      <Button variant="ghost" onClick={() => requestSort(sortKey)} className="px-0 hover:bg-transparent">
+      <Button variant="ghost" onClick={() => requestSort(sortKey)} className="p-0">
         {children}
         {getSortIndicator(sortKey)}
       </Button>
@@ -225,9 +225,9 @@ export function TimecardList({ timecards, isFiltered, sortConfig, onSort }: Time
                 <SortableHeader sortKey="clientName">Client</SortableHeader>
                 <SortableHeader sortKey="projectName">Project</SortableHeader>
                 <SortableHeader sortKey="hours">Hours</SortableHeader>
-                <TableHead>Description</TableHead>
+                <TableHead className="px-4">Description</TableHead>
                 <SortableHeader sortKey="status">Status</SortableHeader>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-right px-4">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
