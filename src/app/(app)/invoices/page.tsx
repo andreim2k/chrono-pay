@@ -9,7 +9,7 @@ import { collection } from 'firebase/firestore';
 import { DataImport } from '@/components/data/data-import';
 import { CreateInvoiceDialog } from '@/components/invoices/create-invoice-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getYear, parseISO, format } from 'date-fns';
+import { getYear, parseISO, format, getMonth } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
 import { ExportMenu } from '@/components/data/export-menu';
 import { cn } from '@/lib/utils';
@@ -20,6 +20,9 @@ const currencySymbols: { [key: string]: string } = {
   GBP: '£',
 };
 
+const months = Array.from({ length: 12 }, (_, i) => ({ value: i, label: new Date(0, i).toLocaleString('default', { month: 'long' }) }));
+const invoiceStatuses = ['Created', 'Sent', 'Paid'];
+
 export default function InvoicesPage() {
   const firestore = useFirestore();
   const { user } = useUser();
@@ -27,6 +30,8 @@ export default function InvoicesPage() {
   const [selectedClientId, setSelectedClientId] = useState('all');
   const [selectedProjectId, setSelectedProjectId] = useState('all');
   const [selectedYear, setSelectedYear] = useState('all');
+  const [selectedMonth, setSelectedMonth] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
 
   const invoicesQuery = useMemoFirebase(
@@ -72,13 +77,16 @@ export default function InvoicesPage() {
   const filteredInvoices = useMemo(() => {
     if (!invoices) return [];
     return invoices.filter(invoice => {
-      const yearMatch = selectedYear === 'all' || getYear(parseISO(invoice.date)) === Number(selectedYear);
+      const invoiceDate = parseISO(invoice.date);
+      const yearMatch = selectedYear === 'all' || getYear(invoiceDate) === Number(selectedYear);
+      const monthMatch = selectedMonth === 'all' || getMonth(invoiceDate) === Number(selectedMonth);
+      const statusMatch = selectedStatus === 'all' || invoice.status === selectedStatus;
       const projectForInvoice = projects?.find(p => p.id === invoice.projectId);
       const clientMatch = selectedClientId === 'all' || (projectForInvoice && projectForInvoice.clientId === selectedClientId);
       const projectMatch = selectedProjectId === 'all' || invoice.projectId === selectedProjectId;
-      return yearMatch && clientMatch && projectMatch;
+      return yearMatch && monthMatch && statusMatch && clientMatch && projectMatch;
     });
-  }, [invoices, projects, selectedClientId, selectedProjectId, selectedYear]);
+  }, [invoices, projects, selectedClientId, selectedProjectId, selectedYear, selectedMonth, selectedStatus]);
   
   const selectedInvoices = useMemo(() => {
     return filteredInvoices.filter(inv => selectedRows[inv.id]);
@@ -132,7 +140,7 @@ export default function InvoicesPage() {
       </div>
       <Card>
         <CardContent className='p-4'>
-           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
               <Select value={selectedClientId} onValueChange={handleClientChange}>
                 <SelectTrigger><SelectValue placeholder="Filter by Client" /></SelectTrigger>
                 <SelectContent>
@@ -152,6 +160,20 @@ export default function InvoicesPage() {
                 <SelectContent>
                   <SelectItem value="all">All Years</SelectItem>
                   {availableYears.map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger><SelectValue placeholder="Filter by Month" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Months</SelectItem>
+                  {months.map(m => <SelectItem key={m.value} value={String(m.value)}>{m.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                <SelectTrigger><SelectValue placeholder="Filter by Status" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  {invoiceStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
            </div>

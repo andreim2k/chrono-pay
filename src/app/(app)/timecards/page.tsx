@@ -13,6 +13,7 @@ import { DataExport } from '@/components/data/data-export';
 import { DataImport } from '@/components/data/data-import';
 
 const months = Array.from({ length: 12 }, (_, i) => ({ value: i, label: new Date(0, i).toLocaleString('default', { month: 'long' }) }));
+const timecardStatuses: Timecard['status'][] = ['Billable', 'Pending', 'Billed'];
 
 export default function TimecardsPage() {
   const firestore = useFirestore();
@@ -22,6 +23,7 @@ export default function TimecardsPage() {
   const [selectedProjectId, setSelectedProjectId] = useState('all');
   const [selectedYear, setSelectedYear] = useState('all');
   const [selectedMonth, setSelectedMonth] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
 
   const timecardsQuery = useMemoFirebase(
     () => (firestore && user ? query(collection(firestore, `users/${user.uid}/timecards`), orderBy('startDate', 'desc')) : null),
@@ -69,11 +71,12 @@ export default function TimecardsPage() {
       const startDate = parseISO(timecard.startDate);
       const yearMatch = selectedYear === 'all' || getYear(startDate) === Number(selectedYear);
       const monthMatch = selectedMonth === 'all' || getMonth(startDate) === Number(selectedMonth);
+      const statusMatch = selectedStatus === 'all' || timecard.status === selectedStatus;
       const clientMatch = selectedClientId === 'all' || timecard.clientId === selectedClientId;
       const projectMatch = selectedProjectId === 'all' || timecard.projectId === selectedProjectId;
-      return yearMatch && monthMatch && clientMatch && projectMatch;
+      return yearMatch && monthMatch && statusMatch && clientMatch && projectMatch;
     });
-  }, [timecards, selectedClientId, selectedProjectId, selectedYear, selectedMonth]);
+  }, [timecards, selectedClientId, selectedProjectId, selectedYear, selectedMonth, selectedStatus]);
 
   const exportableData = useMemo(() => {
     return { timecards: filteredTimecards || [] };
@@ -105,7 +108,7 @@ export default function TimecardsPage() {
       </div>
       <Card>
         <CardContent className="p-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
             <Select value={selectedClientId} onValueChange={handleClientChange}>
               <SelectTrigger><SelectValue placeholder="Filter by Client" /></SelectTrigger>
               <SelectContent>
@@ -132,6 +135,13 @@ export default function TimecardsPage() {
               <SelectContent>
                 <SelectItem value="all">All Months</SelectItem>
                 {months.map(m => <SelectItem key={m.value} value={String(m.value)}>{m.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <SelectTrigger><SelectValue placeholder="Filter by Status" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                {timecardStatuses.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
