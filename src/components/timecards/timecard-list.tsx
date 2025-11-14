@@ -37,9 +37,20 @@ interface TimecardListProps {
   isFiltered: boolean;
   sortConfig: SortConfig;
   onSort: (config: SortConfig) => void;
+  selectedRows: Record<string, boolean>;
+  onSelectedRowsChange: (selectedRows: Record<string, boolean>) => void;
+  totalSelectedHours: number;
 }
 
-export function TimecardList({ timecards, isFiltered, sortConfig, onSort }: TimecardListProps) {
+export function TimecardList({
+  timecards,
+  isFiltered,
+  sortConfig,
+  onSort,
+  selectedRows,
+  onSelectedRowsChange,
+  totalSelectedHours,
+}: TimecardListProps) {
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
@@ -49,7 +60,6 @@ export function TimecardList({ timecards, isFiltered, sortConfig, onSort }: Time
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
-  const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
 
   const projectsQuery = useMemoFirebase(
     () => (firestore && user ? collection(firestore, `users/${user.uid}/projects`) : null),
@@ -107,11 +117,11 @@ export function TimecardList({ timecards, isFiltered, sortConfig, onSort }: Time
         if(tc.status === 'Billable') newSelectedRows[tc.id] = true
       });
     }
-    setSelectedRows(newSelectedRows);
+    onSelectedRowsChange(newSelectedRows);
   };
 
   const handleRowSelect = (timecardId: string, checked: boolean) => {
-    setSelectedRows(prev => ({ ...prev, [timecardId]: checked }));
+    onSelectedRowsChange({ ...selectedRows, [timecardId]: checked });
   };
 
   const handleDeleteSelected = async () => {
@@ -131,7 +141,7 @@ export function TimecardList({ timecards, isFiltered, sortConfig, onSort }: Time
             title: 'Timecards Deleted',
             description: `${idsToDelete.length} time entries have been successfully deleted.`,
         });
-        setSelectedRows({});
+        onSelectedRowsChange({});
     } catch (error) {
         toast({
             variant: 'destructive',
@@ -159,8 +169,8 @@ export function TimecardList({ timecards, isFiltered, sortConfig, onSort }: Time
     return <ArrowUpDown className="ml-2 h-4 w-4" />;
   };
 
-  const SortableHeader = ({ sortKey, children }: { sortKey: keyof Timecard, children: React.ReactNode }) => (
-    <TableHead>
+  const SortableHeader = ({ sortKey, children, className }: { sortKey: keyof Timecard, children: React.ReactNode, className?: string }) => (
+    <TableHead className={className}>
       <Button variant="ghost" onClick={() => requestSort(sortKey)} className="p-0 hover:text-primary hover:bg-transparent">
         {children}
         {getSortIndicator(sortKey)}
@@ -176,7 +186,9 @@ export function TimecardList({ timecards, isFiltered, sortConfig, onSort }: Time
             <CardTitle>{isFiltered ? 'Filtered Time Entries' : 'All Time Entries'}</CardTitle>
             <CardDescription>
                 Displaying {timecards.length} time entries.
-                {selectedRowCount > 0 && ` (${selectedRowCount} selected)`}
+                {selectedRowCount > 0 && 
+                  ` (${selectedRowCount} selected, ${totalSelectedHours.toFixed(2)}h total)`
+                }
             </CardDescription>
           </div>
            <div className="flex items-center gap-2">
@@ -221,12 +233,12 @@ export function TimecardList({ timecards, isFiltered, sortConfig, onSort }: Time
                         aria-label="Select all billable"
                     />
                 </TableHead>
-                <SortableHeader sortKey="startDate">Date</SortableHeader>
-                <SortableHeader sortKey="clientName">Client</SortableHeader>
-                <SortableHeader sortKey="projectName">Project</SortableHeader>
-                <SortableHeader sortKey="hours">Hours</SortableHeader>
+                <SortableHeader sortKey="startDate" className='px-4'>Date</SortableHeader>
+                <SortableHeader sortKey="clientName" className='px-4'>Client</SortableHeader>
+                <SortableHeader sortKey="projectName" className='px-4'>Project</SortableHeader>
+                <SortableHeader sortKey="hours" className='px-4'>Hours</SortableHeader>
                 <TableHead className="px-4">Description</TableHead>
-                <SortableHeader sortKey="status">Status</SortableHeader>
+                <SortableHeader sortKey="status" className='px-4'>Status</SortableHeader>
                 <TableHead className="text-right px-4">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -241,14 +253,14 @@ export function TimecardList({ timecards, isFiltered, sortConfig, onSort }: Time
                         disabled={timecard.status !== 'Billable'}
                       />
                   </TableCell>
-                  <TableCell className="font-medium">
+                  <TableCell className="font-medium px-4">
                     {format(new Date(timecard.startDate.replace(/-/g, '/')), 'MMM d')} - {format(new Date(timecard.endDate.replace(/-/g, '/')), 'MMM d, yyyy')}
                   </TableCell>
-                  <TableCell>{timecard.clientName}</TableCell>
-                  <TableCell>{timecard.projectName}</TableCell>
-                  <TableCell>{timecard.hours.toFixed(2)}</TableCell>
-                  <TableCell className='max-w-xs truncate'>{timecard.description || '-'}</TableCell>
-                  <TableCell>
+                  <TableCell className='px-4'>{timecard.clientName}</TableCell>
+                  <TableCell className='px-4'>{timecard.projectName}</TableCell>
+                  <TableCell className='px-4'>{timecard.hours.toFixed(2)}</TableCell>
+                  <TableCell className='max-w-xs truncate px-4'>{timecard.description || '-'}</TableCell>
+                  <TableCell className='px-4'>
                     <Badge variant={getBadgeVariant(timecard.status)} className="w-20 justify-center">{timecard.status}</Badge>
                   </TableCell>
                   <TableCell className="text-right px-4">

@@ -30,6 +30,7 @@ export default function TimecardsPage() {
   const [selectedMonth, setSelectedMonth] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
+  const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
 
   const timecardsQuery = useMemoFirebase(
     () => (firestore && user ? query(collection(firestore, `users/${user.uid}/timecards`), orderBy('startDate', 'desc')) : null),
@@ -113,6 +114,13 @@ export default function TimecardsPage() {
   const exportableData = useMemo(() => {
     return { timecards: sortedTimecards || [] };
   }, [sortedTimecards]);
+  
+  const totalSelectedHours = useMemo(() => {
+    return sortedTimecards.reduce((acc, tc) => {
+      return selectedRows[tc.id] ? acc + tc.hours : acc;
+    }, 0);
+  }, [selectedRows, sortedTimecards]);
+
 
   return (
     <div className="space-y-6">
@@ -184,6 +192,9 @@ export default function TimecardsPage() {
         isFiltered={isFiltered} 
         sortConfig={sortConfig}
         onSort={setSortConfig}
+        selectedRows={selectedRows}
+        onSelectedRowsChange={setSelectedRows}
+        totalSelectedHours={totalSelectedHours}
       />
     </div>
   );
