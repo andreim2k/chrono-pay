@@ -78,6 +78,10 @@ export default function TimecardsPage() {
     });
   }, [timecards, selectedClientId, selectedProjectId, selectedYear, selectedMonth, selectedStatus]);
 
+  const isFiltered = useMemo(() => {
+    return selectedClientId !== 'all' || selectedProjectId !== 'all' || selectedYear !== 'all' || selectedMonth !== 'all' || selectedStatus !== 'all';
+  }, [selectedClientId, selectedProjectId, selectedYear, selectedMonth, selectedStatus]);
+
   const exportableData = useMemo(() => {
     return { timecards: filteredTimecards || [] };
   }, [filteredTimecards]);
@@ -147,7 +151,7 @@ export default function TimecardsPage() {
           </div>
         </CardContent>
       </Card>
-      <TimecardList timecards={filteredTimecards || []} />
+      <TimecardList timecards={filteredTimecards || []} isFiltered={isFiltered} />
     </div>
   );
 }

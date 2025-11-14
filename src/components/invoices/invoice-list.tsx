@@ -34,6 +34,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 
 interface InvoiceListProps {
   invoices: Invoice[];
+  isFiltered: boolean;
   selectedRows: Record<string, boolean>;
   onSelectedRowsChange: (selectedRows: Record<string, boolean>) => void;
 }
@@ -44,7 +45,7 @@ const currencySymbols: { [key: string]: string } = {
   GBP: '£',
 };
 
-export function InvoiceList({ invoices, selectedRows, onSelectedRowsChange }: InvoiceListProps) {
+export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRowsChange }: InvoiceListProps) {
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
@@ -289,7 +290,7 @@ export function InvoiceList({ invoices, selectedRows, onSelectedRowsChange }: In
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
             <div>
-                <CardTitle>All Invoices</CardTitle>
+                <CardTitle>{isFiltered ? 'Filtered Invoices' : 'All Invoices'}</CardTitle>
                 <CardDescription>
                   Displaying {invoices.length} invoice(s).
                   {selectedRowCount > 0 && ` (${selectedRowCount} selected)`}

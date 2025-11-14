@@ -30,9 +30,10 @@ import { Checkbox } from '../ui/checkbox';
 
 interface TimecardListProps {
   timecards: Timecard[];
+  isFiltered: boolean;
 }
 
-export function TimecardList({ timecards }: TimecardListProps) {
+export function TimecardList({ timecards, isFiltered }: TimecardListProps) {
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
@@ -140,7 +141,7 @@ export function TimecardList({ timecards }: TimecardListProps) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>All Time Entries</CardTitle>
+            <CardTitle>{isFiltered ? 'Filtered Time Entries' : 'All Time Entries'}</CardTitle>
             <CardDescription>
                 Displaying {timecards.length} time entries.
                 {selectedRowCount > 0 && ` (${selectedRowCount} selected)`}

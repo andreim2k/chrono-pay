@@ -92,6 +92,10 @@ export default function InvoicesPage() {
     return filteredInvoices.filter(inv => selectedRows[inv.id]);
   }, [filteredInvoices, selectedRows]);
 
+  const isFiltered = useMemo(() => {
+    return selectedClientId !== 'all' || selectedProjectId !== 'all' || selectedYear !== 'all' || selectedMonth !== 'all' || selectedStatus !== 'all';
+  }, [selectedClientId, selectedProjectId, selectedYear, selectedMonth, selectedStatus]);
+
   const exportableUiData = useMemo(() => {
     const invoicesToExport = selectedInvoices.length > 0 ? selectedInvoices : filteredInvoices;
     return invoicesToExport.map(inv => ({
@@ -181,6 +185,7 @@ export default function InvoicesPage() {
       </Card>
       <InvoiceList 
         invoices={filteredInvoices || []} 
+        isFiltered={isFiltered}
         selectedRows={selectedRows}
         onSelectedRowsChange={setSelectedRows}
       />
