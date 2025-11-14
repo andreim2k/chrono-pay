@@ -305,7 +305,7 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
 
   const SortableHeader = ({ sortKey, children }: { sortKey: keyof Invoice, children: React.ReactNode }) => (
     <TableHead>
-      <Button variant="ghost" onClick={() => requestSort(sortKey)} className="p-0 hover:bg-transparent">
+      <Button variant="ghost" onClick={() => requestSort(sortKey)} className="p-0 hover:text-primary hover:bg-transparent">
         {children}
         {getSortIndicator(sortKey)}
       </Button>
@@ -356,7 +356,7 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
           <Table>
             <TableHeader>
               <TableRow>
-                 <TableHead className="w-[50px] px-4">
+                 <TableHead className="w-[50px]">
                     <Checkbox
                         checked={invoices.length > 0 && selectedRowCount === invoices.length}
                         onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
@@ -371,13 +371,13 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
                 {showVatColumn && <SortableHeader sortKey="vatAmount">VAT</SortableHeader>}
                 <SortableHeader sortKey="total">Total</SortableHeader>
                 <SortableHeader sortKey="status">Status</SortableHeader>
-                <TableHead className="text-right px-4">Actions</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
              {invoices.length > 0 ? invoices.map((invoice) => (
                 <TableRow key={invoice.id} data-state={selectedRows[invoice.id] && "selected"}>
-                  <TableCell className='px-4'>
+                  <TableCell>
                      <Checkbox
                         checked={selectedRows[invoice.id] || false}
                         onCheckedChange={(checked) => handleRowSelect(invoice.id, Boolean(checked))}

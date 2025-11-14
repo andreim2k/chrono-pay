@@ -161,7 +161,7 @@ export function TimecardList({ timecards, isFiltered, sortConfig, onSort }: Time
 
   const SortableHeader = ({ sortKey, children }: { sortKey: keyof Timecard, children: React.ReactNode }) => (
     <TableHead>
-      <Button variant="ghost" onClick={() => requestSort(sortKey)} className="p-0 hover:bg-transparent">
+      <Button variant="ghost" onClick={() => requestSort(sortKey)} className="p-0 hover:text-primary hover:bg-transparent">
         {children}
         {getSortIndicator(sortKey)}
       </Button>
@@ -214,7 +214,7 @@ export function TimecardList({ timecards, isFiltered, sortConfig, onSort }: Time
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[50px] px-4">
+                <TableHead className="w-[50px]">
                     <Checkbox
                         checked={timecards.filter(t => t.status === 'Billable').length > 0 && selectedRowCount === timecards.filter(t => t.status === 'Billable').length}
                         onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
@@ -225,15 +225,15 @@ export function TimecardList({ timecards, isFiltered, sortConfig, onSort }: Time
                 <SortableHeader sortKey="clientName">Client</SortableHeader>
                 <SortableHeader sortKey="projectName">Project</SortableHeader>
                 <SortableHeader sortKey="hours">Hours</SortableHeader>
-                <TableHead className="px-4">Description</TableHead>
+                <TableHead>Description</TableHead>
                 <SortableHeader sortKey="status">Status</SortableHeader>
-                <TableHead className="text-right px-4">Actions</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {timecards.map((timecard) => (
                 <TableRow key={timecard.id} data-state={selectedRows[timecard.id] && "selected"}>
-                  <TableCell className='px-4'>
+                  <TableCell>
                      <Checkbox
                         checked={selectedRows[timecard.id] || false}
                         onCheckedChange={(checked) => handleRowSelect(timecard.id, Boolean(checked))}
