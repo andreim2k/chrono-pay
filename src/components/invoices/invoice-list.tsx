@@ -71,11 +71,11 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
   const getBadgeVariant = (status: Invoice['status']) => {
     switch (status) {
       case 'Paid':
-        return 'default';
+        return 'success';
       case 'Sent':
-        return 'secondary';
+        return 'warning';
       case 'Created':
-        return 'outline';
+        return 'info';
       default:
         return 'secondary';
     }
@@ -356,7 +356,7 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
           <Table>
             <TableHeader>
               <TableRow>
-                 <TableHead className="w-[50px]">
+                 <TableHead className="w-[50px] px-4">
                     <Checkbox
                         checked={invoices.length > 0 && selectedRowCount === invoices.length}
                         onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
@@ -371,13 +371,13 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
                 {showVatColumn && <SortableHeader sortKey="vatAmount">VAT</SortableHeader>}
                 <SortableHeader sortKey="total">Total</SortableHeader>
                 <SortableHeader sortKey="status">Status</SortableHeader>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-right px-4">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
              {invoices.length > 0 ? invoices.map((invoice) => (
                 <TableRow key={invoice.id} data-state={selectedRows[invoice.id] && "selected"}>
-                  <TableCell>
+                  <TableCell className="px-4">
                      <Checkbox
                         checked={selectedRows[invoice.id] || false}
                         onCheckedChange={(checked) => handleRowSelect(invoice.id, Boolean(checked))}
@@ -396,9 +396,9 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
                   )}
                   <TableCell className="font-semibold">{currencySymbols[invoice.currency] || invoice.currency}{invoice.total.toFixed(2)}</TableCell>
                   <TableCell>
-                    <Badge variant={getBadgeVariant(invoice.status)}>{invoice.status}</Badge>
+                    <Badge variant={getBadgeVariant(invoice.status)} className="w-20 justify-center">{invoice.status}</Badge>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right px-4">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon">

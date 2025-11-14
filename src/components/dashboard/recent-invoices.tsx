@@ -4,7 +4,7 @@ import {
     Avatar,
     AvatarFallback,
   } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge";
+import { Badge, badgeVariants } from "@/components/ui/badge";
 import {
     Card,
     CardContent,
@@ -24,14 +24,14 @@ const currencySymbols: { [key: string]: string } = {
 
 export function RecentInvoices({ invoices }: { invoices: Invoice[] }) {
 
-    const getBadgeVariant = (status: Invoice['status']) => {
+    const getBadgeVariant = (status: Invoice['status']): VariantProps<typeof badgeVariants>['variant'] => {
         switch (status) {
           case 'Paid':
-            return 'default';
+            return 'success';
           case 'Sent':
-            return 'secondary';
+            return 'warning';
           case 'Created':
-            return 'outline';
+            return 'info';
           default:
             return 'secondary';
         }

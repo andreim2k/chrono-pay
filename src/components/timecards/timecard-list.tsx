@@ -68,13 +68,13 @@ export function TimecardList({ timecards, isFiltered, sortConfig, onSort }: Time
   const getBadgeVariant = (status: Timecard['status']) => {
     switch (status) {
       case 'Billed':
-        return 'default';
+        return 'success';
       case 'Pending':
-        return 'secondary';
+        return 'warning';
       case 'Billable':
-        return 'outline';
+        return 'info';
       default:
-        return 'outline';
+        return 'secondary';
     }
   };
 
@@ -214,7 +214,7 @@ export function TimecardList({ timecards, isFiltered, sortConfig, onSort }: Time
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[50px]">
+                <TableHead className="w-[50px] px-4">
                     <Checkbox
                         checked={timecards.filter(t => t.status === 'Billable').length > 0 && selectedRowCount === timecards.filter(t => t.status === 'Billable').length}
                         onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
@@ -225,15 +225,15 @@ export function TimecardList({ timecards, isFiltered, sortConfig, onSort }: Time
                 <SortableHeader sortKey="clientName">Client</SortableHeader>
                 <SortableHeader sortKey="projectName">Project</SortableHeader>
                 <SortableHeader sortKey="hours">Hours</SortableHeader>
-                <TableHead>Description</TableHead>
+                <TableHead className="px-4">Description</TableHead>
                 <SortableHeader sortKey="status">Status</SortableHeader>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-right px-4">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {timecards.map((timecard) => (
                 <TableRow key={timecard.id} data-state={selectedRows[timecard.id] && "selected"}>
-                  <TableCell>
+                  <TableCell className="px-4">
                      <Checkbox
                         checked={selectedRows[timecard.id] || false}
                         onCheckedChange={(checked) => handleRowSelect(timecard.id, Boolean(checked))}
@@ -249,9 +249,9 @@ export function TimecardList({ timecards, isFiltered, sortConfig, onSort }: Time
                   <TableCell>{timecard.hours.toFixed(2)}</TableCell>
                   <TableCell className='max-w-xs truncate'>{timecard.description || '-'}</TableCell>
                   <TableCell>
-                    <Badge variant={getBadgeVariant(timecard.status)}>{timecard.status}</Badge>
+                    <Badge variant={getBadgeVariant(timecard.status)} className="w-20 justify-center">{timecard.status}</Badge>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right px-4">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" disabled={timecard.status !== 'Billable'}>
