@@ -215,7 +215,7 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
     if (invoiceToDelete.billedTimecardIds && invoiceToDelete.billedTimecardIds.length > 0) {
         invoiceToDelete.billedTimecardIds.forEach(tcId => {
             const timecardRef = doc(firestore, `users/${user.uid}/timecards`, tcId);
-            batch.update(timecardRef, { status: 'Billable', invoiceId: '' });
+            batch.update(timecardRef, { status: 'Billable' });
         });
     }
 
@@ -305,7 +305,7 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
 
   const SortableHeader = ({ sortKey, children }: { sortKey: keyof Invoice, children: React.ReactNode }) => (
     <TableHead>
-      <Button variant="ghost" onClick={() => requestSort(sortKey)} className="px-2">
+      <Button variant="ghost" onClick={() => requestSort(sortKey)} className="px-0 hover:bg-transparent">
         {children}
         {getSortIndicator(sortKey)}
       </Button>
@@ -356,7 +356,7 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
           <Table>
             <TableHeader>
               <TableRow>
-                 <TableHead className="w-[50px]">
+                 <TableHead className="w-[50px] px-2">
                     <Checkbox
                         checked={invoices.length > 0 && selectedRowCount === invoices.length}
                         onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
@@ -377,7 +377,7 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
             <TableBody>
              {invoices.length > 0 ? invoices.map((invoice) => (
                 <TableRow key={invoice.id} data-state={selectedRows[invoice.id] && "selected"}>
-                  <TableCell>
+                  <TableCell className='px-2'>
                      <Checkbox
                         checked={selectedRows[invoice.id] || false}
                         onCheckedChange={(checked) => handleRowSelect(invoice.id, Boolean(checked))}
