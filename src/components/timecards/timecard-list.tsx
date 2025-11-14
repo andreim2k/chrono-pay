@@ -161,7 +161,7 @@ export function TimecardList({ timecards, isFiltered, sortConfig, onSort }: Time
 
   const SortableHeader = ({ sortKey, children }: { sortKey: keyof Timecard, children: React.ReactNode }) => (
     <TableHead>
-      <Button variant="ghost" onClick={() => requestSort(sortKey)} className="p-0">
+      <Button variant="ghost" onClick={() => requestSort(sortKey)} className="p-0 hover:bg-transparent">
         {children}
         {getSortIndicator(sortKey)}
       </Button>
@@ -214,7 +214,7 @@ export function TimecardList({ timecards, isFiltered, sortConfig, onSort }: Time
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[50px] px-2">
+                <TableHead className="w-[50px] px-4">
                     <Checkbox
                         checked={timecards.filter(t => t.status === 'Billable').length > 0 && selectedRowCount === timecards.filter(t => t.status === 'Billable').length}
                         onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
@@ -233,7 +233,7 @@ export function TimecardList({ timecards, isFiltered, sortConfig, onSort }: Time
             <TableBody>
               {timecards.map((timecard) => (
                 <TableRow key={timecard.id} data-state={selectedRows[timecard.id] && "selected"}>
-                  <TableCell className='px-2'>
+                  <TableCell className='px-4'>
                      <Checkbox
                         checked={selectedRows[timecard.id] || false}
                         onCheckedChange={(checked) => handleRowSelect(timecard.id, Boolean(checked))}
