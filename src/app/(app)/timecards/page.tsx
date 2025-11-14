@@ -15,6 +15,11 @@ import { DataImport } from '@/components/data/data-import';
 const months = Array.from({ length: 12 }, (_, i) => ({ value: i, label: new Date(0, i).toLocaleString('default', { month: 'long' }) }));
 const timecardStatuses: Timecard['status'][] = ['Billable', 'Pending', 'Billed'];
 
+type SortConfig = {
+  key: keyof Timecard;
+  direction: 'ascending' | 'descending';
+} | null;
+
 export default function TimecardsPage() {
   const firestore = useFirestore();
   const { user } = useUser();
@@ -24,6 +29,7 @@ export default function TimecardsPage() {
   const [selectedYear, setSelectedYear] = useState('all');
   const [selectedMonth, setSelectedMonth] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
+  const [sortConfig, setSortConfig] = useState<SortConfig>(null);
 
   const timecardsQuery = useMemoFirebase(
     () => (firestore && user ? query(collection(firestore, `users/${user.uid}/timecards`), orderBy('startDate', 'desc')) : null),
@@ -77,14 +83,36 @@ export default function TimecardsPage() {
       return yearMatch && monthMatch && statusMatch && clientMatch && projectMatch;
     });
   }, [timecards, selectedClientId, selectedProjectId, selectedYear, selectedMonth, selectedStatus]);
+  
+  const sortedTimecards = useMemo(() => {
+    if (!sortConfig) return filteredTimecards;
+
+    return [...filteredTimecards].sort((a, b) => {
+      const aValue = a[sortConfig.key];
+      const bValue = b[sortConfig.key];
+      
+      let comparison = 0;
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        if (sortConfig.key === 'startDate' || sortConfig.key === 'endDate') {
+            comparison = new Date(aValue).getTime() - new Date(bValue).getTime();
+        } else {
+            comparison = aValue.localeCompare(bValue);
+        }
+      } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+        comparison = aValue - bValue;
+      }
+      
+      return sortConfig.direction === 'ascending' ? comparison : -comparison;
+    });
+  }, [filteredTimecards, sortConfig]);
 
   const isFiltered = useMemo(() => {
     return selectedClientId !== 'all' || selectedProjectId !== 'all' || selectedYear !== 'all' || selectedMonth !== 'all' || selectedStatus !== 'all';
   }, [selectedClientId, selectedProjectId, selectedYear, selectedMonth, selectedStatus]);
 
   const exportableData = useMemo(() => {
-    return { timecards: filteredTimecards || [] };
-  }, [filteredTimecards]);
+    return { timecards: sortedTimecards || [] };
+  }, [sortedTimecards]);
 
   return (
     <div className="space-y-6">
@@ -151,7 +179,12 @@ export default function TimecardsPage() {
           </div>
         </CardContent>
       </Card>
-      <TimecardList timecards={filteredTimecards || []} isFiltered={isFiltered} />
+      <TimecardList 
+        timecards={sortedTimecards || []} 
+        isFiltered={isFiltered} 
+        sortConfig={sortConfig}
+        onSort={setSortConfig}
+      />
     </div>
   );
 }

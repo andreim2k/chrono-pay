@@ -12,7 +12,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { getYear, parseISO, format, getMonth } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
 import { ExportMenu } from '@/components/data/export-menu';
-import { cn } from '@/lib/utils';
 
 const currencySymbols: { [key: string]: string } = {
   EUR: '€',
@@ -22,6 +21,11 @@ const currencySymbols: { [key: string]: string } = {
 
 const months = Array.from({ length: 12 }, (_, i) => ({ value: i, label: new Date(0, i).toLocaleString('default', { month: 'long' }) }));
 const invoiceStatuses = ['Created', 'Sent', 'Paid'];
+
+type SortConfig = {
+  key: keyof Invoice;
+  direction: 'ascending' | 'descending';
+} | null;
 
 export default function InvoicesPage() {
   const firestore = useFirestore();
@@ -33,6 +37,7 @@ export default function InvoicesPage() {
   const [selectedMonth, setSelectedMonth] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
+  const [sortConfig, setSortConfig] = useState<SortConfig>(null);
 
   const invoicesQuery = useMemoFirebase(
     () => (firestore && user ? collection(firestore, `users/${user.uid}/invoices`) : null),
@@ -88,16 +93,40 @@ export default function InvoicesPage() {
     });
   }, [invoices, projects, selectedClientId, selectedProjectId, selectedYear, selectedMonth, selectedStatus]);
   
+  const sortedInvoices = useMemo(() => {
+    if (!sortConfig) {
+      return [...filteredInvoices].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }
+
+    return [...filteredInvoices].sort((a, b) => {
+      const aValue = a[sortConfig.key];
+      const bValue = b[sortConfig.key];
+      
+      let comparison = 0;
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        if (sortConfig.key === 'date' || sortConfig.key === 'dueDate') {
+            comparison = new Date(aValue).getTime() - new Date(bValue).getTime();
+        } else {
+            comparison = aValue.localeCompare(bValue);
+        }
+      } else if (typeof aValue === 'number' && typeof bValue === 'number') {
+        comparison = aValue - bValue;
+      }
+      
+      return sortConfig.direction === 'ascending' ? comparison : -comparison;
+    });
+  }, [filteredInvoices, sortConfig]);
+
   const selectedInvoices = useMemo(() => {
-    return filteredInvoices.filter(inv => selectedRows[inv.id]);
-  }, [filteredInvoices, selectedRows]);
+    return sortedInvoices.filter(inv => selectedRows[inv.id]);
+  }, [sortedInvoices, selectedRows]);
 
   const isFiltered = useMemo(() => {
     return selectedClientId !== 'all' || selectedProjectId !== 'all' || selectedYear !== 'all' || selectedMonth !== 'all' || selectedStatus !== 'all';
   }, [selectedClientId, selectedProjectId, selectedYear, selectedMonth, selectedStatus]);
 
   const exportableUiData = useMemo(() => {
-    const invoicesToExport = selectedInvoices.length > 0 ? selectedInvoices : filteredInvoices;
+    const invoicesToExport = selectedInvoices.length > 0 ? selectedInvoices : sortedInvoices;
     return invoicesToExport.map(inv => ({
       'Invoice #': inv.invoiceNumber,
       'Client': inv.clientName,
@@ -109,11 +138,11 @@ export default function InvoicesPage() {
       ...(inv.totalRon ? { 'Total (RON)': `${inv.totalRon.toFixed(2)} RON` } : {}),
       'Status': inv.status,
     }));
-  }, [selectedInvoices, filteredInvoices]);
+  }, [selectedInvoices, sortedInvoices]);
   
   const exportableRawData = useMemo(() => {
-    return selectedInvoices.length > 0 ? selectedInvoices : filteredInvoices;
-  }, [selectedInvoices, filteredInvoices]);
+    return selectedInvoices.length > 0 ? selectedInvoices : sortedInvoices;
+  }, [selectedInvoices, sortedInvoices]);
 
 
   return (
@@ -184,10 +213,12 @@ export default function InvoicesPage() {
         </CardContent>
       </Card>
       <InvoiceList 
-        invoices={filteredInvoices || []} 
+        invoices={sortedInvoices || []} 
         isFiltered={isFiltered}
         selectedRows={selectedRows}
         onSelectedRowsChange={setSelectedRows}
+        sortConfig={sortConfig}
+        onSort={setSortConfig}
       />
     </div>
   );

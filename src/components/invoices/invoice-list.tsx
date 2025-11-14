@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
@@ -8,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Download, Eye, Loader2, Trash2, RotateCcw } from 'lucide-react';
+import { MoreHorizontal, Download, Eye, Loader2, Trash2, RotateCcw, ArrowUpDown } from 'lucide-react';
 import type { Invoice } from '@/lib/types';
 import { format, parseISO } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
@@ -30,13 +29,20 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Checkbox } from '@/components/ui/checkbox';
+import { cn } from '@/lib/utils';
 
+type SortConfig = {
+  key: keyof Invoice;
+  direction: 'ascending' | 'descending';
+} | null;
 
 interface InvoiceListProps {
   invoices: Invoice[];
   isFiltered: boolean;
   selectedRows: Record<string, boolean>;
   onSelectedRowsChange: (selectedRows: Record<string, boolean>) => void;
+  sortConfig: SortConfig;
+  onSort: (config: SortConfig) => void;
 }
 
 const currencySymbols: { [key: string]: string } = {
@@ -45,7 +51,7 @@ const currencySymbols: { [key: string]: string } = {
   GBP: '£',
 };
 
-export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRowsChange }: InvoiceListProps) {
+export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRowsChange, sortConfig, onSort }: InvoiceListProps) {
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
@@ -279,6 +285,33 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
     }
   };
 
+  const requestSort = (key: keyof Invoice) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    onSort({ key, direction });
+  };
+
+  const getSortIndicator = (key: keyof Invoice) => {
+    if (!sortConfig || sortConfig.key !== key) {
+      return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30" />;
+    }
+    if (sortConfig.direction === 'ascending') {
+      return <ArrowUpDown className="ml-2 h-4 w-4" />;
+    }
+    return <ArrowUpDown className="ml-2 h-4 w-4" />;
+  };
+
+  const SortableHeader = ({ sortKey, children }: { sortKey: keyof Invoice, children: React.ReactNode }) => (
+    <TableHead>
+      <Button variant="ghost" onClick={() => requestSort(sortKey)} className="px-2">
+        {children}
+        {getSortIndicator(sortKey)}
+      </Button>
+    </TableHead>
+  );
+
 
   return (
     <>
@@ -330,14 +363,14 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
                         aria-label="Select all"
                     />
                 </TableHead>
-                <TableHead>Invoice #</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Project</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Subtotal</TableHead>
-                {showVatColumn && <TableHead>VAT</TableHead>}
-                <TableHead>Total</TableHead>
-                <TableHead>Status</TableHead>
+                <SortableHeader sortKey="invoiceNumber">Invoice #</SortableHeader>
+                <SortableHeader sortKey="clientName">Client</SortableHeader>
+                <SortableHeader sortKey="projectName">Project</SortableHeader>
+                <SortableHeader sortKey="date">Date</SortableHeader>
+                <SortableHeader sortKey="subtotal">Subtotal</SortableHeader>
+                {showVatColumn && <SortableHeader sortKey="vatAmount">VAT</SortableHeader>}
+                <SortableHeader sortKey="total">Total</SortableHeader>
+                <SortableHeader sortKey="status">Status</SortableHeader>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>

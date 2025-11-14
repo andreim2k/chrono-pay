@@ -1,14 +1,13 @@
 
-
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Trash2, Edit } from 'lucide-react';
+import { MoreHorizontal, Trash2, Edit, ArrowUpDown } from 'lucide-react';
 import type { Timecard, Project, Client } from '@/lib/types';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
@@ -28,12 +27,19 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Checkbox } from '../ui/checkbox';
 
+type SortConfig = {
+  key: keyof Timecard;
+  direction: 'ascending' | 'descending';
+} | null;
+
 interface TimecardListProps {
   timecards: Timecard[];
   isFiltered: boolean;
+  sortConfig: SortConfig;
+  onSort: (config: SortConfig) => void;
 }
 
-export function TimecardList({ timecards, isFiltered }: TimecardListProps) {
+export function TimecardList({ timecards, isFiltered, sortConfig, onSort }: TimecardListProps) {
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
@@ -135,6 +141,32 @@ export function TimecardList({ timecards, isFiltered }: TimecardListProps) {
     }
   };
 
+  const requestSort = (key: keyof Timecard) => {
+    let direction: 'ascending' | 'descending' = 'ascending';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    onSort({ key, direction });
+  };
+
+  const getSortIndicator = (key: keyof Timecard) => {
+    if (!sortConfig || sortConfig.key !== key) {
+      return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30" />;
+    }
+    if (sortConfig.direction === 'ascending') {
+      return <ArrowUpDown className="ml-2 h-4 w-4" />;
+    }
+    return <ArrowUpDown className="ml-2 h-4 w-4" />;
+  };
+
+  const SortableHeader = ({ sortKey, children }: { sortKey: keyof Timecard, children: React.ReactNode }) => (
+    <TableHead>
+      <Button variant="ghost" onClick={() => requestSort(sortKey)} className="px-2">
+        {children}
+        {getSortIndicator(sortKey)}
+      </Button>
+    </TableHead>
+  );
 
   return (
     <>
@@ -189,12 +221,12 @@ export function TimecardList({ timecards, isFiltered }: TimecardListProps) {
                         aria-label="Select all billable"
                     />
                 </TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Client</TableHead>
-                <TableHead>Project</TableHead>
-                <TableHead>Hours</TableHead>
+                <SortableHeader sortKey="startDate">Date</SortableHeader>
+                <SortableHeader sortKey="clientName">Client</SortableHeader>
+                <SortableHeader sortKey="projectName">Project</SortableHeader>
+                <SortableHeader sortKey="hours">Hours</SortableHeader>
                 <TableHead>Description</TableHead>
-                <TableHead>Status</TableHead>
+                <SortableHeader sortKey="status">Status</SortableHeader>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
