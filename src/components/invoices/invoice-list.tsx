@@ -289,7 +289,7 @@ export function InvoiceList({ invoices, selectedRows, onSelectedRowsChange }: In
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
             <div>
-                <CardTitle>Filtered Invoices</CardTitle>
+                <CardTitle>All Invoices</CardTitle>
                 <CardDescription>
                   Displaying {invoices.length} invoice(s).
                   {selectedRowCount > 0 && ` (${selectedRowCount} selected)`}
