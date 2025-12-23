@@ -20,9 +20,9 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useFirestore, addDocumentNonBlocking, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
-import type { Client } from '@/lib/types';
+import { useFirestore, addDocumentNonBlocking, useCollection, useMemoFirebase, useUser, useDoc } from '@/firebase';
+import { collection, query, doc } from 'firebase/firestore';
+import type { Client, User } from '@/lib/types';
 import { Switch } from '../ui/switch';
 
 const languages = ['English', 'Romanian'];
@@ -38,6 +38,7 @@ const clientSchema = z.object({
   vatRate: z.coerce.number().min(0, "VAT rate must be 0 or greater."),
   paymentTerms: z.coerce.number().int().min(0, "Payment terms must be 0 or greater"),
   hasVat: z.boolean().default(false),
+  preferredCompanyIbanCurrency: z.string().optional(),
 });
 
 type ClientFormValues = z.infer<typeof clientSchema>;
@@ -53,6 +54,13 @@ export function AddClientDialog() {
     [firestore, user]
   );
   const { data: clients } = useCollection<Client>(clientsQuery, `users/${user?.uid}/clients`);
+  
+  const userDocRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, `users/${user.uid}`) : null),
+    [firestore, user]
+  );
+  const { data: myCompany } = useDoc<User>(userDocRef, `users/${user?.uid}`);
+
 
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(clientSchema),
@@ -67,6 +75,7 @@ export function AddClientDialog() {
       vatRate: 0,
       paymentTerms: 7,
       hasVat: false,
+      preferredCompanyIbanCurrency: '',
     },
   });
 
@@ -96,6 +105,8 @@ export function AddClientDialog() {
     form.reset();
     setIsOpen(false);
   };
+  
+  const availableIbanCurrencies = myCompany?.companyIbans ? Object.keys(myCompany.companyIbans) : [];
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -247,6 +258,27 @@ export function AddClientDialog() {
                 )}
               />
             </div>
+            <FormField
+                control={form.control}
+                name="preferredCompanyIbanCurrency"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Default Company IBAN</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select an IBAN currency..." />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {availableIbanCurrencies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground pt-1">Select which of your company's IBANs to use for this client.</p>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
              <FormField
                 control={form.control}
                 name="hasVat"

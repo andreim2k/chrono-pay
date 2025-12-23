@@ -35,7 +35,13 @@
                 "companyName": { "type": "string", "description": "The user's company name." },
                 "companyAddress": { "type": "string", "description": "The user's company address." },
                 "companyVat": { "type": "string", "description": "The user's company VAT number." },
-                "companyIban": { "type": "string", "description": "The user's company IBAN." },
+                "companyIbans": {
+                    "type": "object",
+                    "description": "A map of currency codes to IBANs for the user's company.",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
                 "companyBankName": { "type": "string", "description": "The user's company bank name." },
                 "companySwift": { "type": "string", "description": "The user's company SWIFT/BIC code." },
                 "companyLogoUrl": { "type": "string", "description": "URL for the user's company logo." },
@@ -95,6 +101,10 @@
                 "hasVat": {
                     "type": "boolean",
                     "description": "Indicates if VAT should be applied for this client's invoices."
+                },
+                "preferredCompanyIbanCurrency": {
+                    "type": "string",
+                    "description": "The currency of the company IBAN to use for this client's invoices."
                 }
             },
             "required": [

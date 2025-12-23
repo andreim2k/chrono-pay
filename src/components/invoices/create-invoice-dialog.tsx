@@ -299,12 +299,15 @@ export function CreateInvoiceDialog() {
     
     const creationDateString = new Date().toLocaleDateString('en-CA');
     
+    const preferredIbanCurrency = selectedClient.preferredCompanyIbanCurrency || invoiceConfig.currency;
+    const companyIban = myCompany.companyIbans ? myCompany.companyIbans[preferredIbanCurrency] : undefined;
+    
     const data: Omit<Invoice, 'id'> = {
       invoiceNumber: generateInvoiceNumber(currentProject, invoices),
       companyName: myCompany.companyName!,
       companyAddress: myCompany.companyAddress!,
       companyVat: myCompany.companyVat!,
-      companyIban: myCompany.companyIban,
+      companyIban: companyIban,
       companyBankName: myCompany.companyBankName,
       companySwift: myCompany.companySwift,
       companyPhone: myCompany.companyPhone,

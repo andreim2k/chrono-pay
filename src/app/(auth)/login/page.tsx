@@ -57,7 +57,7 @@ export default function LoginPage() {
             companyName: `${googleUser.displayName}'s Company`,
             companyAddress: 'Your Company Address',
             companyVat: 'Your VAT Number',
-            companyIban: 'Your IBAN',
+            companyIbans: { EUR: 'Your IBAN for EUR' },
             companyVatRate: 0.19, // Default to 19%
             companyBankName: 'Your Bank Name',
             companySwift: 'Your SWIFT/BIC'

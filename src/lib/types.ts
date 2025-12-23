@@ -1,8 +1,4 @@
 
-
-
-
-
 export type User = {
   id: string;
   name: string;
@@ -13,7 +9,7 @@ export type User = {
   companyName?: string;
   companyAddress?: string;
   companyVat?: string;
-  companyIban?: string;
+  companyIbans?: { [key: string]: string };
   companyBankName?: string;
   companySwift?: string;
   companyLogoUrl?: string;
@@ -35,6 +31,7 @@ export type Client = {
   language?: 'English' | 'Romanian';
   order?: number;
   paymentTerms: number; // Number of days until invoice is due
+  preferredCompanyIbanCurrency?: string;
 };
 
 export type Company = {

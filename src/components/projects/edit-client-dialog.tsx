@@ -17,8 +17,8 @@ import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { Client } from '@/lib/types';
-import { useFirestore, useUser } from '@/firebase';
+import type { Client, User } from '@/lib/types';
+import { useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useEffect } from 'react';
 import { Switch } from '../ui/switch';
@@ -36,6 +36,7 @@ const clientSchema = z.object({
   vatRate: z.coerce.number().min(0, "VAT rate must be 0 or greater."),
   paymentTerms: z.coerce.number().int().min(0, "Payment terms must be 0 or greater"),
   hasVat: z.boolean().default(false),
+  preferredCompanyIbanCurrency: z.string().optional(),
 });
 
 type ClientFormValues = z.infer<typeof clientSchema>;
@@ -51,6 +52,12 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
   const firestore = useFirestore();
   const { user } = useUser();
 
+  const userDocRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, `users/${user.uid}`) : null),
+    [firestore, user]
+  );
+  const { data: myCompany } = useDoc<User>(userDocRef, `users/${user?.uid}`);
+
   const form = useForm<ClientFormValues>({
     resolver: zodResolver(clientSchema),
     defaultValues: {
@@ -64,6 +71,7 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
       vatRate: client.vatRate * 100, // Display as percentage
       paymentTerms: client.paymentTerms ?? 7,
       hasVat: client.hasVat || false,
+      preferredCompanyIbanCurrency: client.preferredCompanyIbanCurrency || '',
     },
   });
 
@@ -80,6 +88,7 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
             vatRate: client.vatRate * 100, // Display as percentage
             paymentTerms: client.paymentTerms ?? 7,
             hasVat: client.hasVat || false,
+            preferredCompanyIbanCurrency: client.preferredCompanyIbanCurrency || '',
         });
     }
   }, [isOpen, client, form]);
@@ -115,6 +124,8 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
     });
     onOpenChange(false);
   };
+
+  const availableIbanCurrencies = myCompany?.companyIbans ? Object.keys(myCompany.companyIbans) : [];
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -261,6 +272,27 @@ export function EditClientDialog({ client, isOpen, onOpenChange }: EditClientDia
                 )}
               />
             </div>
+            <FormField
+                control={form.control}
+                name="preferredCompanyIbanCurrency"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Default Company IBAN</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select an IBAN currency..." />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {availableIbanCurrencies.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                         <p className="text-xs text-muted-foreground pt-1">Select which of your company's IBANs to use for this client.</p>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
             <FormField
                 control={form.control}
                 name="hasVat"
