@@ -21,12 +21,18 @@ export function DataManagement({ data }: DataManagementProps) {
       <CardHeader>
         <CardTitle>Data Management</CardTitle>
         <CardDescription>
-          Export all your data for backup or import it to a new workspace. This will overwrite all existing data.
+          Export your data for backup, or import a previous backup file. You can choose to merge new data or overwrite existing data.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex items-center gap-4">
-        <DataExport data={data} />
-        <DataImport allowedCollections={['clients', 'projects', 'invoices', 'timecards', 'myCompany']} defaultImportMode='overwrite' existingData={data} />
+        <DataExport data={data} fileName='chronopay_full_backup.json' buttonLabel='Export All Data'/>
+        <DataImport 
+            allowedCollections={['clients', 'projects', 'invoices', 'timecards', 'myCompany']} 
+            defaultImportMode='merge' 
+            existingData={data} 
+            allowModeSelection={true}
+            buttonLabel='Import Data'
+        />
       </CardContent>
     </Card>
   );

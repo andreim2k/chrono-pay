@@ -5,7 +5,7 @@ import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Download, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
+import { useFirestore, useUser } from '@/firebase';
 import { writeBatch, collection, doc } from 'firebase/firestore';
 import {
   AlertDialog,
@@ -31,7 +31,7 @@ interface DataImportProps {
 }
 
 interface AlignedData {
-    myCompany?: User,
+    myCompany?: Partial<User>,
     clients?: Client[];
     projects?: Project[];
     invoices?: Invoice[];
@@ -233,7 +233,15 @@ export function DataImport({
 
       await batch.commit();
       
-      const countForToast = selectedImportMode === 'overwrite' ? Object.values(dataToImport).flat().length : importCount;
+      let countForToast = 0;
+      if (selectedImportMode === 'overwrite') {
+        countForToast = Object.keys(dataToImport)
+            .filter(key => allowedCollections.includes(key as keyof AlignedData))
+            .reduce((sum, key) => sum + (Array.isArray(dataToImport[key]) ? dataToImport[key].length : (key === 'myCompany' ? 1 : 0)), 0);
+      } else {
+        countForToast = importCount;
+      }
+
       const successTitle = selectedImportMode === 'overwrite' ? 'Import Successful' : 'Merge Successful';
       const successDescription = selectedImportMode === 'overwrite' 
         ? `Successfully cleared relevant data and imported ${countForToast} records. The page will now refresh.`

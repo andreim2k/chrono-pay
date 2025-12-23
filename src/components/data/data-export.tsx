@@ -69,7 +69,10 @@ export function DataExport({ data, fileName = 'chronopay_backup.json', buttonLab
     if (Array.isArray(value)) {
         return value.length > 0;
     }
-    return value && Object.keys(value).length > 0;
+    if (value === null || value === undefined) {
+        return false;
+    }
+    return typeof value === 'object' && Object.keys(value).length > 0;
   });
 
   return (
