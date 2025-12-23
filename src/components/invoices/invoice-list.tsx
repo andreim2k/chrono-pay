@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, Download, Eye, Loader2, Trash2, RotateCcw, ArrowUpDown } from 'lucide-react';
 import type { Invoice } from '@/lib/types';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isPast, isFuture, differenceInDays } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser } from '@/firebase';
 import { doc, writeBatch } from 'firebase/firestore';
@@ -312,12 +312,25 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
 
   const SortableHeader = ({ sortKey, children }: { sortKey: keyof Invoice, children: React.ReactNode }) => (
     <TableHead>
-      <Button variant="ghost" onClick={() => requestSort(sortKey)} className="p-0 hover:bg-transparent hover:text-primary">
+      <Button variant="ghost" onClick={() => requestSort(sortKey)} className="p-0 hover:text-primary hover:bg-transparent">
         {children}
         {getSortIndicator(sortKey)}
       </Button>
     </TableHead>
   );
+  
+  const getDueDateStyles = (invoice: Invoice) => {
+    if (invoice.status === 'Paid') return '';
+    const dueDate = parseISO(invoice.dueDate);
+    const today = new Date();
+    if (isPast(dueDate)) {
+      return 'text-destructive';
+    }
+    if (isFuture(dueDate) && differenceInDays(dueDate, today) <= 7) {
+      return 'text-amber-600 dark:text-amber-500';
+    }
+    return '';
+  }
 
 
   return (
@@ -374,6 +387,7 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
                 <SortableHeader sortKey="clientName">Client</SortableHeader>
                 <SortableHeader sortKey="projectName">Project</SortableHeader>
                 <SortableHeader sortKey="date">Date</SortableHeader>
+                <SortableHeader sortKey="dueDate">Due Date</SortableHeader>
                 <SortableHeader sortKey="subtotal">Subtotal</SortableHeader>
                 {showVatColumn && <SortableHeader sortKey="vatAmount">VAT</SortableHeader>}
                 <SortableHeader sortKey="total">Total</SortableHeader>
@@ -395,6 +409,9 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
                   <TableCell>{invoice.clientName}</TableCell>
                   <TableCell>{invoice.projectName}</TableCell>
                   <TableCell>{format(parseISO(invoice.date), 'MMM d, yyyy')}</TableCell>
+                   <TableCell className={cn('font-medium', getDueDateStyles(invoice))}>
+                    {format(parseISO(invoice.dueDate), 'MMM d, yyyy')}
+                  </TableCell>
                   <TableCell>{currencySymbols[invoice.currency] || invoice.currency}{invoice.subtotal.toFixed(2)}</TableCell>
                   {showVatColumn && (
                       <TableCell>
@@ -431,7 +448,7 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
                 </TableRow>
               )) : (
                 <TableRow>
-                  <TableCell colSpan={showVatColumn ? 10 : 9} className="h-24 text-center">
+                  <TableCell colSpan={showVatColumn ? 11 : 10} className="h-24 text-center">
                     No invoices match the current filters.
                   </TableCell>
                 </TableRow>
