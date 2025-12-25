@@ -32,15 +32,21 @@ export function RevenueChart({ invoices }: { invoices: Invoice[] }) {
         const revenueByMonthAndCurrency: { 
             [month: string]: { [currency: string]: { subtotal: number, vat: number } } 
         } = {};
+        
+        const allCurrencies = [...new Set(paidInvoices.map(inv => inv.currency))];
 
         paidInvoices.forEach(invoice => {
             const month = format(parseISO(invoice.date), 'MMM yyyy');
             if (!revenueByMonthAndCurrency[month]) {
                 revenueByMonthAndCurrency[month] = {};
             }
-            if (!revenueByMonthAndCurrency[month][invoice.currency]) {
-                revenueByMonthAndCurrency[month][invoice.currency] = { subtotal: 0, vat: 0 };
-            }
+            
+            allCurrencies.forEach(currency => {
+                 if (!revenueByMonthAndCurrency[month][currency]) {
+                    revenueByMonthAndCurrency[month][currency] = { subtotal: 0, vat: 0 };
+                }
+            });
+
             revenueByMonthAndCurrency[month][invoice.currency].subtotal += invoice.subtotal;
             revenueByMonthAndCurrency[month][invoice.currency].vat += invoice.vatAmount || 0;
         });
@@ -52,8 +58,6 @@ export function RevenueChart({ invoices }: { invoices: Invoice[] }) {
         
         const sortedMonths = monthKeys.sort((a,b) => new Date(a).getTime() - new Date(b).getTime());
         
-        const allCurrencies = [...new Set(paidInvoices.map(inv => inv.currency))];
-
         const chartData = sortedMonths.map(month => {
             const entry: { month: string; [key: string]: any } = { month: format(new Date(month), 'MMM') };
             allCurrencies.forEach(currency => {
