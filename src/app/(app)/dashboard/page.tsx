@@ -50,8 +50,8 @@ export default function DashboardPage() {
     const clientCount = safeClients.length;
     const projectCount = safeProjects.length;
 
-    const totalRevenue = paidInvoices.reduce((acc, inv) => acc + (inv.totalRon || inv.total), 0);
-    const unpaidTotal = unpaidInvoices.reduce((acc, inv) => acc + (inv.totalRon || inv.total), 0);
+    const totalRevenue = paidInvoices.reduce((acc, inv) => acc + (inv.totalRon || 0), 0);
+    const unpaidTotal = unpaidInvoices.reduce((acc, inv) => acc + (inv.totalRon || 0), 0);
 
     const totalVatCollectedRon = paidInvoices.reduce((acc, inv) => {
         const vatInRon = (inv.vatAmount || 0) * (inv.exchangeRate || 1);
@@ -67,7 +67,7 @@ export default function DashboardPage() {
     
     const paidEurNoVat = paidInvoices
       .filter(inv => inv.currency === 'EUR' && (!inv.vatAmount || inv.vatAmount === 0))
-      .reduce((acc, inv) => acc + inv.total, 0);
+      .reduce((acc, inv) => acc + inv.subtotal, 0);
 
     const formatCurrency = (amount: number, currency = 'EUR') => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
