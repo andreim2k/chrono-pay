@@ -41,11 +41,9 @@ export function RevenueChart({ invoices }: { invoices: Invoice[] }) {
                 revenueByMonthAndCurrency[month] = {};
             }
             
-            allCurrencies.forEach(currency => {
-                 if (!revenueByMonthAndCurrency[month][currency]) {
-                    revenueByMonthAndCurrency[month][currency] = { subtotal: 0, vat: 0 };
-                }
-            });
+            if (!revenueByMonthAndCurrency[month][invoice.currency]) {
+                revenueByMonthAndCurrency[month][invoice.currency] = { subtotal: 0, vat: 0 };
+            }
 
             revenueByMonthAndCurrency[month][invoice.currency].subtotal += invoice.subtotal;
             revenueByMonthAndCurrency[month][invoice.currency].vat += invoice.vatAmount || 0;
@@ -61,7 +59,7 @@ export function RevenueChart({ invoices }: { invoices: Invoice[] }) {
         const chartData = sortedMonths.map(month => {
             const entry: { month: string; [key: string]: any } = { month: format(new Date(month), 'MMM') };
             allCurrencies.forEach(currency => {
-                const data = revenueByMonthAndCurrency[month][currency] || { subtotal: 0, vat: 0 };
+                const data = revenueByMonthAndCurrency[month]?.[currency] || { subtotal: 0, vat: 0 };
                 entry[`${currency}-subtotal`] = data.subtotal;
                 entry[`${currency}-vat`] = data.vat;
             });
@@ -76,14 +74,15 @@ export function RevenueChart({ invoices }: { invoices: Invoice[] }) {
     const chartConfig = useMemo(() => {
         const config: ChartConfig = {};
         currencies.forEach((currency, index) => {
-            const color = chartColors[index % chartColors.length];
+            const color1 = chartColors[index % chartColors.length];
+            const color2 = chartColors[(index + 1) % chartColors.length];
             config[`${currency}-subtotal`] = {
                 label: `${currency} (Net)`,
-                color: color,
+                color: color1,
             };
             config[`${currency}-vat`] = {
                 label: `${currency} (VAT)`,
-                color: color,
+                color: color2,
             };
         });
         return config;
@@ -118,7 +117,7 @@ export function RevenueChart({ invoices }: { invoices: Invoice[] }) {
                 content={<ChartTooltipContent 
                     indicator="dot" 
                     formatter={(value, name) => {
-                        const [currency, type] = (name as string).split('-');
+                        const [currency] = (name as string).split('-');
                         const symbol = currencySymbols[currency] || currency;
                         return `${symbol}${(value as number).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
                     }}
@@ -126,11 +125,11 @@ export function RevenueChart({ invoices }: { invoices: Invoice[] }) {
               />
               {currencies.map((currency) => (
                 <defs key={`def-${currency}`}>
-                    <linearGradient id={`fill${currency}-subtotal`} x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id={`fill-${currency}-subtotal`} x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor={`var(--color-${currency}-subtotal)`} stopOpacity={0.8}/>
                         <stop offset="95%" stopColor={`var(--color-${currency}-subtotal)`} stopOpacity={0.1}/>
                     </linearGradient>
-                     <linearGradient id={`fill${currency}-vat`} x1="0" y1="0" x2="0" y2="1">
+                     <linearGradient id={`fill-${currency}-vat`} x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor={`var(--color-${currency}-vat)`} stopOpacity={0.8}/>
                         <stop offset="95%" stopColor={`var(--color-${currency}-vat)`} stopOpacity={0.3}/>
                     </linearGradient>
@@ -143,7 +142,7 @@ export function RevenueChart({ invoices }: { invoices: Invoice[] }) {
                         dataKey={`${currency}-subtotal`} 
                         stackId={currency}
                         stroke={`var(--color-${currency}-subtotal)`}
-                        fill={`url(#fill${currency}-subtotal)`}
+                        fill={`url(#fill-${currency}-subtotal)`}
                         fillOpacity={0.4}
                     />
                      <Area 
@@ -152,7 +151,7 @@ export function RevenueChart({ invoices }: { invoices: Invoice[] }) {
                         stackId={currency}
                         stroke={`var(--color-${currency}-vat)`}
                         strokeDasharray="3 3"
-                        fill={`url(#fill${currency}-vat)`}
+                        fill={`url(#fill-${currency}-vat)`}
                         fillOpacity={0.4}
                     />
                    </React.Fragment>
