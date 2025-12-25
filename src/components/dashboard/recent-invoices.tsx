@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/card"
 import type { Invoice } from "@/lib/types";
 import { cn, getInitials } from "@/lib/utils";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, isPast, isFuture, differenceInDays } from "date-fns";
+import type { VariantProps } from "class-variance-authority";
 
 const currencySymbols: { [key: string]: string } = {
     EUR: '€',
@@ -56,6 +57,22 @@ export function RecentInvoices({ invoices }: { invoices: Invoice[] }) {
         return '';
     };
 
+    const getDueDateStyles = (invoice: Invoice) => {
+        if (invoice.status === 'Paid') return '';
+        const dueDate = parseISO(invoice.dueDate);
+        const today = new Date();
+        // Reset hours to compare dates only
+        today.setHours(0, 0, 0, 0);
+
+        if (isPast(dueDate) && format(dueDate, 'yyyy-MM-dd') !== format(today, 'yyyy-MM-dd')) {
+            return 'text-destructive';
+        }
+        if (isFuture(dueDate) && differenceInDays(dueDate, today) <= 7) {
+            return 'text-amber-600 dark:text-amber-500';
+        }
+        return '';
+    }
+
 
     return (
         <Card>
@@ -75,7 +92,8 @@ export function RecentInvoices({ invoices }: { invoices: Invoice[] }) {
                                 <p className="text-sm font-medium leading-none">{invoice.clientName}</p>
                                 <p className="text-xs text-muted-foreground">
                                 {invoice.invoiceNumber} &middot; {format(parseISO(invoice.date), 'MMM d, yyyy')}
-                                <span className='italic ml-1'>{getServiceMonth(invoice)}</span>
+                                <span className='italic mx-1'>{getServiceMonth(invoice)}</span>
+                                &middot; <span className={cn('font-medium', getDueDateStyles(invoice))}>Due {format(parseISO(invoice.dueDate), 'MMM d, yyyy')}</span>
                                 </p>
                             </div>
                             <div className="flex items-center gap-4">
@@ -103,5 +121,3 @@ export function RecentInvoices({ invoices }: { invoices: Invoice[] }) {
         </Card>
     )
 }
-
-    
