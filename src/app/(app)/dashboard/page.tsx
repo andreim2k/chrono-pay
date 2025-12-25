@@ -87,7 +87,7 @@ export default function DashboardPage() {
       netRevenue: formatRon(netRevenue),
       unpaidAmount: formatRon(unpaidTotal),
       unpaidTotal,
-      clientCount: clientCount,
+      clientCount,
       projectCount,
       paidCount: paidInvoices.length,
       totalVatCollected: formatRon(totalVatCollectedRon),
@@ -129,19 +129,13 @@ export default function DashboardPage() {
         valueClassName={dashboardStats.unpaidTotal > 0 ? 'text-destructive' : ''}
         />
          <StatCard
-          title="Active Clients"
-          value={String(dashboardStats.clientCount)}
+          title="Clients & Projects"
+          value={`${dashboardStats.clientCount} / ${dashboardStats.projectCount}`}
           icon={<Users className="h-4 w-4 text-muted-foreground" />}
-          description="Total number of active clients"
+          description="Total active clients / projects"
         />
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-         <StatCard
-          title="Active Projects"
-          value={String(dashboardStats.projectCount)}
-          icon={<Briefcase className="h-4 w-4 text-muted-foreground" />}
-          description="Total number of active projects"
-        />
         <StatCard
           title="Total Revenue (EUR, no VAT)"
           value={dashboardStats.paidEurNoVat}
@@ -161,8 +155,6 @@ export default function DashboardPage() {
           description="From created & sent invoices"
           valueClassName={dashboardStats.outstandingVatTotal > 0 ? 'text-amber-600 dark:text-amber-500' : ''}
         />
-      </div>
-       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
          <StatCard
           title="Unbilled Hours"
           value={dashboardStats.unbilledHours}
@@ -170,6 +162,9 @@ export default function DashboardPage() {
           description="Ready to be invoiced"
           valueClassName={parseFloat(dashboardStats.unbilledHours) > 0 ? 'text-amber-600 dark:text-amber-500' : ''}
         />
+      </div>
+       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        
        </div>
 
       <RecentInvoices invoices={recentInvoices} />
