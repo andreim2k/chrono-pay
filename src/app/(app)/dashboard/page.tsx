@@ -4,7 +4,7 @@
 import { StatCard } from '@/components/dashboard/stat-card';
 import { RecentInvoices } from '@/components/dashboard/recent-invoices';
 import { useCollection, useUser } from '@/firebase';
-import { DollarSign, Users, Clock, Banknote, Landmark, Briefcase, Hourglass, Euro } from 'lucide-react';
+import { DollarSign, Users, Clock, Banknote, Landmark, Briefcase, Hourglass, Euro, FileText } from 'lucide-react';
 import type { Invoice, Project, Timecard, Client } from '@/lib/types';
 import { useMemo } from 'react';
 import { useFirestore, useMemoFirebase } from '@/firebase/provider';
@@ -51,6 +51,11 @@ export default function DashboardPage() {
     const projectCount = safeProjects.length;
 
     const totalRevenue = paidInvoices.reduce((acc, inv) => acc + (inv.totalRon || 0), 0);
+    const netRevenue = paidInvoices.reduce((acc, inv) => {
+        const subtotalRon = inv.subtotal * (inv.exchangeRate || 1);
+        return acc + subtotalRon;
+    }, 0);
+    
     const unpaidTotal = unpaidInvoices.reduce((acc, inv) => acc + (inv.totalRon || 0), 0);
 
     const totalVatCollectedRon = paidInvoices.reduce((acc, inv) => {
@@ -79,6 +84,7 @@ export default function DashboardPage() {
 
     return {
       totalRevenue: formatRon(totalRevenue),
+      netRevenue: formatRon(netRevenue),
       unpaidAmount: formatRon(unpaidTotal),
       unpaidTotal,
       clientCount: clientCount,
@@ -107,7 +113,13 @@ export default function DashboardPage() {
         title="Total Revenue (RON)"
         value={dashboardStats.totalRevenue}
         icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
-        description="Total from paid invoices"
+        description="Total from paid invoices, including VAT"
+        />
+        <StatCard
+          title="Net Revenue (RON)"
+          value={dashboardStats.netRevenue}
+          icon={<FileText className="h-4 w-4 text-muted-foreground" />}
+          description="Total from paid invoices, before VAT"
         />
         <StatCard
         title="Unpaid Amount (RON)"
@@ -122,14 +134,14 @@ export default function DashboardPage() {
           icon={<Users className="h-4 w-4 text-muted-foreground" />}
           description="Total number of active clients"
         />
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
          <StatCard
           title="Active Projects"
           value={String(dashboardStats.projectCount)}
           icon={<Briefcase className="h-4 w-4 text-muted-foreground" />}
           description="Total number of active projects"
         />
-      </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Total Revenue (EUR, no VAT)"
           value={dashboardStats.paidEurNoVat}
@@ -149,14 +161,16 @@ export default function DashboardPage() {
           description="From created & sent invoices"
           valueClassName={dashboardStats.outstandingVatTotal > 0 ? 'text-amber-600 dark:text-amber-500' : ''}
         />
-        <StatCard
+      </div>
+       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+         <StatCard
           title="Unbilled Hours"
           value={dashboardStats.unbilledHours}
           icon={<Hourglass className="h-4 w-4 text-muted-foreground" />}
           description="Ready to be invoiced"
           valueClassName={parseFloat(dashboardStats.unbilledHours) > 0 ? 'text-amber-600 dark:text-amber-500' : ''}
         />
-      </div>
+       </div>
 
       <RecentInvoices invoices={recentInvoices} />
 
