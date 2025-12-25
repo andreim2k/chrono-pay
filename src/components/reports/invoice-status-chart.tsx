@@ -3,7 +3,7 @@
 
 import { Pie, PieChart, ResponsiveContainer, Cell, Label } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChartContainer, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
+import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import type { ChartConfig } from '@/components/ui/chart';
 import type { Invoice } from '@/lib/types';
 import { useMemo } from 'react';
@@ -57,6 +57,10 @@ export function InvoiceStatusChart({ invoices }: { invoices: Invoice[] }) {
           <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
             <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
+                    <ChartTooltip
+                        cursor={false}
+                        content={<ChartTooltipContent hideLabel />}
+                    />
                     <Pie
                         data={statusData}
                         dataKey="count"
