@@ -17,69 +17,67 @@ const currencySymbols: { [key: string]: string } = {
     RON: 'RON'
 };
 
+// More distinct color pairs for chart areas
 const chartColors = [
-    { net: 'hsl(var(--chart-1))', vat: 'hsl(var(--chart-2))' },
-    { net: 'hsl(var(--chart-3))', vat: 'hsl(var(--chart-4))' },
-    { net: 'hsl(var(--chart-5))', vat: 'hsl(var(--chart-1))' },
+    { net: 'hsl(var(--chart-2))', vat: 'hsl(var(--chart-1))' },
+    { net: 'hsl(var(--chart-4))', vat: 'hsl(var(--chart-3))' },
+    { net: 'hsl(var(--chart-5))', vat: 'hsl(var(--chart-2))' },
 ];
 
 
 export function RevenueChart({ invoices }: { invoices: Invoice[] }) {
-    const { monthlyRevenue, currencies } = useMemo(() => {
+    const { chartData, chartConfig, currencies } = useMemo(() => {
         const paidInvoices = invoices.filter(inv => inv.status === 'Paid');
         
-        const revenueByMonthAndCurrency: { 
-            [month: string]: { [key: string]: number } 
-        } = {};
-        
-        const allCurrencies = [...new Set(paidInvoices.map(inv => inv.currency))];
+        // Group revenue by month and currency
+        const revenueByMonth: { [month: string]: { [key: string]: number | string } } = {};
+        const allCurrencies = new Set<string>();
 
         paidInvoices.forEach(invoice => {
             const month = format(parseISO(invoice.date), 'MMM yyyy');
-            if (!revenueByMonthAndCurrency[month]) {
-                revenueByMonthAndCurrency[month] = { month: new Date(month).getTime() };
+            allCurrencies.add(invoice.currency);
+
+            if (!revenueByMonth[month]) {
+                revenueByMonth[month] = { month };
             }
-            
+
             const subtotalKey = `${invoice.currency}-subtotal`;
             const vatKey = `${invoice.currency}-vat`;
 
-            if (!revenueByMonthAndCurrency[month][subtotalKey]) {
-                revenueByMonthAndCurrency[month][subtotalKey] = 0;
-            }
-             if (!revenueByMonthAndCurrency[month][vatKey]) {
-                revenueByMonthAndCurrency[month][vatKey] = 0;
-            }
-
-            revenueByMonthAndCurrency[month][subtotalKey] += invoice.subtotal;
-            revenueByMonthAndCurrency[month][vatKey] += invoice.vatAmount || 0;
+            // Initialize keys if they don't exist
+            if (!revenueByMonth[month][subtotalKey]) revenueByMonth[month][subtotalKey] = 0;
+            if (!revenueByMonth[month][vatKey]) revenueByMonth[month][vatKey] = 0;
+            
+            (revenueByMonth[month][subtotalKey] as number) += invoice.subtotal;
+            (revenueByMonth[month][vatKey] as number) += invoice.vatAmount || 0;
         });
 
-        const sortedChartData = Object.values(revenueByMonthAndCurrency)
-            .sort((a, b) => a.month - b.month)
+        // Sort data by date and format month label
+        const sortedChartData = Object.values(revenueByMonth)
+            .sort((a, b) => new Date(a.month as string).getTime() - new Date(b.month as string).getTime())
             .map(item => ({
                 ...item,
-                month: format(new Date(item.month), 'MMM'),
+                month: format(new Date(item.month as string), 'MMM'),
             }));
+        
+        const currencyList = Array.from(allCurrencies);
 
-        return { monthlyRevenue: sortedChartData, currencies: allCurrencies };
-    }, [invoices]);
-
-
-    const chartConfig = useMemo(() => {
-        const config: ChartConfig = {};
-        currencies.forEach((currency, index) => {
+        // Dynamically build chart config
+        const newChartConfig: ChartConfig = {};
+        currencyList.forEach((currency, index) => {
             const colors = chartColors[index % chartColors.length];
-            config[`${currency}-subtotal`] = {
+            newChartConfig[`${currency}-subtotal`] = {
                 label: `${currency} (Net)`,
                 color: colors.net,
             };
-            config[`${currency}-vat`] = {
+            newChartConfig[`${currency}-vat`] = {
                 label: `${currency} (VAT)`,
                 color: colors.vat,
             };
         });
-        return config;
-    }, [currencies]);
+
+        return { chartData: sortedChartData, chartConfig: newChartConfig, currencies: currencyList };
+    }, [invoices]);
 
 
   return (
@@ -89,9 +87,9 @@ export function RevenueChart({ invoices }: { invoices: Invoice[] }) {
         <CardDescription>Total revenue from paid invoices, broken down by subtotal (Net) and VAT.</CardDescription>
       </CardHeader>
       <CardContent>
-        {monthlyRevenue.length > 0 ? (
+        {chartData.length > 0 ? (
           <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
-            <AreaChart accessibilityLayer data={monthlyRevenue}>
+            <AreaChart accessibilityLayer data={chartData}>
               <CartesianGrid vertical={false} />
               <XAxis dataKey="month" tickLine={false} axisLine={false} tickMargin={8} />
               <YAxis
@@ -124,7 +122,7 @@ export function RevenueChart({ invoices }: { invoices: Invoice[] }) {
                     </linearGradient>
                      <linearGradient id={`fill-${currency}-vat`} x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor={`var(--color-${currency}-vat)`} stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor={`var(--color-${currency}-vat)`} stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor={`var(--color-${currency}-vat)`} stopOpacity={0.1}/>
                     </linearGradient>
                 </defs>
               ))}
@@ -133,7 +131,7 @@ export function RevenueChart({ invoices }: { invoices: Invoice[] }) {
                     <Area 
                         type="natural" 
                         dataKey={`${currency}-subtotal`} 
-                        stackId={`${currency}-subtotal`}
+                        stackId={currency} // Stack subtotal and VAT for the same currency
                         stroke={`var(--color-${currency}-subtotal)`}
                         fill={`url(#fill-${currency}-subtotal)`}
                         fillOpacity={0.4}
@@ -141,7 +139,7 @@ export function RevenueChart({ invoices }: { invoices: Invoice[] }) {
                      <Area 
                         type="natural" 
                         dataKey={`${currency}-vat`} 
-                        stackId={`${currency}-vat`}
+                        stackId={currency} // Stack subtotal and VAT for the same currency
                         stroke={`var(--color-${currency}-vat)`}
                         strokeDasharray="3 3"
                         fill={`url(#fill-${currency}-vat)`}
