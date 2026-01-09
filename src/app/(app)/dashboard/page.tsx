@@ -71,14 +71,9 @@ export default function DashboardPage() {
 
     safeInvoices.forEach(inv => {
         const client = clientsById.get(inv.clientId);
-        // **CRITICAL FIX**: Only group by the client's preference. Do NOT fall back to invoice currency.
-        const groupCurrency = client?.preferredCompanyIbanCurrency;
+        // **CRITICAL FIX**: Prioritize client preference, but fall back to invoice currency.
+        const groupCurrency = client?.preferredCompanyIbanCurrency || inv.currency;
 
-        // If client has no preferred currency, we cannot group this invoice. Skip it.
-        if (!groupCurrency) {
-            return;
-        }
-        
         if (!currencyStats[groupCurrency]) {
             currencyStats[groupCurrency] = { totalRevenue: 0, netRevenue: 0, unpaidTotal: 0, vatCollected: 0, outstandingVat: 0 };
         }
@@ -94,7 +89,8 @@ export default function DashboardPage() {
             subtotalInGroupCurrency = inv.subtotal * conversionRate;
             vatInGroupCurrency = (inv.vatAmount || 0) * conversionRate;
         } else if (groupCurrency !== 'RON' && inv.currency !== groupCurrency) {
-             // **CRITICAL FIX**: If group is not RON, skip any invoice not in that exact currency.
+            // This is the critical part: if the group is NOT RON, only include invoices
+            // that are natively in that currency. Do not convert other currencies into it.
             return;
         }
 
