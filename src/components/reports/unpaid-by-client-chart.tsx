@@ -17,36 +17,25 @@ const currencySymbols: { [key: string]: string } = {
 export function UnpaidByClientChart({ invoices }: { invoices: Invoice[] }) {
     const clientData = useMemo(() => {
         const unpaidInvoices = invoices.filter(inv => inv.status !== 'Paid');
-        const amounts: { [clientName: string]: { [currency: string]: number } } = {};
+        const amounts: { [clientName: string]: number } = {};
 
         unpaidInvoices.forEach(inv => {
             if (!amounts[inv.clientName]) {
-                amounts[inv.clientName] = {};
+                amounts[inv.clientName] = 0;
             }
-            if (!amounts[inv.clientName][inv.currency]) {
-                amounts[inv.clientName][inv.currency] = 0;
-            }
-            amounts[inv.clientName][inv.currency] += inv.total;
+            amounts[inv.clientName] += inv.totalRon || (inv.total * (inv.exchangeRate || 1));
         });
 
-        // For simplicity, we assume one currency per client or convert to a primary currency.
-        // This implementation just picks the first currency found for a client.
-        return Object.entries(amounts).map(([clientName, currencyAmounts]) => {
-            const primaryCurrency = Object.keys(currencyAmounts)[0] || '';
-            const totalAmount = Object.values(currencyAmounts).reduce((sum, amount) => sum + amount, 0);
-
-            return {
-                client: clientName,
-                amount: totalAmount,
-                currency: primaryCurrency,
-            }
-        }).sort((a, b) => b.amount - a.amount);
+        return Object.entries(amounts).map(([clientName, totalAmount]) => ({
+            client: clientName,
+            amount: totalAmount,
+        })).sort((a, b) => b.amount - a.amount);
 
     }, [invoices]);
 
     const chartConfig = {
         amount: {
-            label: 'Unpaid',
+            label: 'Unpaid (RON)',
             color: 'hsl(var(--destructive))',
         },
     };
@@ -54,8 +43,8 @@ export function UnpaidByClientChart({ invoices }: { invoices: Invoice[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Outstanding Balances</CardTitle>
-        <CardDescription>Total unpaid amounts (including VAT) by client.</CardDescription>
+        <CardTitle>Outstanding Balances (RON)</CardTitle>
+        <CardDescription>Total unpaid amounts (including VAT) by client, shown in RON.</CardDescription>
       </CardHeader>
       <CardContent>
         {clientData.length > 0 ? (
@@ -77,11 +66,7 @@ export function UnpaidByClientChart({ invoices }: { invoices: Invoice[] }) {
                     cursor={{fill: 'hsl(var(--muted))'}}
                     content={<ChartTooltipContent 
                         indicator="dot" 
-                        formatter={(value, name, props) => {
-                            const { payload } = props;
-                            const symbol = currencySymbols[payload.currency] || payload.currency;
-                            return `${symbol}${Number(value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-                        }} 
+                        formatter={(value) => `RON ${Number(value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`} 
                     />}
                 />
                 <Bar 

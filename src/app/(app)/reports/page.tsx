@@ -6,9 +6,9 @@ import { InvoiceStatusChart } from '@/components/reports/invoice-status-chart';
 import { InvoicesPerClientChart } from '@/components/reports/invoices-per-client-chart';
 import { InvoicesPerProjectChart } from '@/components/reports/invoices-per-project-chart';
 import { UnpaidByClientChart } from '@/components/reports/unpaid-by-client-chart';
-import { useCollection, useFirestore, useMemoFirebase, useUser } from '@/firebase';
-import { Invoice, Project, Timecard } from '@/lib/types';
-import { collection, query } from 'firebase/firestore';
+import { useCollection, useFirestore, useMemoFirebase, useUser, useDoc } from '@/firebase';
+import { Invoice, Project, Timecard, User } from '@/lib/types';
+import { collection, query, doc } from 'firebase/firestore';
 import { StatCard } from '@/components/dashboard/stat-card';
 import { Banknote, Landmark } from 'lucide-react';
 import { useMemo, useState, useEffect } from 'react';
@@ -21,6 +21,13 @@ import { VatChartYearly } from '@/components/reports/vat-chart-yearly';
 export default function ReportsPage() {
   const firestore = useFirestore();
   const { user } = useUser();
+
+  const userDocRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, `users/${user.uid}`) : null),
+    [firestore, user]
+  );
+  const { data: myCompany } = useDoc<User>(userDocRef, `users/${user?.uid}`);
+
   const invoicesQuery = useMemoFirebase(
     () => (firestore && user ? collection(firestore, `users/${user.uid}/invoices`) : null),
     [firestore, user]
@@ -133,7 +140,7 @@ export default function ReportsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <RevenueChart invoices={filteredInvoices || []} />
+        <RevenueChart invoices={filteredInvoices || []} myCompany={myCompany} />
         <InvoiceStatusChart invoices={filteredInvoices || []} />
       </div>
 

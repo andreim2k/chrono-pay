@@ -3,16 +3,22 @@
 
 import { StatCard } from '@/components/dashboard/stat-card';
 import { RecentInvoices } from '@/components/dashboard/recent-invoices';
-import { useCollection, useUser } from '@/firebase';
+import { useCollection, useUser, useDoc } from '@/firebase';
 import { DollarSign, Users, Clock, Banknote, Landmark, Briefcase, Hourglass, Euro, FileText } from 'lucide-react';
-import type { Invoice, Project, Timecard, Client } from '@/lib/types';
+import type { Invoice, Project, Timecard, Client, User } from '@/lib/types';
 import { useMemo } from 'react';
 import { useFirestore, useMemoFirebase } from '@/firebase/provider';
-import { collection } from 'firebase/firestore';
+import { collection, doc } from 'firebase/firestore';
 
 export default function DashboardPage() {
   const firestore = useFirestore();
   const { user } = useUser();
+
+  const userDocRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, `users/${user.uid}`) : null),
+    [firestore, user]
+  );
+  const { data: myCompany } = useDoc<User>(userDocRef, `users/${user?.uid}`);
 
   const invoicesQuery = useMemoFirebase(
     () => (firestore && user ? collection(firestore, `users/${user.uid}/invoices`) : null),
@@ -70,9 +76,13 @@ export default function DashboardPage() {
     
     const unbilledHours = safeTimecards.filter(tc => tc.status === 'Billable').reduce((acc, tc) => acc + tc.hours, 0);
     
-    const paidEurNoVat = paidInvoices
-      .filter(inv => inv.currency === 'EUR' && (!inv.vatAmount || inv.vatAmount === 0))
-      .reduce((acc, inv) => acc + inv.subtotal, 0);
+    const paidEurNoVatInvoices = paidInvoices
+      .filter(inv => inv.currency === 'EUR' && (!inv.vatAmount || inv.vatAmount === 0));
+
+    const paidEurNoVat = paidEurNoVatInvoices.reduce((acc, inv) => acc + inv.subtotal, 0);
+    const paidEurNoVatInRon = paidEurNoVatInvoices.reduce((acc, inv) => acc + (inv.subtotal * (inv.exchangeRate || 1)), 0);
+
+    const shouldShowRon = myCompany?.companyIbans && 'RON' in myCompany.companyIbans;
 
     const formatCurrency = (amount: number, currency = 'EUR') => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
@@ -94,9 +104,10 @@ export default function DashboardPage() {
       outstandingVat: formatRon(outstandingVatTotalRon),
       outstandingVatTotal: outstandingVatTotalRon,
       unbilledHours: unbilledHours.toFixed(2),
-      paidEurNoVat: formatCurrency(paidEurNoVat, 'EUR'),
+      paidEurValue: shouldShowRon ? formatRon(paidEurNoVatInRon) : formatCurrency(paidEurNoVat, 'EUR'),
+      paidEurLabel: shouldShowRon ? 'Net Revenue from EUR (RON)' : 'Net Revenue from EUR',
     };
-  }, [invoices, clients, projects, timecards]);
+  }, [invoices, clients, projects, timecards, myCompany]);
 
   const recentInvoices = useMemo(() => {
      if (!invoices) return [];
@@ -137,8 +148,8 @@ export default function DashboardPage() {
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="Total Revenue (EUR, no VAT)"
-          value={dashboardStats.paidEurNoVat}
+          title={dashboardStats.paidEurLabel}
+          value={dashboardStats.paidEurValue}
           icon={<Euro className="h-4 w-4 text-muted-foreground" />}
           description="From paid EUR invoices without VAT"
         />
@@ -167,7 +178,7 @@ export default function DashboardPage() {
         
        </div>
 
-      <RecentInvoices invoices={recentInvoices} />
+      <RecentInvoices invoices={recentInvoices} myCompany={myCompany} />
 
     </div>
   );
