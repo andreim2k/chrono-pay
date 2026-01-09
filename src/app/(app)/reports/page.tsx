@@ -66,7 +66,7 @@ export default function ReportsPage() {
   
   const availableCurrencies = useMemo(() => {
       const currencySet = new Set<string>();
-      if (myCompany?.companyIbans?.RON) {
+       if (myCompany?.companyIbans && myCompany.companyIbans.RON) {
           currencySet.add('RON');
       }
       allInvoices.forEach(inv => currencySet.add(inv.currency));
@@ -215,5 +215,3 @@ export default function ReportsPage() {
     </div>
   );
 }
-
-    
