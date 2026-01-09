@@ -52,6 +52,7 @@ const currencySymbols: { [key: string]: string } = {
   EUR: '€',
   USD: '$',
   GBP: '£',
+  RON: 'RON'
 };
 
 export function InvoiceList({ invoices, clients, projects, isFiltered, selectedRows, onSelectedRowsChange, sortConfig, onSort, selectedInvoicesTotals }: InvoiceListProps) {
@@ -73,10 +74,8 @@ export function InvoiceList({ invoices, clients, projects, isFiltered, selectedR
 
   const showVatColumn = useMemo(() => invoices.some(invoice => invoice.vatAmount && invoice.vatAmount > 0), [invoices]);
   const showRonColumn = useMemo(() => invoices.some(invoice => {
-     const project = projectsById.get(invoice.projectId);
-     const client = clientsById.get(project?.clientId || '');
-     return client?.preferredCompanyIbanCurrency === 'RON' && invoice.currency !== 'RON';
-  }), [invoices, clientsById, projectsById]);
+     return !!invoice.totalRon || invoice.currency === 'RON';
+  }), [invoices]);
 
   const selectedRowCount = useMemo(() => Object.values(selectedRows).filter(Boolean).length, [selectedRows]);
 
@@ -280,7 +279,21 @@ export function InvoiceList({ invoices, clients, projects, isFiltered, selectedR
   const totalsString = useMemo(() => {
     const entries = Object.entries(selectedInvoicesTotals);
     if (entries.length === 0) return '';
-    return `(${entries.map(([currency, total]) => `${(currencySymbols[currency] || currency)}${total.toFixed(2)}`).join(', ')} total)`;
+    
+    const ronTotal = selectedInvoicesTotals['RON'];
+    const otherCurrencies = entries.filter(([currency]) => currency !== 'RON');
+
+    let displayParts: string[] = [];
+
+    if (otherCurrencies.length > 0) {
+        displayParts = otherCurrencies.map(([currency, total]) => `${(currencySymbols[currency] || currency)}${total.toFixed(2)}`);
+    }
+
+    if (ronTotal !== undefined) {
+        displayParts.push(`${ronTotal.toFixed(2)} RON`);
+    }
+
+    return `(${displayParts.join(' + ')} total)`;
   }, [selectedInvoicesTotals]);
 
   const SortableHeader = ({ sortKey, children }: { sortKey: keyof Invoice | 'totalRon', children: React.ReactNode }) => (
@@ -392,8 +405,8 @@ export function InvoiceList({ invoices, clients, projects, isFiltered, selectedR
                         )}
                     </TableCell>
                     {showRonColumn && (
-                        <TableCell className={cn("font-semibold", displayInRon && "text-foreground")}>
-                            {invoice.totalRon ? `${invoice.totalRon.toFixed(2)} RON` : '-'}
+                        <TableCell className={cn("font-semibold", "text-foreground")}>
+                            {invoice.totalRon ? `${invoice.totalRon.toFixed(2)} RON` : (invoice.currency === 'RON' ? `${invoice.total.toFixed(2)} RON` : '-')}
                         </TableCell>
                     )}
                     <TableCell>
@@ -426,7 +439,7 @@ export function InvoiceList({ invoices, clients, projects, isFiltered, selectedR
                 )
              }) : (
                 <TableRow>
-                  <TableCell colSpan={showRonColumn ? showVatColumn ? 11 : 10 : showVatColumn ? 10 : 9} className="h-24 text-center">
+                  <TableCell colSpan={showRonColumn ? 10 : 9} className="h-24 text-center">
                     No invoices match the current filters.
                   </TableCell>
                 </TableRow>

@@ -147,13 +147,28 @@ export default function InvoicesPage() {
   const selectedInvoicesTotals = useMemo(() => {
     if (selectedInvoices.length === 0) return {};
 
-    return selectedInvoices.reduce((acc, inv) => {
-      if (!acc[inv.currency]) {
-        acc[inv.currency] = 0;
-      }
-      acc[inv.currency] += inv.total;
-      return acc;
-    }, {} as Record<string, number>);
+    const totals = selectedInvoices.reduce((acc, inv) => {
+        // Original currency totals
+        if (!acc.currencies[inv.currency]) {
+            acc.currencies[inv.currency] = 0;
+        }
+        acc.currencies[inv.currency] += inv.total;
+
+        // RON total
+        const totalInRon = inv.totalRon ?? (inv.currency === 'RON' ? inv.total : 0);
+        if (totalInRon > 0) {
+            acc.totalRon += totalInRon;
+        }
+
+        return acc;
+    }, { currencies: {} as Record<string, number>, totalRon: 0 });
+
+    const finalTotals: Record<string, number> = { ...totals.currencies };
+    if (totals.totalRon > 0) {
+        finalTotals['RON'] = totals.totalRon;
+    }
+    
+    return finalTotals;
   }, [selectedInvoices]);
 
 
