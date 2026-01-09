@@ -59,6 +59,7 @@ export default function DashboardPage() {
     const safeTimecards = timecards || [];
 
     const clientsById = new Map(safeClients.map(c => [c.id, c]));
+    const projectsById = new Map(safeProjects.map(p => [p.id, p]));
     
     type CurrencyStats = {
       totalRevenue: number;
@@ -70,26 +71,24 @@ export default function DashboardPage() {
     const currencyStats: { [currency: string]: CurrencyStats } = {};
 
     safeInvoices.forEach(inv => {
-        const project = projects?.find(p => p.id === inv.projectId);
+        const project = projectsById.get(inv.projectId);
         const client = clientsById.get(project?.clientId || '');
         
-        // Group by client's preferred currency, fallback to invoice currency
         const groupCurrency = client?.preferredCompanyIbanCurrency || inv.currency;
         
         if (!currencyStats[groupCurrency]) {
             currencyStats[groupCurrency] = { totalRevenue: 0, netRevenue: 0, unpaidTotal: 0, vatCollected: 0, outstandingVat: 0 };
         }
         
-        // Determine the conversion rate to the group's currency
         let conversionRate = 1;
-        if (inv.currency !== groupCurrency) {
-            // This assumes RON is the base for exchange rates stored in the invoice
-            if (groupCurrency === 'RON') {
-                conversionRate = inv.exchangeRate || 1;
-            } else {
-                // This is a simplification. A full implementation would need a rate from inv.currency to groupCurrency.
-                // For now, we only handle the primary case of foreign currency -> RON.
-            }
+        // Only convert to RON if the group currency is RON and invoice currency is not.
+        if (groupCurrency === 'RON' && inv.currency !== 'RON') {
+            conversionRate = inv.exchangeRate || 1;
+        }
+
+        // If the grouping currency is not RON, we only care about invoices already in that currency.
+        if (groupCurrency !== 'RON' && inv.currency !== groupCurrency) {
+            return; // Skip this invoice as it doesn't match the foreign currency group
         }
 
         const totalInGroupCurrency = inv.total * conversionRate;
@@ -100,7 +99,7 @@ export default function DashboardPage() {
             currencyStats[groupCurrency].totalRevenue += totalInGroupCurrency;
             currencyStats[groupCurrency].netRevenue += subtotalInGroupCurrency;
             currencyStats[groupCurrency].vatCollected += vatInGroupCurrency;
-        } else {
+        } else { // Created or Sent
             currencyStats[groupCurrency].unpaidTotal += totalInGroupCurrency;
             currencyStats[groupCurrency].outstandingVat += vatInGroupCurrency;
         }
