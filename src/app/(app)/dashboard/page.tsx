@@ -4,11 +4,19 @@
 import { StatCard } from '@/components/dashboard/stat-card';
 import { RecentInvoices } from '@/components/dashboard/recent-invoices';
 import { useCollection, useUser, useDoc } from '@/firebase';
-import { DollarSign, Users, Clock, Banknote, Landmark, Briefcase, Hourglass, Euro, FileText } from 'lucide-react';
+import { DollarSign, Users, Clock, Banknote, Landmark, Briefcase, Hourglass, Euro, FileText, PoundSterling } from 'lucide-react';
 import type { Invoice, Project, Timecard, Client, User } from '@/lib/types';
 import { useMemo } from 'react';
 import { useFirestore, useMemoFirebase } from '@/firebase/provider';
 import { collection, doc } from 'firebase/firestore';
+
+const currencyIcons: { [key: string]: React.ReactNode } = {
+  EUR: <Euro className="h-4 w-4 text-muted-foreground" />,
+  USD: <DollarSign className="h-4 w-4 text-muted-foreground" />,
+  GBP: <PoundSterling className="h-4 w-4 text-muted-foreground" />,
+  RON: <FileText className="h-4 w-4 text-muted-foreground" />,
+};
+
 
 export default function DashboardPage() {
   const firestore = useFirestore();
@@ -64,7 +72,7 @@ export default function DashboardPage() {
         if (client?.preferredCompanyIbanCurrency === 'RON' && invoice.currency !== 'RON') {
             return invoice.totalRon || (invoice.total * (invoice.exchangeRate || 1));
         }
-        return invoice.totalRon || (invoice.currency === 'RON' ? invoice.total : 0);
+        return invoice.currency === 'RON' ? invoice.total : (invoice.totalRon || 0);
     }
     const getSubtotalInRon = (invoice: Invoice) => {
         const project = projects?.find(p => p.id === invoice.projectId);
@@ -72,7 +80,7 @@ export default function DashboardPage() {
         if (client?.preferredCompanyIbanCurrency === 'RON' && invoice.currency !== 'RON') {
             return invoice.subtotal * (invoice.exchangeRate || 1);
         }
-        return invoice.currency === 'RON' ? invoice.subtotal : invoice.subtotal * (invoice.exchangeRate || 1);
+         return invoice.currency === 'RON' ? invoice.subtotal : (invoice.totalRon ? invoice.subtotal * (invoice.exchangeRate || 1) : 0);
     }
     const getVatInRon = (invoice: Invoice) => {
         const project = projects?.find(p => p.id === invoice.projectId);
@@ -80,7 +88,7 @@ export default function DashboardPage() {
         if (client?.preferredCompanyIbanCurrency === 'RON' && invoice.currency !== 'RON') {
             return (invoice.vatAmount || 0) * (invoice.exchangeRate || 1);
         }
-        return invoice.currency === 'RON' ? (invoice.vatAmount || 0) : (invoice.vatAmount || 0) * (invoice.exchangeRate || 1);
+        return invoice.currency === 'RON' ? (invoice.vatAmount || 0) : (invoice.totalRon ? (invoice.vatAmount || 0) * (invoice.exchangeRate || 1) : 0);
     }
 
 
@@ -92,13 +100,13 @@ export default function DashboardPage() {
     
     const unbilledHours = safeTimecards.filter(tc => tc.status === 'Billable').reduce((acc, tc) => acc + tc.hours, 0);
     
-    const paidEurNoVatInvoices = paidInvoices
-      .filter(inv => inv.currency === 'EUR' && (!inv.vatAmount || inv.vatAmount === 0));
-
-    const paidEurNoVat = paidEurNoVatInvoices.reduce((acc, inv) => acc + inv.subtotal, 0);
-    const paidEurNoVatInRon = paidEurNoVatInvoices.reduce((acc, inv) => acc + (inv.subtotal * (inv.exchangeRate || 1)), 0);
-
-    const shouldShowRon = myCompany?.companyIbans && 'RON' in myCompany.companyIbans;
+    const netRevenueByCurrency: { [currency: string]: number } = {};
+    paidInvoices.forEach(inv => {
+        if (!netRevenueByCurrency[inv.currency]) {
+            netRevenueByCurrency[inv.currency] = 0;
+        }
+        netRevenueByCurrency[inv.currency] += inv.subtotal;
+    });
 
     const formatCurrency = (amount: number, currency = 'EUR') => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
@@ -107,6 +115,13 @@ export default function DashboardPage() {
     const formatRon = (amount: number) => {
         return new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(amount);
     }
+
+    const dynamicCurrencyCards = Object.entries(netRevenueByCurrency).map(([currency, netAmount]) => ({
+      currency,
+      netAmount,
+      formattedAmount: formatCurrency(netAmount, currency),
+    }));
+
 
     return {
       totalRevenue: formatRon(totalRevenue),
@@ -120,8 +135,7 @@ export default function DashboardPage() {
       outstandingVat: formatRon(outstandingVatTotalRon),
       outstandingVatTotal: outstandingVatTotalRon,
       unbilledHours: unbilledHours.toFixed(2),
-      paidEurValue: shouldShowRon ? formatRon(paidEurNoVatInRon) : formatCurrency(paidEurNoVat, 'EUR'),
-      paidEurLabel: shouldShowRon ? 'Net Revenue from EUR (RON)' : 'Net Revenue from EUR',
+      dynamicCurrencyCards,
     };
   }, [invoices, clients, projects, timecards, myCompany]);
 
@@ -163,12 +177,15 @@ export default function DashboardPage() {
         />
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title={dashboardStats.paidEurLabel}
-          value={dashboardStats.paidEurValue}
-          icon={<Euro className="h-4 w-4 text-muted-foreground" />}
-          description="From paid EUR invoices without VAT"
-        />
+        {dashboardStats.dynamicCurrencyCards.map(card => (
+            <StatCard
+                key={card.currency}
+                title={`Net Revenue (${card.currency})`}
+                value={card.formattedAmount}
+                icon={currencyIcons[card.currency] || <DollarSign className="h-4 w-4 text-muted-foreground" />}
+                description={`From paid ${card.currency} invoices without VAT`}
+            />
+        ))}
         <StatCard
           title="Total VAT Collected (RON)"
           value={dashboardStats.totalVatCollected}
@@ -199,3 +216,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
