@@ -63,6 +63,8 @@ export default function DashboardPage() {
     let totalRonRevenue = 0;
     let netRonRevenue = 0;
     let unpaidRonTotal = 0;
+    let totalVatCollectedRon = 0;
+    let outstandingVatRon = 0;
 
     const currencyStats: { [currency: string]: { totalRevenue: number; netRevenue: number; unpaidTotal: number } } = {};
 
@@ -74,11 +76,15 @@ export default function DashboardPage() {
         if (displayInRon) {
             const totalInRon = inv.totalRon || (inv.total * (inv.exchangeRate || 1));
             const subtotalInRon = (inv.subtotal || 0) * (inv.exchangeRate || 1);
+            const vatInRon = (inv.vatAmount || 0) * (inv.exchangeRate || 1);
+
             if (inv.status === 'Paid') {
                 totalRonRevenue += totalInRon;
                 netRonRevenue += subtotalInRon;
+                totalVatCollectedRon += vatInRon;
             } else {
                 unpaidRonTotal += totalInRon;
+                outstandingVatRon += vatInRon;
             }
         } else {
             const currency = inv.currency;
@@ -120,6 +126,9 @@ export default function DashboardPage() {
       netRevenue: formatRon(netRonRevenue),
       unpaidAmount: formatRon(unpaidRonTotal),
       unpaidTotal: unpaidRonTotal,
+      totalVatCollected: formatRon(totalVatCollectedRon),
+      outstandingVat: formatRon(outstandingVatRon),
+      outstandingVatTotal: outstandingVatRon,
       clientCount,
       projectCount,
       unbilledHours: unbilledHours.toFixed(2),
@@ -162,6 +171,22 @@ export default function DashboardPage() {
           value={`${dashboardStats.clientCount} / ${dashboardStats.projectCount}`}
           icon={<Users className="h-4 w-4 text-muted-foreground" />}
           description="Total active clients / projects"
+        />
+      </div>
+
+       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          title="Total VAT Collected (RON)"
+          value={dashboardStats.totalVatCollected}
+          icon={<Banknote className="h-4 w-4 text-muted-foreground" />}
+          description="VAT from paid invoices converted to RON"
+        />
+        <StatCard
+          title="Outstanding VAT (RON)"
+          value={dashboardStats.outstandingVat}
+          icon={<Landmark className="h-4 w-4 text-muted-foreground" />}
+          description="VAT from created & sent invoices in RON"
+          valueClassName={dashboardStats.outstandingVatTotal > 0 ? 'text-destructive' : ''}
         />
       </div>
 
