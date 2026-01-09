@@ -71,7 +71,6 @@ export default function DashboardPage() {
 
     safeInvoices.forEach(inv => {
         const client = clientsById.get(inv.clientId);
-        // **CRITICAL FIX**: Prioritize client preference, but fall back to invoice currency.
         const groupCurrency = client?.preferredCompanyIbanCurrency || inv.currency;
 
         if (!currencyStats[groupCurrency]) {
@@ -82,24 +81,18 @@ export default function DashboardPage() {
         let subtotalInGroupCurrency = inv.subtotal;
         let vatInGroupCurrency = inv.vatAmount || 0;
 
-        // Convert to RON only if the group is RON and the invoice is not.
         if (groupCurrency === 'RON' && inv.currency !== 'RON') {
             const conversionRate = inv.exchangeRate || 1;
             totalInGroupCurrency = inv.total * conversionRate;
             subtotalInGroupCurrency = inv.subtotal * conversionRate;
             vatInGroupCurrency = (inv.vatAmount || 0) * conversionRate;
-        } else if (groupCurrency !== 'RON' && inv.currency !== groupCurrency) {
-            // This is the critical part: if the group is NOT RON, only include invoices
-            // that are natively in that currency. Do not convert other currencies into it.
-            return;
         }
-
 
         if (inv.status === 'Paid') {
             currencyStats[groupCurrency].totalRevenue += totalInGroupCurrency;
             currencyStats[groupCurrency].netRevenue += subtotalInGroupCurrency;
             currencyStats[groupCurrency].vatCollected += vatInGroupCurrency;
-        } else { // Created or Sent
+        } else { // Status is 'Created' or 'Sent'
             currencyStats[groupCurrency].unpaidTotal += totalInGroupCurrency;
             currencyStats[groupCurrency].outstandingVat += vatInGroupCurrency;
         }
@@ -251,4 +244,3 @@ export default function DashboardPage() {
   );
 }
 
-    
