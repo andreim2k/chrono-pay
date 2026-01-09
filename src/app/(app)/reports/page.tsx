@@ -80,6 +80,7 @@ export default function ReportsPage() {
   }, [availableYears, selectedYear]);
 
   const clientsById = useMemo(() => new Map(clients?.map(c => [c.id, c])), [clients]);
+  const projectsById = useMemo(() => new Map(projects?.map(p => [p.id, p])), [projects]);
 
   const filteredInvoicesByDate = useMemo(() => {
     if (selectedYear === 'all') return allInvoices;
@@ -88,17 +89,15 @@ export default function ReportsPage() {
 
 
   const filteredInvoices = useMemo(() => {
-    const projectsById = new Map(projects?.map(p => [p.id, p]));
+    if (!clients || !projects) return [];
 
-    if (selectedCurrency === 'RON') {
-        return filteredInvoicesByDate.filter(inv => {
-            const project = projectsById.get(inv.projectId);
-            const client = clientsById.get(project?.clientId || '');
-            return inv.currency === 'RON' || (client?.preferredCompanyIbanCurrency === 'RON');
-        });
-    }
-    return filteredInvoicesByDate.filter(inv => inv.currency === selectedCurrency);
-  }, [filteredInvoicesByDate, selectedCurrency, projects, clientsById]);
+    return filteredInvoicesByDate.filter(inv => {
+        const project = projectsById.get(inv.projectId);
+        const client = clientsById.get(project?.clientId || '');
+        const groupCurrency = client?.preferredCompanyIbanCurrency || inv.currency;
+        return groupCurrency === selectedCurrency;
+    });
+  }, [filteredInvoicesByDate, selectedCurrency, projectsById, clientsById, clients, projects]);
 
 
   const filteredTimecards = useMemo(() => {
