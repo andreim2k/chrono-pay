@@ -164,7 +164,7 @@ export default function DashboardPage() {
         />
       </div>
 
-       {dashboardStats.dynamicCurrencyCards.map(card => (
+       {dashboardStats.dynamicCurrencyCards.map((card, index) => (
           <div key={card.currency} className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-4">
               <StatCard
                   title={`Total Revenue (${card.currency})`}
@@ -185,18 +185,17 @@ export default function DashboardPage() {
                   description={`Awaiting payment from ${card.currency} invoices`}
                   valueClassName={card.unpaidTotal > 0 ? 'text-destructive' : ''}
               />
+              {index === 0 && (
+                <StatCard
+                  title="Unbilled Hours"
+                  value={dashboardStats.unbilledHours}
+                  icon={<Hourglass className="h-4 w-4 text-muted-foreground" />}
+                  description="Ready to be invoiced"
+                  valueClassName={parseFloat(dashboardStats.unbilledHours) > 0 ? 'text-amber-600 dark:text-amber-500' : ''}
+                />
+              )}
           </div>
         ))}
-        
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-         <StatCard
-          title="Unbilled Hours"
-          value={dashboardStats.unbilledHours}
-          icon={<Hourglass className="h-4 w-4 text-muted-foreground" />}
-          description="Ready to be invoiced"
-          valueClassName={parseFloat(dashboardStats.unbilledHours) > 0 ? 'text-amber-600 dark:text-amber-500' : ''}
-        />
-      </div>
 
       <RecentInvoices invoices={recentInvoices} myCompany={myCompany} clients={clients || []} projects={projects || []} />
 
