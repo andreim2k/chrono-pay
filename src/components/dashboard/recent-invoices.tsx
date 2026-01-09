@@ -73,9 +73,6 @@ export function RecentInvoices({ invoices, myCompany }: { invoices: Invoice[], m
         }
         return '';
     }
-    
-    const shouldShowRon = myCompany?.companyIbans && 'RON' in myCompany.companyIbans;
-
 
     return (
         <Card>
@@ -87,10 +84,7 @@ export function RecentInvoices({ invoices, myCompany }: { invoices: Invoice[], m
             {invoices.length > 0 ? (
                 <div className="space-y-4">
                     {invoices.map((invoice) => {
-                        const displayInRon = shouldShowRon && invoice.currency !== 'RON' && invoice.totalRon;
-                        const displayAmount = displayInRon ? invoice.totalRon : invoice.total;
-                        const displayCurrency = displayInRon ? 'RON' : invoice.currency;
-                        const currencySymbol = currencySymbols[displayCurrency] || displayCurrency;
+                        const currencySymbol = currencySymbols[invoice.currency] || invoice.currency;
 
                         return (
                             <div key={invoice.id} className="flex items-center gap-4">
@@ -108,12 +102,12 @@ export function RecentInvoices({ invoices, myCompany }: { invoices: Invoice[], m
                                 <div className="flex items-center gap-4">
                                     <div className="text-right w-32">
                                         <p className="font-medium">
-                                            {displayCurrency === 'RON' ? `${displayAmount.toFixed(2)} RON` : `${currencySymbol}${displayAmount.toFixed(2)}`}
+                                            {invoice.currency === 'RON' ? `${invoice.total.toFixed(2)} RON` : `${currencySymbol}${invoice.total.toFixed(2)}`}
                                         </p>
                                         {typeof invoice.vatAmount === 'number' && invoice.vatAmount > 0 && (
                                             <p className="text-xs text-muted-foreground">
-                                            incl. VAT {displayInRon 
-                                                ? `${((invoice.vatAmount || 0) * (invoice.exchangeRate || 1)).toFixed(2)} RON`
+                                            incl. VAT {invoice.currency === 'RON' 
+                                                ? `${(invoice.vatAmount || 0).toFixed(2)} RON`
                                                 : `${currencySymbols[invoice.currency] || invoice.currency}${invoice.vatAmount.toFixed(2)}`
                                         }
                                             </p>
