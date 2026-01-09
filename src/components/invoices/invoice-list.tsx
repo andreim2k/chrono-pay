@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, Download, Eye, Loader2, Trash2, RotateCcw, ArrowUpDown } from 'lucide-react';
-import type { Invoice } from '@/lib/types';
+import type { Invoice, Client, Project } from '@/lib/types';
 import { format, parseISO, isPast, isFuture, differenceInDays } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser } from '@/firebase';
@@ -32,12 +32,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 
 type SortConfig = {
-  key: keyof Invoice;
+  key: keyof Invoice | 'totalRon';
   direction: 'ascending' | 'descending';
 } | null;
 
 interface InvoiceListProps {
   invoices: Invoice[];
+  clients: Client[];
+  projects: Project[];
   isFiltered: boolean;
   selectedRows: Record<string, boolean>;
   onSelectedRowsChange: (selectedRows: Record<string, boolean>) => void;
@@ -52,7 +54,7 @@ const currencySymbols: { [key: string]: string } = {
   GBP: '£',
 };
 
-export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRowsChange, sortConfig, onSort, selectedInvoicesTotals }: InvoiceListProps) {
+export function InvoiceList({ invoices, clients, projects, isFiltered, selectedRows, onSelectedRowsChange, sortConfig, onSort, selectedInvoicesTotals }: InvoiceListProps) {
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
@@ -65,8 +67,17 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
   const [isAlertOpen, setIsAlertOpen] = useState(false);
 
   const previewRef = useRef<HTMLDivElement>(null);
+  
+  const clientsById = useMemo(() => new Map(clients.map(c => [c.id, c])), [clients]);
+  const projectsById = useMemo(() => new Map(projects.map(p => [p.id, p])), [projects]);
 
   const showVatColumn = useMemo(() => invoices.some(invoice => invoice.vatAmount && invoice.vatAmount > 0), [invoices]);
+  const showRonColumn = useMemo(() => invoices.some(invoice => {
+     const project = projectsById.get(invoice.projectId);
+     const client = clientsById.get(project?.clientId || '');
+     return client?.preferredCompanyIbanCurrency === 'RON' && invoice.currency !== 'RON';
+  }), [invoices, clientsById, projectsById]);
+
   const selectedRowCount = useMemo(() => Object.values(selectedRows).filter(Boolean).length, [selectedRows]);
 
   const getBadgeVariant = (status: Invoice['status']) => {
@@ -122,16 +133,11 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
     setInvoiceToView(invoice);
     setIsGenerating(true);
 
-    // Use requestAnimationFrame to wait for DOM update, then wait one more frame to ensure rendering
     requestAnimationFrame(() => {
       requestAnimationFrame(async () => {
         try {
           if (!previewRef.current) {
-            toast({
-              variant: 'destructive',
-              title: 'Error',
-              description: 'Could not generate PDF. Preview element not found.',
-            });
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not generate PDF. Preview element not found.' });
             setIsGenerating(false);
             setInvoiceToView(null);
             return;
@@ -146,17 +152,10 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
           pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, '', 'FAST');
           pdf.save(`invoice-${invoice.invoiceNumber}.pdf`);
 
-          toast({
-            title: 'PDF Downloaded',
-            description: `Invoice ${invoice.invoiceNumber} has been downloaded.`,
-          });
+          toast({ title: 'PDF Downloaded', description: `Invoice ${invoice.invoiceNumber} has been downloaded.` });
         } catch (error) {
           console.error('PDF generation failed:', error);
-          toast({
-            variant: 'destructive',
-            title: 'PDF Generation Failed',
-            description: 'Could not generate the PDF. Please try again.',
-          });
+          toast({ variant: 'destructive', title: 'PDF Generation Failed', description: 'Could not generate the PDF. Please try again.' });
         } finally {
           setIsGenerating(false);
           setInvoiceToView(null);
@@ -177,11 +176,7 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
         setPreviewImage(canvas.toDataURL('image/png'));
     } catch (error) {
         console.error('Error generating canvas:', error);
-        toast({
-            variant: 'destructive',
-            title: 'Preview Error',
-            description: 'Could not generate the invoice preview image.',
-        });
+        toast({ variant: 'destructive', title: 'Preview Error', description: 'Could not generate the invoice preview image.' });
     } finally {
         setIsGenerating(false);
     }
@@ -207,12 +202,9 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
     if (!firestore || !invoiceToDelete || !user) return;
     
     const batch = writeBatch(firestore);
-
-    // Delete the invoice
     const invoiceRef = doc(firestore, `users/${user.uid}/invoices`, invoiceToDelete.id);
     batch.delete(invoiceRef);
 
-    // Un-bill associated timecards
     if (invoiceToDelete.billedTimecardIds && invoiceToDelete.billedTimecardIds.length > 0) {
         invoiceToDelete.billedTimecardIds.forEach(tcId => {
             const timecardRef = doc(firestore, `users/${user.uid}/timecards`, tcId);
@@ -222,16 +214,9 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
 
     try {
         await batch.commit();
-        toast({
-        title: 'Invoice Deleted',
-        description: `Invoice ${invoiceToDelete.invoiceNumber} has been deleted and associated timecards are now unbilled.`,
-        });
+        toast({ title: 'Invoice Deleted', description: `Invoice ${invoiceToDelete.invoiceNumber} has been deleted and associated timecards are now unbilled.` });
     } catch (error) {
-         toast({
-            variant: 'destructive',
-            title: 'Error Deleting Invoice',
-            description: 'Could not delete the invoice. Please try again.',
-        });
+         toast({ variant: 'destructive', title: 'Error Deleting Invoice', description: 'Could not delete the invoice. Please try again.' });
     }
 
     setInvoiceToDelete(null);
@@ -272,21 +257,14 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
 
     try {
         await batch.commit();
-        toast({
-            title: 'Invoices Deleted',
-            description: `${idsToDelete.length} invoices have been successfully deleted.`,
-        });
+        toast({ title: 'Invoices Deleted', description: `${idsToDelete.length} invoices have been successfully deleted.` });
         onSelectedRowsChange({});
     } catch (error) {
-        toast({
-            variant: 'destructive',
-            title: 'Error Deleting Invoices',
-            description: 'Could not delete the selected invoices. Please try again.',
-        });
+        toast({ variant: 'destructive', title: 'Error Deleting Invoices', description: 'Could not delete the selected invoices. Please try again.' });
     }
   };
 
-  const requestSort = (key: keyof Invoice) => {
+  const requestSort = (key: keyof Invoice | 'totalRon') => {
     let direction: 'ascending' | 'descending' = 'ascending';
     if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
       direction = 'descending';
@@ -294,14 +272,9 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
     onSort({ key, direction });
   };
 
-  const getSortIndicator = (key: keyof Invoice) => {
-    if (!sortConfig || sortConfig.key !== key) {
-      return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30" />;
-    }
-    if (sortConfig.direction === 'ascending') {
-      return <ArrowUpDown className="ml-2 h-4 w-4" />;
-    }
-    return <ArrowUpDown className="ml-2 h-4 w-4" />;
+  const getSortIndicator = (key: keyof Invoice | 'totalRon') => {
+    if (!sortConfig || sortConfig.key !== key) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30" />;
+    return sortConfig.direction === 'ascending' ? <ArrowUpDown className="ml-2 h-4 w-4" /> : <ArrowUpDown className="ml-2 h-4 w-4" />;
   };
 
   const totalsString = useMemo(() => {
@@ -310,7 +283,7 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
     return `(${entries.map(([currency, total]) => `${(currencySymbols[currency] || currency)}${total.toFixed(2)}`).join(', ')} total)`;
   }, [selectedInvoicesTotals]);
 
-  const SortableHeader = ({ sortKey, children }: { sortKey: keyof Invoice, children: React.ReactNode }) => (
+  const SortableHeader = ({ sortKey, children }: { sortKey: keyof Invoice | 'totalRon', children: React.ReactNode }) => (
     <TableHead>
       <Button variant="ghost" onClick={() => requestSort(sortKey)} className="p-0 hover:text-primary hover:bg-transparent">
         {children}
@@ -323,19 +296,13 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
     if (invoice.status === 'Paid') return '';
     const dueDate = parseISO(invoice.dueDate);
     const today = new Date();
-    if (isPast(dueDate)) {
-      return 'text-destructive';
-    }
-    if (isFuture(dueDate) && differenceInDays(dueDate, today) <= 7) {
-      return 'text-amber-600 dark:text-amber-500';
-    }
+    if (isPast(dueDate)) return 'text-destructive';
+    if (isFuture(dueDate) && differenceInDays(dueDate, today) <= 7) return 'text-amber-600 dark:text-amber-500';
     return '';
   }
 
-
   return (
     <>
-      {/* Hidden container for PDF/image generation */}
       <div style={{ position: 'fixed', left: '-9999px', top: '-9999px', width: '800px' }}>
         {invoiceToView && <div ref={previewRef}><InvoiceHtmlPreview invoice={invoiceToView} /></div>}
       </div>
@@ -388,67 +355,78 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
                 <SortableHeader sortKey="projectName">Project</SortableHeader>
                 <SortableHeader sortKey="date">Date</SortableHeader>
                 <SortableHeader sortKey="dueDate">Due Date</SortableHeader>
-                <SortableHeader sortKey="subtotal">Subtotal</SortableHeader>
-                {showVatColumn && <SortableHeader sortKey="vatAmount">VAT</SortableHeader>}
                 <SortableHeader sortKey="total">Total</SortableHeader>
+                {showRonColumn && <SortableHeader sortKey="totalRon">Total (RON)</SortableHeader>}
                 <SortableHeader sortKey="status">Status</SortableHeader>
                 <TableHead className="text-right px-4">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-             {invoices.length > 0 ? invoices.map((invoice) => (
-                <TableRow key={invoice.id} data-state={selectedRows[invoice.id] && "selected"}>
-                  <TableCell className="px-4">
-                     <Checkbox
-                        checked={selectedRows[invoice.id] || false}
-                        onCheckedChange={(checked) => handleRowSelect(invoice.id, Boolean(checked))}
-                        aria-label={`Select invoice ${invoice.invoiceNumber}`}
-                      />
-                  </TableCell>
-                  <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
-                  <TableCell>{invoice.clientName}</TableCell>
-                  <TableCell>{invoice.projectName}</TableCell>
-                  <TableCell>{format(parseISO(invoice.date), 'MMM d, yyyy')}</TableCell>
-                   <TableCell className={cn('font-medium', getDueDateStyles(invoice))}>
-                    {format(parseISO(invoice.dueDate), 'MMM d, yyyy')}
-                  </TableCell>
-                  <TableCell>{currencySymbols[invoice.currency] || invoice.currency}{invoice.subtotal.toFixed(2)}</TableCell>
-                  {showVatColumn && (
-                      <TableCell>
-                          {invoice.vatAmount ? `${currencySymbols[invoice.currency] || invoice.currency}${invoice.vatAmount.toFixed(2)}` : '-'}
-                      </TableCell>
-                  )}
-                  <TableCell className="font-semibold">{currencySymbols[invoice.currency] || invoice.currency}{invoice.total.toFixed(2)}</TableCell>
-                  <TableCell>
-                    <Badge variant={getBadgeVariant(invoice.status)} className="w-20 justify-center">{invoice.status}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right px-4">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem onSelect={() => openViewDialog(invoice)}>
-                          <Eye className="mr-2 h-4 w-4" /> View
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => handleDownloadPdf(invoice)}>
-                          <Download className="mr-2 h-4 w-4" /> Download PDF
-                        </DropdownMenuItem>
-                        {invoice.status === 'Created' && <DropdownMenuItem onSelect={() => handleStatusChange(invoice, 'Sent')}>Mark as Sent</DropdownMenuItem>}
-                        {invoice.status === 'Sent' && <DropdownMenuItem onSelect={() => handleStatusChange(invoice, 'Paid')}>Mark as Paid</DropdownMenuItem>}
-                        {invoice.status === 'Paid' && <DropdownMenuItem onSelect={() => handleStatusChange(invoice, 'Sent')}><RotateCcw className="mr-2 h-4 w-4" />Revert to Sent</DropdownMenuItem>}
-                        <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => openDeleteDialog(invoice)}>
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              )) : (
+             {invoices.length > 0 ? invoices.map((invoice) => {
+                const project = projectsById.get(invoice.projectId);
+                const client = clientsById.get(project?.clientId || '');
+                const displayInRon = client?.preferredCompanyIbanCurrency === 'RON' && invoice.currency !== 'RON';
+
+                return (
+                    <TableRow key={invoice.id} data-state={selectedRows[invoice.id] && "selected"}>
+                    <TableCell className="px-4">
+                        <Checkbox
+                            checked={selectedRows[invoice.id] || false}
+                            onCheckedChange={(checked) => handleRowSelect(invoice.id, Boolean(checked))}
+                            aria-label={`Select invoice ${invoice.invoiceNumber}`}
+                        />
+                    </TableCell>
+                    <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
+                    <TableCell>{invoice.clientName}</TableCell>
+                    <TableCell>{invoice.projectName}</TableCell>
+                    <TableCell>{format(parseISO(invoice.date), 'MMM d, yyyy')}</TableCell>
+                    <TableCell className={cn('font-medium', getDueDateStyles(invoice))}>
+                        {format(parseISO(invoice.dueDate), 'MMM d, yyyy')}
+                    </TableCell>
+                    <TableCell className="font-semibold">
+                        {currencySymbols[invoice.currency] || invoice.currency}{invoice.total.toFixed(2)}
+                        {showVatColumn && invoice.vatAmount && invoice.vatAmount > 0 && (
+                            <div className='text-xs text-muted-foreground font-normal'>
+                                Net: {currencySymbols[invoice.currency] || invoice.currency}{invoice.subtotal.toFixed(2)}
+                            </div>
+                        )}
+                    </TableCell>
+                    {showRonColumn && (
+                        <TableCell className={cn("font-semibold", displayInRon && "text-foreground")}>
+                            {invoice.totalRon ? `${invoice.totalRon.toFixed(2)} RON` : '-'}
+                        </TableCell>
+                    )}
+                    <TableCell>
+                        <Badge variant={getBadgeVariant(invoice.status)} className="w-20 justify-center">{invoice.status}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right px-4">
+                        <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuItem onSelect={() => openViewDialog(invoice)}>
+                            <Eye className="mr-2 h-4 w-4" /> View
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => handleDownloadPdf(invoice)}>
+                            <Download className="mr-2 h-4 w-4" /> Download PDF
+                            </DropdownMenuItem>
+                            {invoice.status === 'Created' && <DropdownMenuItem onSelect={() => handleStatusChange(invoice, 'Sent')}>Mark as Sent</DropdownMenuItem>}
+                            {invoice.status === 'Sent' && <DropdownMenuItem onSelect={() => handleStatusChange(invoice, 'Paid')}>Mark as Paid</DropdownMenuItem>}
+                            {invoice.status === 'Paid' && <DropdownMenuItem onSelect={() => handleStatusChange(invoice, 'Sent')}><RotateCcw className="mr-2 h-4 w-4" />Revert to Sent</DropdownMenuItem>}
+                            <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => openDeleteDialog(invoice)}>
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                        </DropdownMenu>
+                    </TableCell>
+                    </TableRow>
+                )
+             }) : (
                 <TableRow>
-                  <TableCell colSpan={showVatColumn ? 11 : 10} className="h-24 text-center">
+                  <TableCell colSpan={showRonColumn ? showVatColumn ? 11 : 10 : showVatColumn ? 10 : 9} className="h-24 text-center">
                     No invoices match the current filters.
                   </TableCell>
                 </TableRow>
@@ -458,7 +436,6 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
         </CardContent>
       </Card>
       
-      {/* View Invoice Dialog */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
         <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
             <DialogHeader>
@@ -491,7 +468,6 @@ export function InvoiceList({ invoices, isFiltered, selectedRows, onSelectedRows
         </DialogContent>
       </Dialog>
       
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

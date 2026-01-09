@@ -226,6 +226,8 @@ export default function InvoicesPage() {
       </Card>
       <InvoiceList 
         invoices={sortedInvoices || []} 
+        clients={clients || []}
+        projects={projects || []}
         isFiltered={isFiltered}
         selectedRows={selectedRows}
         onSelectedRowsChange={setSelectedRows}

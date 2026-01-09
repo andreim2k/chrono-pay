@@ -12,7 +12,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
-import type { Invoice, User, Client } from "@/lib/types";
+import type { Invoice, User, Client, Project } from "@/lib/types";
 import { cn, getInitials } from "@/lib/utils";
 import { format, parseISO, isPast, isFuture, differenceInDays } from "date-fns";
 import type { VariantProps } from "class-variance-authority";
@@ -25,11 +25,15 @@ const currencySymbols: { [key: string]: string } = {
     RON: 'RON',
 };
 
-export function RecentInvoices({ invoices, myCompany, clients }: { invoices: Invoice[], myCompany: User | null, clients: Client[] }) {
+export function RecentInvoices({ invoices, myCompany, clients, projects }: { invoices: Invoice[], myCompany: User | null, clients: Client[], projects: Project[] }) {
 
     const clientsById = useMemo(() => {
         return new Map(clients.map(c => [c.id, c]));
     }, [clients]);
+
+    const projectsById = useMemo(() => {
+        return new Map(projects.map(p => [p.id, p]));
+    }, [projects]);
 
     const getBadgeVariant = (status: Invoice['status']): VariantProps<typeof badgeVariants>['variant'] => {
         switch (status) {
@@ -89,7 +93,8 @@ export function RecentInvoices({ invoices, myCompany, clients }: { invoices: Inv
             {invoices.length > 0 ? (
                 <div className="space-y-4">
                     {invoices.map((invoice) => {
-                        const client = clients.find(c => c.name === invoice.clientName);
+                        const project = projectsById.get(invoice.projectId);
+                        const client = clientsById.get(project?.clientId || '');
                         const displayInRon = client?.preferredCompanyIbanCurrency === 'RON' && invoice.currency !== 'RON';
 
                         let totalDisplay, vatDisplay;

@@ -23,7 +23,6 @@ const multiCurrencyChartColors = [
     { net: 'hsl(var(--chart-5))', vat: 'hsl(var(--chart-2))' },
 ];
 
-
 export function RevenueChart({ invoices, myCompany }: { invoices: Invoice[], myCompany: User | null }) {
     const { chartData, chartConfig, isRonOnly, currencies } = useMemo(() => {
         const paidInvoices = invoices.filter(inv => inv.status === 'Paid');
@@ -113,7 +112,7 @@ export function RevenueChart({ invoices, myCompany }: { invoices: Invoice[], myC
                 axisLine={false}
                 tickMargin={8}
                 tickFormatter={(value) => {
-                    const primaryCurrency = currencies[0] || '';
+                    const primaryCurrency = isRonOnly ? 'RON' : currencies[0] || '';
                     const symbol = currencySymbols[primaryCurrency] || '';
                     if (value >= 1000) return `${symbol}${value / 1000}k`;
                     return `${symbol}${String(value)}`;
@@ -165,7 +164,7 @@ export function RevenueChart({ invoices, myCompany }: { invoices: Invoice[], myC
                             <Area 
                                 type="natural" 
                                 dataKey={`${currency}-subtotal`} 
-                                stackId={currency}
+                                stackId={`${currency}-subtotal`}
                                 stroke={`var(--color-${currency}-subtotal)`}
                                 fill={`url(#fill-${currency}-subtotal)`}
                                 fillOpacity={0.4}
@@ -173,7 +172,7 @@ export function RevenueChart({ invoices, myCompany }: { invoices: Invoice[], myC
                             <Area 
                                 type="natural" 
                                 dataKey={`${currency}-vat`} 
-                                stackId={currency}
+                                stackId={`${currency}-vat`}
                                 stroke={`var(--color-${currency}-vat)`}
                                 strokeDasharray="3 3"
                                 fill={`url(#fill-${currency}-vat)`}

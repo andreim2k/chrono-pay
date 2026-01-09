@@ -50,29 +50,45 @@ export default function DashboardPage() {
     const safeProjects = projects || [];
     const safeTimecards = timecards || [];
 
+    const clientsById = new Map(safeClients.map(c => [c.id, c]));
+
     const paidInvoices = safeInvoices.filter(inv => inv.status === 'Paid');
     const unpaidInvoices = safeInvoices.filter(inv => inv.status !== 'Paid');
     
     const clientCount = safeClients.length;
     const projectCount = safeProjects.length;
 
-    const totalRevenue = paidInvoices.reduce((acc, inv) => acc + (inv.totalRon || 0), 0);
-    const netRevenue = paidInvoices.reduce((acc, inv) => {
-        const subtotalRon = inv.subtotal * (inv.exchangeRate || 1);
-        return acc + subtotalRon;
-    }, 0);
-    
-    const unpaidTotal = unpaidInvoices.reduce((acc, inv) => acc + (inv.totalRon || 0), 0);
+    const getTotalInRon = (invoice: Invoice) => {
+        const project = projects?.find(p => p.id === invoice.projectId);
+        const client = clientsById.get(project?.clientId || '');
+        if (client?.preferredCompanyIbanCurrency === 'RON' && invoice.currency !== 'RON') {
+            return invoice.totalRon || (invoice.total * (invoice.exchangeRate || 1));
+        }
+        return invoice.totalRon || (invoice.currency === 'RON' ? invoice.total : 0);
+    }
+    const getSubtotalInRon = (invoice: Invoice) => {
+        const project = projects?.find(p => p.id === invoice.projectId);
+        const client = clientsById.get(project?.clientId || '');
+        if (client?.preferredCompanyIbanCurrency === 'RON' && invoice.currency !== 'RON') {
+            return invoice.subtotal * (invoice.exchangeRate || 1);
+        }
+        return invoice.currency === 'RON' ? invoice.subtotal : invoice.subtotal * (invoice.exchangeRate || 1);
+    }
+    const getVatInRon = (invoice: Invoice) => {
+        const project = projects?.find(p => p.id === invoice.projectId);
+        const client = clientsById.get(project?.clientId || '');
+        if (client?.preferredCompanyIbanCurrency === 'RON' && invoice.currency !== 'RON') {
+            return (invoice.vatAmount || 0) * (invoice.exchangeRate || 1);
+        }
+        return invoice.currency === 'RON' ? (invoice.vatAmount || 0) : (invoice.vatAmount || 0) * (invoice.exchangeRate || 1);
+    }
 
-    const totalVatCollectedRon = paidInvoices.reduce((acc, inv) => {
-        const vatInRon = (inv.vatAmount || 0) * (inv.exchangeRate || 1);
-        return acc + vatInRon;
-    }, 0);
-    
-    const outstandingVatTotalRon = unpaidInvoices.reduce((acc, inv) => {
-        const vatInRon = (inv.vatAmount || 0) * (inv.exchangeRate || 1);
-        return acc + vatInRon;
-    }, 0);
+
+    const totalRevenue = paidInvoices.reduce((acc, inv) => acc + getTotalInRon(inv), 0);
+    const netRevenue = paidInvoices.reduce((acc, inv) => acc + getSubtotalInRon(inv), 0);
+    const unpaidTotal = unpaidInvoices.reduce((acc, inv) => acc + getTotalInRon(inv), 0);
+    const totalVatCollectedRon = paidInvoices.reduce((acc, inv) => acc + getVatInRon(inv), 0);
+    const outstandingVatTotalRon = unpaidInvoices.reduce((acc, inv) => acc + getVatInRon(inv), 0);
     
     const unbilledHours = safeTimecards.filter(tc => tc.status === 'Billable').reduce((acc, tc) => acc + tc.hours, 0);
     
@@ -178,7 +194,7 @@ export default function DashboardPage() {
         
        </div>
 
-      <RecentInvoices invoices={recentInvoices} myCompany={myCompany} clients={clients || []} />
+      <RecentInvoices invoices={recentInvoices} myCompany={myCompany} clients={clients || []} projects={projects || []} />
 
     </div>
   );
