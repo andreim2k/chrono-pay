@@ -58,30 +58,41 @@ export default function DashboardPage() {
     const safeProjects = projects || [];
     const safeTimecards = timecards || [];
 
-    const ronInvoices = safeInvoices.filter(inv => inv.currency === 'RON');
-    const otherInvoices = safeInvoices.filter(inv => inv.currency !== 'RON');
+    const clientsById = new Map(safeClients.map(c => [c.id, c]));
+    const projectsById = new Map(safeProjects.map(p => [p.id, p]));
 
-    // RON-specific calculations
-    const paidRonInvoices = ronInvoices.filter(inv => inv.status === 'Paid');
-    const unpaidRonInvoices = ronInvoices.filter(inv => inv.status !== 'Paid');
-    const totalRonRevenue = paidRonInvoices.reduce((acc, inv) => acc + inv.total, 0);
-    const netRonRevenue = paidRonInvoices.reduce((acc, inv) => acc + inv.subtotal, 0);
-    const unpaidRonTotal = unpaidRonInvoices.reduce((acc, inv) => acc + inv.total, 0);
+    let totalRonRevenue = 0;
+    let netRonRevenue = 0;
+    let unpaidRonTotal = 0;
+
+    const netRevenueByCurrency: { [currency: string]: number } = {};
     
-    // Multi-currency calculations
+    safeInvoices.forEach(inv => {
+        const project = projectsById.get(inv.projectId);
+        const client = clientsById.get(project?.clientId || '');
+        const displayInRon = client?.preferredCompanyIbanCurrency === 'RON';
+        
+        if (inv.status === 'Paid') {
+            if (displayInRon) {
+                totalRonRevenue += inv.totalRon || (inv.total * (inv.exchangeRate || 1));
+                netRonRevenue += (inv.subtotal || 0) * (inv.exchangeRate || 1);
+            } else {
+                if (!netRevenueByCurrency[inv.currency]) {
+                    netRevenueByCurrency[inv.currency] = 0;
+                }
+                netRevenueByCurrency[inv.currency] += inv.subtotal;
+            }
+        } else { // Unpaid invoices
+            if (displayInRon) {
+                unpaidRonTotal += inv.totalRon || (inv.total * (inv.exchangeRate || 1));
+            }
+        }
+    });
+
     const clientCount = safeClients.length;
     const projectCount = safeProjects.length;
 
     const unbilledHours = safeTimecards.filter(tc => tc.status === 'Billable').reduce((acc, tc) => acc + tc.hours, 0);
-    
-    const netRevenueByCurrency: { [currency: string]: number } = {};
-    const paidOtherInvoices = otherInvoices.filter(inv => inv.status === 'Paid');
-    paidOtherInvoices.forEach(inv => {
-        if (!netRevenueByCurrency[inv.currency]) {
-            netRevenueByCurrency[inv.currency] = 0;
-        }
-        netRevenueByCurrency[inv.currency] += inv.subtotal;
-    });
 
     const formatCurrency = (amount: number, currency = 'EUR') => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
@@ -96,7 +107,6 @@ export default function DashboardPage() {
       netAmount,
       formattedAmount: formatCurrency(netAmount, currency),
     }));
-
 
     return {
       totalRevenue: formatRon(totalRonRevenue),
