@@ -185,7 +185,7 @@ export default function DashboardPage() {
           title="Total VAT Collected (RON)"
           value={dashboardStats.totalVatCollected}
           icon={<Banknote className="h-4 w-4 text-muted-foreground" />}
-          description="VAT from paid invoices converted to RON"
+          description="VAT from paid invoices in RON"
         />
         <StatCard
           title="Outstanding VAT (RON)"
