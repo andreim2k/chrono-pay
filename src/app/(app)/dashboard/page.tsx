@@ -58,39 +58,15 @@ export default function DashboardPage() {
     const safeProjects = projects || [];
     const safeTimecards = timecards || [];
 
-    const clientsById = new Map(safeClients.map(c => [c.id, c]));
-
     const paidInvoices = safeInvoices.filter(inv => inv.status === 'Paid');
     const unpaidInvoices = safeInvoices.filter(inv => inv.status !== 'Paid');
     
     const clientCount = safeClients.length;
     const projectCount = safeProjects.length;
 
-    const getTotalInRon = (invoice: Invoice) => {
-        const project = projects?.find(p => p.id === invoice.projectId);
-        const client = clientsById.get(project?.clientId || '');
-        if (client?.preferredCompanyIbanCurrency === 'RON' && invoice.currency !== 'RON') {
-            return invoice.totalRon || (invoice.total * (invoice.exchangeRate || 1));
-        }
-        return invoice.currency === 'RON' ? invoice.total : (invoice.totalRon || 0);
-    }
-    const getSubtotalInRon = (invoice: Invoice) => {
-        const project = projects?.find(p => p.id === invoice.projectId);
-        const client = clientsById.get(project?.clientId || '');
-        if (client?.preferredCompanyIbanCurrency === 'RON' && invoice.currency !== 'RON') {
-            return invoice.subtotal * (invoice.exchangeRate || 1);
-        }
-         return invoice.currency === 'RON' ? invoice.subtotal : (invoice.totalRon ? invoice.subtotal * (invoice.exchangeRate || 1) : 0);
-    }
-    const getVatInRon = (invoice: Invoice) => {
-        const project = projects?.find(p => p.id === invoice.projectId);
-        const client = clientsById.get(project?.clientId || '');
-        if (client?.preferredCompanyIbanCurrency === 'RON' && invoice.currency !== 'RON') {
-            return (invoice.vatAmount || 0) * (invoice.exchangeRate || 1);
-        }
-        return invoice.currency === 'RON' ? (invoice.vatAmount || 0) : (invoice.totalRon ? (invoice.vatAmount || 0) * (invoice.exchangeRate || 1) : 0);
-    }
-
+    const getTotalInRon = (invoice: Invoice) => invoice.totalRon || (invoice.total * (invoice.exchangeRate || 1));
+    const getSubtotalInRon = (invoice: Invoice) => invoice.subtotal * (invoice.exchangeRate || 1);
+    const getVatInRon = (invoice: Invoice) => (invoice.vatAmount || 0) * (invoice.exchangeRate || 1);
 
     const totalRevenue = paidInvoices.reduce((acc, inv) => acc + getTotalInRon(inv), 0);
     const netRevenue = paidInvoices.reduce((acc, inv) => acc + getSubtotalInRon(inv), 0);
@@ -216,4 +192,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
