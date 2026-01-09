@@ -67,7 +67,8 @@ export default function DashboardPage() {
     const currencyStats: { [currency: string]: { totalRevenue: number; netRevenue: number; unpaidTotal: number } } = {};
 
     safeInvoices.forEach(inv => {
-        const client = clientsById.get(inv.projectId ? projects?.find(p => p.id === inv.projectId)?.clientId || '' : '');
+        const project = projects?.find(p => p.id === inv.projectId);
+        const client = clientsById.get(project?.clientId || '');
         const displayInRon = client?.preferredCompanyIbanCurrency === 'RON';
         
         if (displayInRon) {
@@ -170,13 +171,13 @@ export default function DashboardPage() {
                   title={`Total Revenue (${card.currency})`}
                   value={card.totalRevenue}
                   icon={currencyIcons[card.currency] || <DollarSign className="h-4 w-4 text-muted-foreground" />}
-                  description={`From paid ${card.currency} invoices`}
+                  description={`Total from paid invoices in ${card.currency}`}
               />
               <StatCard
                   title={`Net Revenue (${card.currency})`}
                   value={card.netRevenue}
                   icon={currencyIcons[card.currency] || <FileText className="h-4 w-4 text-muted-foreground" />}
-                  description={`From paid ${card.currency} invoices, before VAT`}
+                  description={`Total from paid invoices in ${card.currency}, before VAT`}
               />
               <StatCard
                   title={`Unpaid Amount (${card.currency})`}
