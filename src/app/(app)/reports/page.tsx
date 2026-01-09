@@ -82,21 +82,21 @@ export default function ReportsPage() {
   const clientsById = useMemo(() => new Map(clients?.map(c => [c.id, c])), [clients]);
 
   const filteredInvoicesByDate = useMemo(() => {
-    if (allInvoices.length === 0) return [];
     if (selectedYear === 'all') return allInvoices;
     return allInvoices.filter(inv => getYear(parseISO(inv.date)) === selectedYear);
   }, [allInvoices, selectedYear]);
 
+
   const filteredInvoices = useMemo(() => {
+    const projectsById = new Map(projects?.map(p => [p.id, p]));
+
     if (selectedCurrency === 'RON') {
-        // RON report: include RON invoices + other currency invoices for clients who prefer RON
         return filteredInvoicesByDate.filter(inv => {
-            const project = projects?.find(p => p.id === inv.projectId);
+            const project = projectsById.get(inv.projectId);
             const client = clientsById.get(project?.clientId || '');
-            return inv.currency === 'RON' || client?.preferredCompanyIbanCurrency === 'RON';
+            return inv.currency === 'RON' || (client?.preferredCompanyIbanCurrency === 'RON');
         });
     }
-    // For any other currency, just show invoices in that currency
     return filteredInvoicesByDate.filter(inv => inv.currency === selectedCurrency);
   }, [filteredInvoicesByDate, selectedCurrency, projects, clientsById]);
 

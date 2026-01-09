@@ -89,7 +89,7 @@ export function InvoiceStatusChart({ invoices }: { invoices: Invoice[] }) {
                                         y={viewBox.cy}
                                         className="fill-foreground text-3xl font-bold"
                                     >
-                                        {totalInvoices}
+                                        {totalInvoices.toLocaleString()}
                                     </tspan>
                                     <tspan
                                         x={viewBox.cx}
