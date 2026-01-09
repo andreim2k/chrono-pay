@@ -7,14 +7,12 @@ import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart';
 import type { Invoice } from '@/lib/types';
 import { useMemo } from 'react';
 
-const currencySymbols: { [key: string]: string } = {
-    EUR: '€',
-    USD: '$',
-    GBP: '£',
-    RON: 'RON',
-};
+interface UnpaidByClientChartProps {
+    invoices: Invoice[];
+    selectedCurrency: string;
+}
 
-export function UnpaidByClientChart({ invoices }: { invoices: Invoice[] }) {
+export function UnpaidByClientChart({ invoices, selectedCurrency }: UnpaidByClientChartProps) {
     const clientData = useMemo(() => {
         const unpaidInvoices = invoices.filter(inv => inv.status !== 'Paid');
         const amounts: { [clientName: string]: number } = {};
@@ -23,28 +21,41 @@ export function UnpaidByClientChart({ invoices }: { invoices: Invoice[] }) {
             if (!amounts[inv.clientName]) {
                 amounts[inv.clientName] = 0;
             }
-            amounts[inv.clientName] += inv.totalRon || (inv.total * (inv.exchangeRate || 1));
+            
+            let totalInSelectedCurrency = 0;
+            if (selectedCurrency === 'RON') {
+                totalInSelectedCurrency = inv.totalRon || (inv.total * (inv.exchangeRate || 1));
+            } else if (inv.currency === selectedCurrency) {
+                totalInSelectedCurrency = inv.total;
+            }
+
+            if(totalInSelectedCurrency > 0) {
+                amounts[inv.clientName] += totalInSelectedCurrency;
+            }
         });
 
-        return Object.entries(amounts).map(([clientName, totalAmount]) => ({
-            client: clientName,
-            amount: totalAmount,
-        })).sort((a, b) => b.amount - a.amount);
+        return Object.entries(amounts)
+            .filter(([, amount]) => amount > 0)
+            .map(([clientName, totalAmount]) => ({
+                client: clientName,
+                amount: totalAmount,
+            }))
+            .sort((a, b) => b.amount - a.amount);
 
-    }, [invoices]);
+    }, [invoices, selectedCurrency]);
 
-    const chartConfig = {
+    const chartConfig = useMemo(() => ({
         amount: {
-            label: 'Unpaid (RON)',
+            label: `Unpaid (${selectedCurrency})`,
             color: 'hsl(var(--destructive))',
         },
-    };
+    }), [selectedCurrency]);
     
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Outstanding Balances (RON)</CardTitle>
-        <CardDescription>Total unpaid amounts (including VAT) by client, shown in RON.</CardDescription>
+        <CardTitle>Outstanding Balances ({selectedCurrency})</CardTitle>
+        <CardDescription>Total unpaid amounts (including VAT) by client, shown in {selectedCurrency}.</CardDescription>
       </CardHeader>
       <CardContent>
         {clientData.length > 0 ? (
@@ -66,7 +77,7 @@ export function UnpaidByClientChart({ invoices }: { invoices: Invoice[] }) {
                     cursor={{fill: 'hsl(var(--muted))'}}
                     content={<ChartTooltipContent 
                         indicator="dot" 
-                        formatter={(value) => `RON ${Number(value).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`} 
+                        formatter={(value) => `${new Intl.NumberFormat('en-US', { style: 'currency', currency: selectedCurrency }).format(value as number)}`} 
                     />}
                 />
                 <Bar 
@@ -79,10 +90,12 @@ export function UnpaidByClientChart({ invoices }: { invoices: Invoice[] }) {
           </ChartContainer>
         ) : (
             <div className="flex items-center justify-center h-[300px] text-muted-foreground">
-                <p>No unpaid invoices to display.</p>
+                <p>No unpaid invoices to display for {selectedCurrency}.</p>
             </div>
         )}
       </CardContent>
     </Card>
   );
 }
+
+    

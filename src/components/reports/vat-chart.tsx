@@ -9,46 +9,56 @@ import type { Invoice } from '@/lib/types';
 import { useMemo } from 'react';
 import { format, parseISO, getMonth } from 'date-fns';
 
-const chartConfig = {
-  vat: {
-    label: 'VAT (RON)',
-    color: 'hsl(var(--chart-2))',
-  },
-} satisfies ChartConfig;
-
 interface VatChartProps {
     invoices: Invoice[];
     selectedYear: number | 'all';
+    selectedCurrency: string;
 }
 
-export function VatChart({ invoices, selectedYear }: VatChartProps) {
+export function VatChart({ invoices, selectedYear, selectedCurrency }: VatChartProps) {
+    const chartConfig = useMemo(() => ({
+        vat: {
+            label: `VAT (${selectedCurrency})`,
+            color: 'hsl(var(--chart-2))',
+        },
+    }), [selectedCurrency]) satisfies ChartConfig;
+
     const chartData = useMemo(() => {
         const yearData = Array.from({ length: 12 }, (_, i) => ({
-            month: format(new Date(2000, i), 'MMM'), // Dummy year, we only need the month name
+            month: format(new Date(2000, i), 'MMM'),
             vat: 0,
-            monthIndex: i,
         }));
 
         invoices.forEach(invoice => {
-            if (!invoice.vatAmount || invoice.vatAmount === 0) return;
+            const vatAmount = invoice.vatAmount || 0;
+            if (vatAmount === 0) return;
             
             const invoiceDate = parseISO(invoice.date);
             const monthIndex = getMonth(invoiceDate);
             
-            const vatInRon = (invoice.vatAmount || 0) * (invoice.exchangeRate || 1);
-            yearData[monthIndex].vat += vatInRon;
+            let vatInSelectedCurrency = 0;
+            if (selectedCurrency === 'RON') {
+                const exchangeRate = invoice.currency === 'RON' ? 1 : (invoice.exchangeRate || 1);
+                vatInSelectedCurrency = vatAmount * exchangeRate;
+            } else if (invoice.currency === selectedCurrency) {
+                vatInSelectedCurrency = vatAmount;
+            }
+
+            if (vatInSelectedCurrency > 0) {
+                yearData[monthIndex].vat += vatInSelectedCurrency;
+            }
         });
 
         return yearData.filter(d => d.vat > 0);
 
-    }, [invoices]);
+    }, [invoices, selectedCurrency]);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>VAT Accrued per Month (RON)</CardTitle>
+        <CardTitle>VAT Accrued per Month ({selectedCurrency})</CardTitle>
         <CardDescription>
-          {`Total VAT in RON from all invoices created for ${selectedYear === 'all' ? 'the selected period' : selectedYear}.`}
+          {`Total VAT in ${selectedCurrency} from all invoices created for ${selectedYear === 'all' ? 'the selected period' : selectedYear}.`}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -67,9 +77,9 @@ export function VatChart({ invoices, selectedYear }: VatChartProps) {
                 axisLine={false}
                 tickMargin={8}
                 tickFormatter={(value) => {
-                    const formattedValue = new Intl.NumberFormat('ro-RO', {
+                    const formattedValue = new Intl.NumberFormat('en-US', {
                       style: 'currency',
-                      currency: 'RON',
+                      currency: selectedCurrency,
                       notation: 'compact',
                       compactDisplay: 'short'
                     }).format(value);
@@ -79,7 +89,7 @@ export function VatChart({ invoices, selectedYear }: VatChartProps) {
               <Tooltip
                 cursor={false}
                 content={<ChartTooltipContent indicator="dot" formatter={(value) => {
-                    return new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(value as number);
+                    return new Intl.NumberFormat('en-US', { style: 'currency', currency: selectedCurrency }).format(value as number);
                 }} />}
               />
               <Bar 
@@ -98,3 +108,5 @@ export function VatChart({ invoices, selectedYear }: VatChartProps) {
     </Card>
   );
 }
+
+    
