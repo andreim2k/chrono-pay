@@ -58,26 +58,25 @@ export default function DashboardPage() {
     const safeProjects = projects || [];
     const safeTimecards = timecards || [];
 
-    const paidInvoices = safeInvoices.filter(inv => inv.status === 'Paid');
-    const unpaidInvoices = safeInvoices.filter(inv => inv.status !== 'Paid');
+    const ronInvoices = safeInvoices.filter(inv => inv.currency === 'RON');
+    const otherInvoices = safeInvoices.filter(inv => inv.currency !== 'RON');
+
+    // RON-specific calculations
+    const paidRonInvoices = ronInvoices.filter(inv => inv.status === 'Paid');
+    const unpaidRonInvoices = ronInvoices.filter(inv => inv.status !== 'Paid');
+    const totalRonRevenue = paidRonInvoices.reduce((acc, inv) => acc + inv.total, 0);
+    const netRonRevenue = paidRonInvoices.reduce((acc, inv) => acc + inv.subtotal, 0);
+    const unpaidRonTotal = unpaidRonInvoices.reduce((acc, inv) => acc + inv.total, 0);
     
+    // Multi-currency calculations
     const clientCount = safeClients.length;
     const projectCount = safeProjects.length;
 
-    const getTotalInRon = (invoice: Invoice) => invoice.totalRon || (invoice.total * (invoice.exchangeRate || 1));
-    const getSubtotalInRon = (invoice: Invoice) => invoice.subtotal * (invoice.exchangeRate || 1);
-    const getVatInRon = (invoice: Invoice) => (invoice.vatAmount || 0) * (invoice.exchangeRate || 1);
-
-    const totalRevenue = paidInvoices.reduce((acc, inv) => acc + getTotalInRon(inv), 0);
-    const netRevenue = paidInvoices.reduce((acc, inv) => acc + getSubtotalInRon(inv), 0);
-    const unpaidTotal = unpaidInvoices.reduce((acc, inv) => acc + getTotalInRon(inv), 0);
-    const totalVatCollectedRon = paidInvoices.reduce((acc, inv) => acc + getVatInRon(inv), 0);
-    const outstandingVatTotalRon = unpaidInvoices.reduce((acc, inv) => acc + getVatInRon(inv), 0);
-    
     const unbilledHours = safeTimecards.filter(tc => tc.status === 'Billable').reduce((acc, tc) => acc + tc.hours, 0);
     
     const netRevenueByCurrency: { [currency: string]: number } = {};
-    paidInvoices.forEach(inv => {
+    const paidOtherInvoices = otherInvoices.filter(inv => inv.status === 'Paid');
+    paidOtherInvoices.forEach(inv => {
         if (!netRevenueByCurrency[inv.currency]) {
             netRevenueByCurrency[inv.currency] = 0;
         }
@@ -100,20 +99,16 @@ export default function DashboardPage() {
 
 
     return {
-      totalRevenue: formatRon(totalRevenue),
-      netRevenue: formatRon(netRevenue),
-      unpaidAmount: formatRon(unpaidTotal),
-      unpaidTotal,
+      totalRevenue: formatRon(totalRonRevenue),
+      netRevenue: formatRon(netRonRevenue),
+      unpaidAmount: formatRon(unpaidRonTotal),
+      unpaidTotal: unpaidRonTotal,
       clientCount,
       projectCount,
-      paidCount: paidInvoices.length,
-      totalVatCollected: formatRon(totalVatCollectedRon),
-      outstandingVat: formatRon(outstandingVatTotalRon),
-      outstandingVatTotal: outstandingVatTotalRon,
       unbilledHours: unbilledHours.toFixed(2),
       dynamicCurrencyCards,
     };
-  }, [invoices, clients, projects, timecards, myCompany]);
+  }, [invoices, clients, projects, timecards]);
 
   const recentInvoices = useMemo(() => {
      if (!invoices) return [];
@@ -130,19 +125,19 @@ export default function DashboardPage() {
         title="Total Revenue (RON)"
         value={dashboardStats.totalRevenue}
         icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
-        description="Total from paid invoices, including VAT"
+        description="Total from paid invoices in RON"
         />
         <StatCard
           title="Net Revenue (RON)"
           value={dashboardStats.netRevenue}
           icon={<FileText className="h-4 w-4 text-muted-foreground" />}
-          description="Total from paid invoices, before VAT"
+          description="Total from paid invoices in RON, before VAT"
         />
         <StatCard
         title="Unpaid Amount (RON)"
         value={dashboardStats.unpaidAmount}
         icon={<Clock className="h-4 w-4 text-muted-foreground" />}
-        description="Awaiting payment from clients"
+        description="Awaiting payment from RON invoices"
         valueClassName={dashboardStats.unpaidTotal > 0 ? 'text-destructive' : ''}
         />
          <StatCard
@@ -162,19 +157,6 @@ export default function DashboardPage() {
                 description={`From paid ${card.currency} invoices without VAT`}
             />
         ))}
-        <StatCard
-          title="Total VAT Collected (RON)"
-          value={dashboardStats.totalVatCollected}
-          icon={<Banknote className="h-4 w-4 text-muted-foreground" />}
-          description="From paid invoices"
-        />
-        <StatCard
-          title="Outstanding VAT (RON)"
-          value={dashboardStats.outstandingVat}
-          icon={<Landmark className="h-4 w-4 text-muted-foreground" />}
-          description="From created & sent invoices"
-          valueClassName={dashboardStats.outstandingVatTotal > 0 ? 'text-amber-600 dark:text-amber-500' : ''}
-        />
          <StatCard
           title="Unbilled Hours"
           value={dashboardStats.unbilledHours}
