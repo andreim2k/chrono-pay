@@ -286,14 +286,14 @@ export function InvoiceList({ invoices, clients, projects, isFiltered, selectedR
     let otherCurrenciesParts = otherCurrencies.map(([currency, total]) => `${(currencySymbols[currency] || currency)}${total.toFixed(2)}`);
 
     if (otherCurrenciesParts.length === 0 && ronTotal !== undefined) {
-      return `(${ronTotal.toFixed(2)} RON total)`;
+      return `${ronTotal.toFixed(2)} RON total`;
     }
     
     if (otherCurrenciesParts.length > 0 && ronTotal !== undefined) {
-      return `(${otherCurrenciesParts.join(' + ')} = ${ronTotal.toFixed(2)} RON total)`;
+      return `${otherCurrenciesParts.join(' + ')} = ${ronTotal.toFixed(2)} RON total`;
     }
 
-    return `(${otherCurrenciesParts.join(' + ')} total)`;
+    return `${otherCurrenciesParts.join(' + ')} total`;
   }, [selectedInvoicesTotals]);
 
   const SortableHeader = ({ sortKey, children }: { sortKey: keyof Invoice | 'totalRon', children: React.ReactNode }) => (
@@ -326,7 +326,7 @@ export function InvoiceList({ invoices, clients, projects, isFiltered, selectedR
                 <CardTitle>{isFiltered ? 'Filtered Invoices' : 'All Invoices'}</CardTitle>
                 <CardDescription>
                   Displaying {invoices.length} invoice(s).
-                  {selectedRowCount > 0 && ` (${selectedRowCount} selected ${totalsString})`}
+                  {selectedRowCount > 0 && ` ${selectedRowCount} selected, ${totalsString}`}
                 </CardDescription>
             </div>
             {selectedRowCount > 0 && (
