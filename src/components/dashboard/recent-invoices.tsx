@@ -12,10 +12,11 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card"
-import type { Invoice, User } from "@/lib/types";
+import type { Invoice, User, Client } from "@/lib/types";
 import { cn, getInitials } from "@/lib/utils";
 import { format, parseISO, isPast, isFuture, differenceInDays } from "date-fns";
 import type { VariantProps } from "class-variance-authority";
+import { useMemo } from "react";
 
 const currencySymbols: { [key: string]: string } = {
     EUR: '€',
@@ -24,7 +25,11 @@ const currencySymbols: { [key: string]: string } = {
     RON: 'RON',
 };
 
-export function RecentInvoices({ invoices, myCompany }: { invoices: Invoice[], myCompany: User | null }) {
+export function RecentInvoices({ invoices, myCompany, clients }: { invoices: Invoice[], myCompany: User | null, clients: Client[] }) {
+
+    const clientsById = useMemo(() => {
+        return new Map(clients.map(c => [c.id, c]));
+    }, [clients]);
 
     const getBadgeVariant = (status: Invoice['status']): VariantProps<typeof badgeVariants>['variant'] => {
         switch (status) {
@@ -84,7 +89,21 @@ export function RecentInvoices({ invoices, myCompany }: { invoices: Invoice[], m
             {invoices.length > 0 ? (
                 <div className="space-y-4">
                     {invoices.map((invoice) => {
-                        const currencySymbol = currencySymbols[invoice.currency] || invoice.currency;
+                        const client = clients.find(c => c.name === invoice.clientName);
+                        const displayInRon = client?.preferredCompanyIbanCurrency === 'RON' && invoice.currency !== 'RON';
+
+                        let totalDisplay, vatDisplay;
+                        if (displayInRon && invoice.totalRon) {
+                            totalDisplay = `${invoice.totalRon.toFixed(2)} RON`;
+                            const vatInRon = (invoice.vatAmount || 0) * (invoice.exchangeRate || 1);
+                            vatDisplay = `incl. VAT ${vatInRon.toFixed(2)} RON`;
+                        } else {
+                            const currencySymbol = currencySymbols[invoice.currency] || invoice.currency;
+                            totalDisplay = `${currencySymbol}${invoice.total.toFixed(2)}`;
+                             if (invoice.vatAmount && invoice.vatAmount > 0) {
+                                vatDisplay = `incl. VAT ${currencySymbol}${invoice.vatAmount.toFixed(2)}`;
+                            }
+                        }
 
                         return (
                             <div key={invoice.id} className="flex items-center gap-4">
@@ -100,16 +119,13 @@ export function RecentInvoices({ invoices, myCompany }: { invoices: Invoice[], m
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-4">
-                                    <div className="text-right w-32">
+                                    <div className="text-right w-36">
                                         <p className="font-medium">
-                                            {invoice.currency === 'RON' ? `${invoice.total.toFixed(2)} RON` : `${currencySymbol}${invoice.total.toFixed(2)}`}
+                                           {totalDisplay}
                                         </p>
-                                        {typeof invoice.vatAmount === 'number' && invoice.vatAmount > 0 && (
+                                        {vatDisplay && (
                                             <p className="text-xs text-muted-foreground">
-                                            incl. VAT {invoice.currency === 'RON' 
-                                                ? `${(invoice.vatAmount || 0).toFixed(2)} RON`
-                                                : `${currencySymbols[invoice.currency] || invoice.currency}${invoice.vatAmount.toFixed(2)}`
-                                        }
+                                                {vatDisplay}
                                             </p>
                                         )}
                                     </div>

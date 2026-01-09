@@ -178,7 +178,7 @@ export default function DashboardPage() {
         
        </div>
 
-      <RecentInvoices invoices={recentInvoices} myCompany={myCompany} />
+      <RecentInvoices invoices={recentInvoices} myCompany={myCompany} clients={clients || []} />
 
     </div>
   );
