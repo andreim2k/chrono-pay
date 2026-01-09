@@ -113,7 +113,8 @@
                 "vat",
                 "vatRate",
                 "paymentTerms",
-                "hasVat"
+                "hasVat",
+                "preferredCompanyIbanCurrency"
             ]
         },
         "Project": {

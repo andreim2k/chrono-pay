@@ -31,7 +31,7 @@ export type Client = {
   language?: 'English' | 'Romanian';
   order?: number;
   paymentTerms: number; // Number of days until invoice is due
-  preferredCompanyIbanCurrency?: string;
+  preferredCompanyIbanCurrency: string;
 };
 
 export type Company = {

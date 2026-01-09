@@ -36,7 +36,7 @@ const clientSchema = z.object({
   vatRate: z.coerce.number().min(0, "VAT rate must be 0 or greater."),
   paymentTerms: z.coerce.number().int().min(0, "Payment terms must be 0 or greater"),
   hasVat: z.boolean().default(false),
-  preferredCompanyIbanCurrency: z.string().optional(),
+  preferredCompanyIbanCurrency: z.string().min(1, 'Default IBAN is required.'),
 });
 
 type ClientFormValues = z.infer<typeof clientSchema>;
