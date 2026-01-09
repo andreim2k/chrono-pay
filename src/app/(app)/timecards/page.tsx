@@ -112,8 +112,9 @@ export default function TimecardsPage() {
   }, [selectedClientId, selectedProjectId, selectedYear, selectedMonth, selectedStatus]);
 
   const exportableData = useMemo(() => {
-    return { timecards: sortedTimecards || [] };
-  }, [sortedTimecards]);
+    const timecardsToExport = sortedTimecards.filter(tc => selectedRows[tc.id]);
+    return { timecards: timecardsToExport.length > 0 ? timecardsToExport : sortedTimecards || [] };
+  }, [sortedTimecards, selectedRows]);
   
   const totalSelectedHours = useMemo(() => {
     return sortedTimecards.reduce((acc, tc) => {
@@ -135,14 +136,14 @@ export default function TimecardsPage() {
           <DataExport 
             data={exportableData} 
             fileName='timecards_export.json' 
-            buttonLabel="Export Filtered"
+            buttonLabel={Object.keys(selectedRows).length > 0 ? `Export ${Object.keys(selectedRows).length} Selected` : "Export Filtered"}
           />
           <DataImport 
-            allowedCollections={['timecards', 'projects', 'clients', 'invoices']}
+            allowedCollections={['timecards', 'projects', 'clients']}
             buttonLabel="Import Timecards"
             defaultImportMode="merge"
             allowModeSelection={true}
-            existingData={{ timecards: timecards || [], projects: projects || [], clients: clients || [], invoices: invoices || [] }}
+            existingData={{ timecards: timecards || [], projects: projects || [], clients: clients || [] }}
           />
         </div>
       </div>
