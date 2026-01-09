@@ -60,43 +60,49 @@ export default function DashboardPage() {
 
     const clientsById = new Map(safeClients.map(c => [c.id, c]));
     
-    let totalRonRevenue = 0;
-    let netRonRevenue = 0;
-    let unpaidRonTotal = 0;
-    let totalVatCollectedRon = 0;
-    let outstandingVatRon = 0;
-
-    const currencyStats: { [currency: string]: { totalRevenue: number; netRevenue: number; unpaidTotal: number } } = {};
+    type CurrencyStats = {
+      totalRevenue: number;
+      netRevenue: number;
+      unpaidTotal: number;
+      vatCollected: number;
+      outstandingVat: number;
+    };
+    const currencyStats: { [currency: string]: CurrencyStats } = {};
 
     safeInvoices.forEach(inv => {
         const project = projects?.find(p => p.id === inv.projectId);
         const client = clientsById.get(project?.clientId || '');
-        const displayInRon = client?.preferredCompanyIbanCurrency === 'RON';
         
-        if (displayInRon) {
-            const totalInRon = inv.totalRon || (inv.total * (inv.exchangeRate || 1));
-            const subtotalInRon = (inv.subtotal || 0) * (inv.exchangeRate || 1);
-            const vatInRon = (inv.vatAmount || 0) * (inv.exchangeRate || 1);
+        // Group by client's preferred currency, fallback to invoice currency
+        const groupCurrency = client?.preferredCompanyIbanCurrency || inv.currency;
+        
+        if (!currencyStats[groupCurrency]) {
+            currencyStats[groupCurrency] = { totalRevenue: 0, netRevenue: 0, unpaidTotal: 0, vatCollected: 0, outstandingVat: 0 };
+        }
+        
+        // Determine the conversion rate to the group's currency
+        let conversionRate = 1;
+        if (inv.currency !== groupCurrency) {
+            // This assumes RON is the base for exchange rates stored in the invoice
+            if (groupCurrency === 'RON') {
+                conversionRate = inv.exchangeRate || 1;
+            } else {
+                // This is a simplification. A full implementation would need a rate from inv.currency to groupCurrency.
+                // For now, we only handle the primary case of foreign currency -> RON.
+            }
+        }
 
-            if (inv.status === 'Paid') {
-                totalRonRevenue += totalInRon;
-                netRonRevenue += subtotalInRon;
-                totalVatCollectedRon += vatInRon;
-            } else {
-                unpaidRonTotal += totalInRon;
-                outstandingVatRon += vatInRon;
-            }
+        const totalInGroupCurrency = inv.total * conversionRate;
+        const subtotalInGroupCurrency = inv.subtotal * conversionRate;
+        const vatInGroupCurrency = (inv.vatAmount || 0) * conversionRate;
+
+        if (inv.status === 'Paid') {
+            currencyStats[groupCurrency].totalRevenue += totalInGroupCurrency;
+            currencyStats[groupCurrency].netRevenue += subtotalInGroupCurrency;
+            currencyStats[groupCurrency].vatCollected += vatInGroupCurrency;
         } else {
-            const currency = inv.currency;
-            if (!currencyStats[currency]) {
-                currencyStats[currency] = { totalRevenue: 0, netRevenue: 0, unpaidTotal: 0 };
-            }
-            if (inv.status === 'Paid') {
-                currencyStats[currency].totalRevenue += inv.total;
-                currencyStats[currency].netRevenue += inv.subtotal;
-            } else {
-                currencyStats[currency].unpaidTotal += inv.total;
-            }
+            currencyStats[groupCurrency].unpaidTotal += totalInGroupCurrency;
+            currencyStats[groupCurrency].outstandingVat += vatInGroupCurrency;
         }
     });
 
@@ -105,34 +111,35 @@ export default function DashboardPage() {
     const unbilledHours = safeTimecards.filter(tc => tc.status === 'Billable').reduce((acc, tc) => acc + tc.hours, 0);
 
     const formatCurrency = (amount: number, currency: string) => {
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
+        const locale = currency === 'RON' ? 'ro-RO' : 'en-US';
+        return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(amount);
     }
     
-    const formatRon = (amount: number) => {
-        return new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(amount);
-    }
-
-    const dynamicCurrencyCards = Object.entries(currencyStats).map(([currency, stats]) => ({
-      currency,
-      totalRevenue: formatCurrency(stats.totalRevenue, currency),
-      netRevenue: formatCurrency(stats.netRevenue, currency),
-      unpaidAmount: formatCurrency(stats.unpaidTotal, currency),
-      unpaidTotal: stats.unpaidTotal,
-    }));
+    const ronStats = currencyStats['RON'] || { totalRevenue: 0, netRevenue: 0, unpaidTotal: 0, vatCollected: 0, outstandingVat: 0 };
+    
+    const otherCurrencyCards = Object.entries(currencyStats)
+        .filter(([currency]) => currency !== 'RON')
+        .map(([currency, stats]) => ({
+            currency,
+            totalRevenue: formatCurrency(stats.totalRevenue, currency),
+            netRevenue: formatCurrency(stats.netRevenue, currency),
+            unpaidAmount: formatCurrency(stats.unpaidTotal, currency),
+            unpaidTotal: stats.unpaidTotal,
+        }));
 
 
     return {
-      totalRevenue: formatRon(totalRonRevenue),
-      netRevenue: formatRon(netRonRevenue),
-      unpaidAmount: formatRon(unpaidRonTotal),
-      unpaidTotal: unpaidRonTotal,
-      totalVatCollected: formatRon(totalVatCollectedRon),
-      outstandingVat: formatRon(outstandingVatRon),
-      outstandingVatTotal: outstandingVatRon,
+      totalRevenue: formatCurrency(ronStats.totalRevenue, 'RON'),
+      netRevenue: formatCurrency(ronStats.netRevenue, 'RON'),
+      unpaidAmount: formatCurrency(ronStats.unpaidTotal, 'RON'),
+      unpaidTotal: ronStats.unpaidTotal,
+      totalVatCollected: formatCurrency(ronStats.vatCollected, 'RON'),
+      outstandingVat: formatCurrency(ronStats.outstandingVat, 'RON'),
+      outstandingVatTotal: ronStats.outstandingVat,
       clientCount,
       projectCount,
       unbilledHours: unbilledHours.toFixed(2),
-      dynamicCurrencyCards,
+      dynamicCurrencyCards: otherCurrencyCards,
     };
   }, [invoices, clients, projects, timecards]);
 
