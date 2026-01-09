@@ -59,42 +59,45 @@ export default function DashboardPage() {
     const safeTimecards = timecards || [];
 
     const clientsById = new Map(safeClients.map(c => [c.id, c]));
-    const projectsById = new Map(safeProjects.map(p => [p.id, p]));
-
+    
     let totalRonRevenue = 0;
     let netRonRevenue = 0;
     let unpaidRonTotal = 0;
 
-    const netRevenueByCurrency: { [currency: string]: number } = {};
-    
+    const currencyStats: { [currency: string]: { totalRevenue: number; netRevenue: number; unpaidTotal: number } } = {};
+
     safeInvoices.forEach(inv => {
-        const project = projectsById.get(inv.projectId);
-        const client = clientsById.get(project?.clientId || '');
+        const client = clientsById.get(inv.projectId ? projects?.find(p => p.id === inv.projectId)?.clientId || '' : '');
         const displayInRon = client?.preferredCompanyIbanCurrency === 'RON';
         
-        if (inv.status === 'Paid') {
-            if (displayInRon) {
-                totalRonRevenue += inv.totalRon || (inv.total * (inv.exchangeRate || 1));
-                netRonRevenue += (inv.subtotal || 0) * (inv.exchangeRate || 1);
+        if (displayInRon) {
+            const totalInRon = inv.totalRon || (inv.total * (inv.exchangeRate || 1));
+            const subtotalInRon = (inv.subtotal || 0) * (inv.exchangeRate || 1);
+            if (inv.status === 'Paid') {
+                totalRonRevenue += totalInRon;
+                netRonRevenue += subtotalInRon;
             } else {
-                if (!netRevenueByCurrency[inv.currency]) {
-                    netRevenueByCurrency[inv.currency] = 0;
-                }
-                netRevenueByCurrency[inv.currency] += inv.subtotal;
+                unpaidRonTotal += totalInRon;
             }
-        } else { // Unpaid invoices
-            if (displayInRon) {
-                unpaidRonTotal += inv.totalRon || (inv.total * (inv.exchangeRate || 1));
+        } else {
+            const currency = inv.currency;
+            if (!currencyStats[currency]) {
+                currencyStats[currency] = { totalRevenue: 0, netRevenue: 0, unpaidTotal: 0 };
+            }
+            if (inv.status === 'Paid') {
+                currencyStats[currency].totalRevenue += inv.total;
+                currencyStats[currency].netRevenue += inv.subtotal;
+            } else {
+                currencyStats[currency].unpaidTotal += inv.total;
             }
         }
     });
 
     const clientCount = safeClients.length;
     const projectCount = safeProjects.length;
-
     const unbilledHours = safeTimecards.filter(tc => tc.status === 'Billable').reduce((acc, tc) => acc + tc.hours, 0);
 
-    const formatCurrency = (amount: number, currency = 'EUR') => {
+    const formatCurrency = (amount: number, currency: string) => {
         return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
     }
     
@@ -102,11 +105,14 @@ export default function DashboardPage() {
         return new Intl.NumberFormat('ro-RO', { style: 'currency', currency: 'RON' }).format(amount);
     }
 
-    const dynamicCurrencyCards = Object.entries(netRevenueByCurrency).map(([currency, netAmount]) => ({
+    const dynamicCurrencyCards = Object.entries(currencyStats).map(([currency, stats]) => ({
       currency,
-      netAmount,
-      formattedAmount: formatCurrency(netAmount, currency),
+      totalRevenue: formatCurrency(stats.totalRevenue, currency),
+      netRevenue: formatCurrency(stats.netRevenue, currency),
+      unpaidAmount: formatCurrency(stats.unpaidTotal, currency),
+      unpaidTotal: stats.unpaidTotal,
     }));
+
 
     return {
       totalRevenue: formatRon(totalRonRevenue),
@@ -132,10 +138,10 @@ export default function DashboardPage() {
     <div className="flex flex-col gap-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
-        title="Total Revenue (RON)"
-        value={dashboardStats.totalRevenue}
-        icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
-        description="Total from paid invoices in RON"
+          title="Total Revenue (RON)"
+          value={dashboardStats.totalRevenue}
+          icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
+          description="Total from paid invoices in RON"
         />
         <StatCard
           title="Net Revenue (RON)"
@@ -144,11 +150,11 @@ export default function DashboardPage() {
           description="Total from paid invoices in RON, before VAT"
         />
         <StatCard
-        title="Unpaid Amount (RON)"
-        value={dashboardStats.unpaidAmount}
-        icon={<Clock className="h-4 w-4 text-muted-foreground" />}
-        description="Awaiting payment from RON invoices"
-        valueClassName={dashboardStats.unpaidTotal > 0 ? 'text-destructive' : ''}
+          title="Unpaid Amount (RON)"
+          value={dashboardStats.unpaidAmount}
+          icon={<Clock className="h-4 w-4 text-muted-foreground" />}
+          description="Awaiting payment from RON invoices"
+          valueClassName={dashboardStats.unpaidTotal > 0 ? 'text-destructive' : ''}
         />
          <StatCard
           title="Clients & Projects"
@@ -157,16 +163,32 @@ export default function DashboardPage() {
           description="Total active clients / projects"
         />
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {dashboardStats.dynamicCurrencyCards.map(card => (
-            <StatCard
-                key={card.currency}
-                title={`Net Revenue (${card.currency})`}
-                value={card.formattedAmount}
-                icon={currencyIcons[card.currency] || <DollarSign className="h-4 w-4 text-muted-foreground" />}
-                description={`From paid ${card.currency} invoices without VAT`}
-            />
+
+       {dashboardStats.dynamicCurrencyCards.map(card => (
+          <div key={card.currency} className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-4">
+              <StatCard
+                  title={`Total Revenue (${card.currency})`}
+                  value={card.totalRevenue}
+                  icon={currencyIcons[card.currency] || <DollarSign className="h-4 w-4 text-muted-foreground" />}
+                  description={`From paid ${card.currency} invoices`}
+              />
+              <StatCard
+                  title={`Net Revenue (${card.currency})`}
+                  value={card.netRevenue}
+                  icon={currencyIcons[card.currency] || <FileText className="h-4 w-4 text-muted-foreground" />}
+                  description={`From paid ${card.currency} invoices, before VAT`}
+              />
+              <StatCard
+                  title={`Unpaid Amount (${card.currency})`}
+                  value={card.unpaidAmount}
+                  icon={currencyIcons[card.currency] || <Clock className="h-4 w-4 text-muted-foreground" />}
+                  description={`Awaiting payment from ${card.currency} invoices`}
+                  valueClassName={card.unpaidTotal > 0 ? 'text-destructive' : ''}
+              />
+          </div>
         ))}
+        
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
          <StatCard
           title="Unbilled Hours"
           value={dashboardStats.unbilledHours}
@@ -175,9 +197,6 @@ export default function DashboardPage() {
           valueClassName={parseFloat(dashboardStats.unbilledHours) > 0 ? 'text-amber-600 dark:text-amber-500' : ''}
         />
       </div>
-       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        
-       </div>
 
       <RecentInvoices invoices={recentInvoices} myCompany={myCompany} clients={clients || []} projects={projects || []} />
 
