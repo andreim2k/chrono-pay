@@ -280,20 +280,20 @@ export function InvoiceList({ invoices, clients, projects, isFiltered, selectedR
     const entries = Object.entries(selectedInvoicesTotals);
     if (entries.length === 0) return '';
     
-    const ronTotal = selectedInvoicesTotals['RON'];
-    const otherCurrencies = entries.filter(([currency]) => currency !== 'RON');
+    const ronTotal = selectedInvoicesTotals['RON_total_for_summary'];
+    const otherCurrencies = entries.filter(([currency]) => currency !== 'RON_total_for_summary');
 
-    let displayParts: string[] = [];
+    let otherCurrenciesParts = otherCurrencies.map(([currency, total]) => `${(currencySymbols[currency] || currency)}${total.toFixed(2)}`);
 
-    if (otherCurrencies.length > 0) {
-        displayParts = otherCurrencies.map(([currency, total]) => `${(currencySymbols[currency] || currency)}${total.toFixed(2)}`);
+    if (otherCurrenciesParts.length === 0 && ronTotal !== undefined) {
+      return `(${ronTotal.toFixed(2)} RON total)`;
+    }
+    
+    if (otherCurrenciesParts.length > 0 && ronTotal !== undefined) {
+      return `(${otherCurrenciesParts.join(' + ')} = ${ronTotal.toFixed(2)} RON total)`;
     }
 
-    if (ronTotal !== undefined) {
-        displayParts.push(`${ronTotal.toFixed(2)} RON`);
-    }
-
-    return `(${displayParts.join(' + ')} total)`;
+    return `(${otherCurrenciesParts.join(' + ')} total)`;
   }, [selectedInvoicesTotals]);
 
   const SortableHeader = ({ sortKey, children }: { sortKey: keyof Invoice | 'totalRon', children: React.ReactNode }) => (
@@ -397,12 +397,23 @@ export function InvoiceList({ invoices, clients, projects, isFiltered, selectedR
                         {format(parseISO(invoice.dueDate), 'MMM d, yyyy')}
                     </TableCell>
                     <TableCell className="font-semibold">
-                        {currencySymbols[invoice.currency] || invoice.currency}{invoice.total.toFixed(2)}
-                        {showVatColumn && invoice.vatAmount && invoice.vatAmount > 0 && (
-                            <div className='text-xs text-muted-foreground font-normal'>
-                                Net: {currencySymbols[invoice.currency] || invoice.currency}{invoice.subtotal.toFixed(2)}
-                            </div>
-                        )}
+                      {displayInRon && invoice.totalRon ?
+                        <div className="flex flex-col">
+                            <span>{invoice.totalRon.toFixed(2)} RON</span>
+                            <span className="text-xs text-muted-foreground font-normal">
+                                ({currencySymbols[invoice.currency] || invoice.currency}{invoice.total.toFixed(2)})
+                            </span>
+                        </div>
+                         :
+                        <>
+                          {currencySymbols[invoice.currency] || invoice.currency}{invoice.total.toFixed(2)}
+                          {showVatColumn && invoice.vatAmount && invoice.vatAmount > 0 && (
+                              <div className='text-xs text-muted-foreground font-normal'>
+                                  Net: {currencySymbols[invoice.currency] || invoice.currency}{invoice.subtotal.toFixed(2)}
+                              </div>
+                          )}
+                        </>
+                      }
                     </TableCell>
                     {showRonColumn && (
                         <TableCell className={cn("font-semibold", "text-foreground")}>

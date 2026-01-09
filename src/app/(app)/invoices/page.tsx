@@ -154,18 +154,18 @@ export default function InvoicesPage() {
         }
         acc.currencies[inv.currency] += inv.total;
 
-        // RON total
+        // RON total for summary display
         const totalInRon = inv.totalRon ?? (inv.currency === 'RON' ? inv.total : 0);
         if (totalInRon > 0) {
-            acc.totalRon += totalInRon;
+            acc.totalRonForSummary += totalInRon;
         }
 
         return acc;
-    }, { currencies: {} as Record<string, number>, totalRon: 0 });
+    }, { currencies: {} as Record<string, number>, totalRonForSummary: 0 });
 
     const finalTotals: Record<string, number> = { ...totals.currencies };
-    if (totals.totalRon > 0) {
-        finalTotals['RON'] = totals.totalRon;
+    if (totals.totalRonForSummary > 0) {
+        finalTotals['RON_total_for_summary'] = totals.totalRonForSummary;
     }
     
     return finalTotals;
