@@ -18,7 +18,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
 import { EditClientDialog } from '@/components/projects/edit-client-dialog';
 import { DataManagement } from '@/components/data/data-management';
-import { InvoiceMigration } from '@/components/data/invoice-migration';
 import { PlusCircle, Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -340,22 +339,15 @@ export default function SettingsPage() {
             <ProjectList projects={projects || []} />
           </TabsContent>
            <TabsContent value="data">
-             <div className="space-y-6">
-               <InvoiceMigration
-                 invoices={invoices || []}
-                 clients={clients || []}
-                 projects={projects || []}
-               />
-               <DataManagement
-                  data={{
-                      myCompany: myCompany || {},
-                      clients: clients || [],
-                      projects: projects || [],
-                      invoices: invoices || [],
-                      timecards: timecards || [],
-                  }}
-               />
-             </div>
+             <DataManagement
+                data={{
+                    myCompany: myCompany || {},
+                    clients: clients || [],
+                    projects: projects || [],
+                    invoices: invoices || [],
+                    timecards: timecards || [],
+                }}
+             />
           </TabsContent>
         </Tabs>
       </div>
