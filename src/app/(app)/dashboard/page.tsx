@@ -58,6 +58,39 @@ export default function DashboardPage() {
     const safeProjects = projects || [];
     const safeTimecards = timecards || [];
 
+    const clientsById = new Map(safeClients.map(c => [c.id, c]));
+
+    // Stage 1: Group invoices into correct currency buckets, performing conversions only for the RON group.
+    const groupedInvoices: { [currency: string]: Invoice[] } = {};
+    safeInvoices.forEach(inv => {
+      const client = clientsById.get(inv.clientId);
+      if (!client) return;
+      
+      const groupCurrency = client.preferredCompanyIbanCurrency;
+      if (!groupedInvoices[groupCurrency]) {
+        groupedInvoices[groupCurrency] = [];
+      }
+
+      // Create a mutable copy to potentially add converted values
+      const invoiceCopy = { ...inv };
+
+      if (groupCurrency === 'RON' && inv.currency !== 'RON') {
+        const conversionRate = inv.exchangeRate || 1;
+        // Attach converted RON values to the invoice copy for the RON group
+        (invoiceCopy as any).totalInGroupCurrency = inv.total * conversionRate;
+        (invoiceCopy as any).subtotalInGroupCurrency = inv.subtotal * conversionRate;
+        (invoiceCopy as any).vatInGroupCurrency = (inv.vatAmount || 0) * conversionRate;
+      } else {
+        // For all other groups (EUR, USD, etc.), the amounts are native.
+        (invoiceCopy as any).totalInGroupCurrency = inv.total;
+        (invoiceCopy as any).subtotalInGroupCurrency = inv.subtotal;
+        (invoiceCopy as any).vatInGroupCurrency = inv.vatAmount || 0;
+      }
+
+      groupedInvoices[groupCurrency].push(invoiceCopy);
+    });
+
+    // Stage 2: Calculate stats for each currency group independently from the clean buckets.
     type CurrencyStats = {
       totalRevenue: number;
       netRevenue: number;
@@ -65,48 +98,21 @@ export default function DashboardPage() {
       vatCollected: number;
       outstandingVat: number;
     };
-    
-    const clientsById = new Map(safeClients.map(c => [c.id, c]));
     const currencyStats: { [currency: string]: CurrencyStats } = {};
-
-    // Stage 1: Group invoices and their values into correct currency buckets
-    const groupedInvoices: { [currency: string]: Invoice[] } = {};
-
-    safeInvoices.forEach(inv => {
-      const client = clientsById.get(inv.clientId);
-      if (!client) return;
-
-      const groupCurrency = client.preferredCompanyIbanCurrency;
-      if (!groupedInvoices[groupCurrency]) {
-        groupedInvoices[groupCurrency] = [];
-      }
-      groupedInvoices[groupCurrency].push(inv);
-    });
-
-    // Stage 2: Calculate stats for each currency group independently
+    
     for (const currency in groupedInvoices) {
-      if (!currencyStats[currency]) {
-        currencyStats[currency] = { totalRevenue: 0, netRevenue: 0, unpaidTotal: 0, vatCollected: 0, outstandingVat: 0 };
-      }
-
+      currencyStats[currency] = { totalRevenue: 0, netRevenue: 0, unpaidTotal: 0, vatCollected: 0, outstandingVat: 0 };
+      
       groupedInvoices[currency].forEach(inv => {
-        let total = inv.total;
-        let subtotal = inv.subtotal;
-        let vat = inv.vatAmount || 0;
-
-        // Convert to RON only if the group is RON but the invoice is not
-        if (currency === 'RON' && inv.currency !== 'RON') {
-          const conversionRate = inv.exchangeRate || 1;
-          total *= conversionRate;
-          subtotal *= conversionRate;
-          vat *= conversionRate;
-        }
+        const total = (inv as any).totalInGroupCurrency;
+        const subtotal = (inv as any).subtotalInGroupCurrency;
+        const vat = (inv as any).vatInGroupCurrency;
 
         if (inv.status === 'Paid') {
           currencyStats[currency].totalRevenue += total;
           currencyStats[currency].netRevenue += subtotal;
           currencyStats[currency].vatCollected += vat;
-        } else { // Status is 'Created' or 'Sent'
+        } else { // 'Created' or 'Sent'
           currencyStats[currency].unpaidTotal += total;
           currencyStats[currency].outstandingVat += vat;
         }
@@ -122,10 +128,12 @@ export default function DashboardPage() {
         return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(amount);
     }
     
+    // Prepare final output
     const ronStats = currencyStats['RON'] || { totalRevenue: 0, netRevenue: 0, unpaidTotal: 0, vatCollected: 0, outstandingVat: 0 };
-    delete currencyStats['RON']; // Remove RON to process other currencies separately
-
+    
+    // Create cards for all other currencies
     const otherCurrencyCards = Object.entries(currencyStats)
+        .filter(([currency]) => currency !== 'RON')
         .map(([currency, stats]) => ({
             currency,
             totalRevenue: formatCurrency(stats.totalRevenue, currency),
@@ -164,96 +172,104 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Total Revenue (RON)"
-          value={dashboardStats.totalRevenue}
-          icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
-          description="Total from paid invoices in RON"
-        />
-        <StatCard
-          title="Net Revenue (RON)"
-          value={dashboardStats.netRevenue}
-          icon={<FileText className="h-4 w-4 text-muted-foreground" />}
-          description="Total from paid invoices in RON, before VAT"
-        />
-        <StatCard
-          title="Unpaid Amount (RON)"
-          value={dashboardStats.unpaidAmount}
-          icon={<Clock className="h-4 w-4 text-muted-foreground" />}
-          description="Awaiting payment from RON invoices"
-          valueClassName={dashboardStats.unpaidTotal > 0 ? 'text-destructive' : ''}
-        />
-         <StatCard
-          title="Total VAT Collected (RON)"
-          value={dashboardStats.totalVatCollected}
-          icon={<Banknote className="h-4 w-4 text-muted-foreground" />}
-          description="VAT from paid invoices in RON"
-        />
-         <StatCard
-          title="Outstanding VAT (RON)"
-          value={dashboardStats.outstandingVat}
-          icon={<Landmark className="h-4 w-4 text-muted-foreground" />}
-          description="VAT from created & sent invoices in RON"
-          valueClassName={dashboardStats.outstandingVatTotal > 0 ? 'text-destructive' : ''}
-        />
-        <StatCard
-          title="Total Clients"
-          value={`${dashboardStats.clientCount}`}
-          icon={<Users className="h-4 w-4 text-muted-foreground" />}
-          description="Total number of active clients"
-        />
-        <StatCard
-          title="Total Projects"
-          value={`${dashboardStats.projectCount}`}
-          icon={<Briefcase className="h-4 w-4 text-muted-foreground" />}
-          description="Total number of active projects"
-        />
-         <StatCard
-          title="Unbilled Hours"
-          value={dashboardStats.unbilledHours}
-          icon={<Hourglass className="h-4 w-4 text-muted-foreground" />}
-          description="Ready to be invoiced"
-          valueClassName={parseFloat(dashboardStats.unbilledHours) > 0 ? 'text-amber-600 dark:text-amber-500' : ''}
-        />
-      </div>
-
-      {dashboardStats.dynamicCurrencyCards.map((card) => (
-        <div key={card.currency}>
-            <h3 className="text-xl font-semibold tracking-tight mt-6 mb-4">{card.currency} Overview</h3>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <StatCard
-                    title={`Total Revenue (${card.currency})`}
-                    value={card.totalRevenue}
-                    icon={currencyIcons[card.currency] || <DollarSign className="h-4 w-4 text-muted-foreground" />}
-                    description={`Total from paid invoices in ${card.currency}`}
+       <div className="space-y-6">
+        <div>
+            <h3 className="text-xl font-semibold tracking-tight">RON Overview</h3>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-4">
+                 <StatCard
+                    title="Total Revenue (RON)"
+                    value={dashboardStats.totalRevenue}
+                    icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
+                    description="Total from paid invoices in RON"
                 />
                 <StatCard
-                    title={`Net Revenue (${card.currency})`}
-                    value={card.netRevenue}
-                    icon={currencyIcons[card.currency] || <FileText className="h-4 w-4 text-muted-foreground" />}
-                    description={`Total from paid invoices in ${card.currency}, before VAT`}
+                    title="Net Revenue (RON)"
+                    value={dashboardStats.netRevenue}
+                    icon={<FileText className="h-4 w-4 text-muted-foreground" />}
+                    description="Total from paid invoices in RON, before VAT"
                 />
                 <StatCard
-                    title={`Unpaid Amount (${card.currency})`}
-                    value={card.unpaidAmount}
-                    icon={currencyIcons[card.currency] || <Clock className="h-4 w-4 text-muted-foreground" />}
-                    description={`Awaiting payment from ${card.currency} invoices`}
-                    valueClassName={card.unpaidTotal > 0 ? 'text-destructive' : ''}
+                    title="Unpaid Amount (RON)"
+                    value={dashboardStats.unpaidAmount}
+                    icon={<Clock className="h-4 w-4 text-muted-foreground" />}
+                    description="Awaiting payment from RON invoices"
+                    valueClassName={dashboardStats.unpaidTotal > 0 ? 'text-destructive' : ''}
                 />
                 <StatCard
-                    title={`Total VAT Collected (${card.currency})`}
-                    value={card.totalVatCollected}
-                    icon={currencyIcons[card.currency] || <Banknote className="h-4 w-4 text-muted-foreground" />}
-                    description={`VAT from paid invoices in ${card.currency}`}
+                    title="Total VAT Collected (RON)"
+                    value={dashboardStats.totalVatCollected}
+                    icon={<Banknote className="h-4 w-4 text-muted-foreground" />}
+                    description="VAT from paid invoices in RON"
+                />
+            </div>
+             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-4">
+                <StatCard
+                    title="Outstanding VAT (RON)"
+                    value={dashboardStats.outstandingVat}
+                    icon={<Landmark className="h-4 w-4 text-muted-foreground" />}
+                    description="VAT from created & sent invoices in RON"
+                    valueClassName={dashboardStats.outstandingVatTotal > 0 ? 'text-destructive' : ''}
+                />
+                <StatCard
+                    title="Total Clients"
+                    value={`${dashboardStats.clientCount}`}
+                    icon={<Users className="h-4 w-4 text-muted-foreground" />}
+                    description="Total number of active clients"
+                />
+                <StatCard
+                    title="Total Projects"
+                    value={`${dashboardStats.projectCount}`}
+                    icon={<Briefcase className="h-4 w-4 text-muted-foreground" />}
+                    description="Total number of active projects"
+                />
+                <StatCard
+                    title="Unbilled Hours"
+                    value={dashboardStats.unbilledHours}
+                    icon={<Hourglass className="h-4 w-4 text-muted-foreground" />}
+                    description="Ready to be invoiced"
+                    valueClassName={parseFloat(dashboardStats.unbilledHours) > 0 ? 'text-amber-600 dark:text-amber-500' : ''}
                 />
             </div>
         </div>
-      ))}
 
+        {dashboardStats.dynamicCurrencyCards.map((card) => (
+            <div key={card.currency}>
+                <h3 className="text-xl font-semibold tracking-tight">{card.currency} Overview</h3>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-4">
+                    <StatCard
+                        title={`Total Revenue (${card.currency})`}
+                        value={card.totalRevenue}
+                        icon={currencyIcons[card.currency] || <DollarSign className="h-4 w-4 text-muted-foreground" />}
+                        description={`Total from paid invoices in ${card.currency}`}
+                    />
+                    <StatCard
+                        title={`Net Revenue (${card.currency})`}
+                        value={card.netRevenue}
+                        icon={currencyIcons[card.currency] || <FileText className="h-4 w-4 text-muted-foreground" />}
+                        description={`Total from paid invoices in ${card.currency}, before VAT`}
+                    />
+                    <StatCard
+                        title={`Unpaid Amount (${card.currency})`}
+                        value={card.unpaidAmount}
+                        icon={currencyIcons[card.currency] || <Clock className="h-4 w-4 text-muted-foreground" />}
+                        description={`Awaiting payment from ${card.currency} invoices`}
+                        valueClassName={card.unpaidTotal > 0 ? 'text-destructive' : ''}
+                    />
+                    <StatCard
+                        title={`Total VAT Collected (${card.currency})`}
+                        value={card.totalVatCollected}
+                        icon={currencyIcons[card.currency] || <Banknote className="h-4 w-4 text-muted-foreground" />}
+                        description={`VAT from paid invoices in ${card.currency}`}
+                    />
+                </div>
+            </div>
+        ))}
+      </div>
 
       <RecentInvoices invoices={recentInvoices} myCompany={myCompany} clients={clients || []} projects={projects || []} />
 
     </div>
   );
 }
+
+    
