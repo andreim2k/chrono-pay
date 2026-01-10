@@ -60,36 +60,6 @@ export default function DashboardPage() {
 
     const clientsById = new Map(safeClients.map(c => [c.id, c]));
 
-    // Stage 1: Group invoices into clean currency buckets with correct values.
-    const groupedInvoices: { [currency: string]: Invoice[] } = {};
-    safeInvoices.forEach(inv => {
-      const client = clientsById.get(inv.clientId);
-      if (!client) return;
-      
-      const groupCurrency = client.preferredCompanyIbanCurrency;
-      if (!groupedInvoices[groupCurrency]) {
-        groupedInvoices[groupCurrency] = [];
-      }
-
-      const invoiceCopy = { ...inv };
-
-      // If the invoice should be in the RON group but isn't a RON invoice, store converted values.
-      if (groupCurrency === 'RON' && inv.currency !== 'RON') {
-        const conversionRate = inv.exchangeRate || 1;
-        (invoiceCopy as any).totalInGroupCurrency = inv.total * conversionRate;
-        (invoiceCopy as any).subtotalInGroupCurrency = inv.subtotal * conversionRate;
-        (invoiceCopy as any).vatInGroupCurrency = (inv.vatAmount || 0) * conversionRate;
-      } else {
-        // Otherwise, the amounts are native to the group currency.
-        (invoiceCopy as any).totalInGroupCurrency = inv.total;
-        (invoiceCopy as any).subtotalInGroupCurrency = inv.subtotal;
-        (invoiceCopy as any).vatInGroupCurrency = inv.vatAmount || 0;
-      }
-
-      groupedInvoices[groupCurrency].push(invoiceCopy);
-    });
-
-    // Stage 2: Calculate stats for each currency group independently.
     type CurrencyStats = {
       totalRevenue: number;
       netRevenue: number;
@@ -97,26 +67,53 @@ export default function DashboardPage() {
       vatCollected: number;
       outstandingVat: number;
     };
+
+    // Stage 1: Initialize stats objects for every preferred currency found in clients
     const currencyStats: { [currency: string]: CurrencyStats } = {};
-
-    for (const currency in groupedInvoices) {
-      currencyStats[currency] = { totalRevenue: 0, netRevenue: 0, unpaidTotal: 0, vatCollected: 0, outstandingVat: 0 };
-      
-      groupedInvoices[currency].forEach(inv => {
-        const total = (inv as any).totalInGroupCurrency;
-        const subtotal = (inv as any).subtotalInGroupCurrency;
-        const vat = (inv as any).vatInGroupCurrency;
-
-        if (inv.status === 'Paid') {
-          currencyStats[currency].totalRevenue += total;
-          currencyStats[currency].netRevenue += subtotal;
-          currencyStats[currency].vatCollected += vat;
-        } else { // 'Created' or 'Sent'
-          currencyStats[currency].unpaidTotal += total;
-          currencyStats[currency].outstandingVat += vat;
+    safeClients.forEach(c => {
+        if (c.preferredCompanyIbanCurrency && !currencyStats[c.preferredCompanyIbanCurrency]) {
+            currencyStats[c.preferredCompanyIbanCurrency] = { totalRevenue: 0, netRevenue: 0, unpaidTotal: 0, vatCollected: 0, outstandingVat: 0 };
         }
-      });
-    }
+    });
+
+    // Stage 2: Process each invoice and add its values to the correct currency bucket
+    safeInvoices.forEach(inv => {
+      const client = clientsById.get(inv.clientId);
+      if (!client || !client.preferredCompanyIbanCurrency) return;
+
+      const groupCurrency = client.preferredCompanyIbanCurrency;
+
+      // Ensure the stats object for this currency exists
+      if (!currencyStats[groupCurrency]) {
+          currencyStats[groupCurrency] = { totalRevenue: 0, netRevenue: 0, unpaidTotal: 0, vatCollected: 0, outstandingVat: 0 };
+      }
+
+      let totalInGroupCurrency: number;
+      let subtotalInGroupCurrency: number;
+      let vatInGroupCurrency: number;
+
+      // Perform conversion only if the group is RON and the invoice currency is different
+      if (groupCurrency === 'RON' && inv.currency !== 'RON') {
+        const conversionRate = inv.exchangeRate || 1;
+        totalInGroupCurrency = inv.total * conversionRate;
+        subtotalInGroupCurrency = inv.subtotal * conversionRate;
+        vatInGroupCurrency = (inv.vatAmount || 0) * conversionRate;
+      } else {
+        // For all other cases (EUR group, USD group, or native RON in RON group), use the invoice's original values
+        totalInGroupCurrency = inv.total;
+        subtotalInGroupCurrency = inv.subtotal;
+        vatInGroupCurrency = inv.vatAmount || 0;
+      }
+
+      if (inv.status === 'Paid') {
+        currencyStats[groupCurrency].totalRevenue += totalInGroupCurrency;
+        currencyStats[groupCurrency].netRevenue += subtotalInGroupCurrency;
+        currencyStats[groupCurrency].vatCollected += vatInGroupCurrency;
+      } else { // 'Created' or 'Sent'
+        currencyStats[groupCurrency].unpaidTotal += totalInGroupCurrency;
+        currencyStats[groupCurrency].outstandingVat += vatInGroupCurrency;
+      }
+    });
 
     const clientCount = safeClients.length;
     const projectCount = safeProjects.length;
