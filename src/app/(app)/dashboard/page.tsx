@@ -57,7 +57,6 @@ export default function DashboardPage() {
     const safeClients = clients || [];
     const safeProjects = projects || [];
     const safeTimecards = timecards || [];
-    const clientsById = new Map(safeClients.map(c => [c.id, c]));
 
     type CurrencyStats = {
       totalRevenue: number;
@@ -66,40 +65,53 @@ export default function DashboardPage() {
       vatCollected: number;
       outstandingVat: number;
     };
-
+    
+    const clientsById = new Map(safeClients.map(c => [c.id, c]));
     const currencyStats: { [currency: string]: CurrencyStats } = {};
+
+    // Stage 1: Group invoices and their values into correct currency buckets
+    const groupedInvoices: { [currency: string]: Invoice[] } = {};
 
     safeInvoices.forEach(inv => {
       const client = clientsById.get(inv.clientId);
       if (!client) return;
 
       const groupCurrency = client.preferredCompanyIbanCurrency;
-      
-      if (!currencyStats[groupCurrency]) {
-        currencyStats[groupCurrency] = { totalRevenue: 0, netRevenue: 0, unpaidTotal: 0, vatCollected: 0, outstandingVat: 0 };
+      if (!groupedInvoices[groupCurrency]) {
+        groupedInvoices[groupCurrency] = [];
       }
-      
-      let totalInGroupCurrency = inv.total;
-      let subtotalInGroupCurrency = inv.subtotal;
-      let vatInGroupCurrency = inv.vatAmount || 0;
-
-      // Convert to RON if the group is RON but invoice is not
-      if (groupCurrency === 'RON' && inv.currency !== 'RON') {
-        const conversionRate = inv.exchangeRate || 1;
-        totalInGroupCurrency = inv.total * conversionRate;
-        subtotalInGroupCurrency = inv.subtotal * conversionRate;
-        vatInGroupCurrency = (inv.vatAmount || 0) * conversionRate;
-      }
-      
-      if (inv.status === 'Paid') {
-          currencyStats[groupCurrency].totalRevenue += totalInGroupCurrency;
-          currencyStats[groupCurrency].netRevenue += subtotalInGroupCurrency;
-          currencyStats[groupCurrency].vatCollected += vatInGroupCurrency;
-      } else { // Status is 'Created' or 'Sent'
-          currencyStats[groupCurrency].unpaidTotal += totalInGroupCurrency;
-          currencyStats[groupCurrency].outstandingVat += vatInGroupCurrency;
-      }
+      groupedInvoices[groupCurrency].push(inv);
     });
+
+    // Stage 2: Calculate stats for each currency group independently
+    for (const currency in groupedInvoices) {
+      if (!currencyStats[currency]) {
+        currencyStats[currency] = { totalRevenue: 0, netRevenue: 0, unpaidTotal: 0, vatCollected: 0, outstandingVat: 0 };
+      }
+
+      groupedInvoices[currency].forEach(inv => {
+        let total = inv.total;
+        let subtotal = inv.subtotal;
+        let vat = inv.vatAmount || 0;
+
+        // Convert to RON only if the group is RON but the invoice is not
+        if (currency === 'RON' && inv.currency !== 'RON') {
+          const conversionRate = inv.exchangeRate || 1;
+          total *= conversionRate;
+          subtotal *= conversionRate;
+          vat *= conversionRate;
+        }
+
+        if (inv.status === 'Paid') {
+          currencyStats[currency].totalRevenue += total;
+          currencyStats[currency].netRevenue += subtotal;
+          currencyStats[currency].vatCollected += vat;
+        } else { // Status is 'Created' or 'Sent'
+          currencyStats[currency].unpaidTotal += total;
+          currencyStats[currency].outstandingVat += vat;
+        }
+      });
+    }
 
     const clientCount = safeClients.length;
     const projectCount = safeProjects.length;
@@ -113,7 +125,7 @@ export default function DashboardPage() {
     const ronStats = currencyStats['RON'] || { totalRevenue: 0, netRevenue: 0, unpaidTotal: 0, vatCollected: 0, outstandingVat: 0 };
     delete currencyStats['RON']; // Remove RON to process other currencies separately
 
-    const dynamicCurrencyCards = Object.entries(currencyStats)
+    const otherCurrencyCards = Object.entries(currencyStats)
         .map(([currency, stats]) => ({
             currency,
             totalRevenue: formatCurrency(stats.totalRevenue, currency),
@@ -125,7 +137,6 @@ export default function DashboardPage() {
             outstandingVat: formatCurrency(stats.outstandingVat, currency),
             outstandingVatTotal: stats.outstandingVat,
         }));
-
 
     return {
       totalRevenue: formatCurrency(ronStats.totalRevenue, 'RON'),
@@ -139,7 +150,7 @@ export default function DashboardPage() {
       clientCount,
       projectCount,
       unbilledHours: unbilledHours.toFixed(2),
-      dynamicCurrencyCards: dynamicCurrencyCards,
+      dynamicCurrencyCards: otherCurrencyCards,
     };
   }, [invoices, clients, projects, timecards]);
 
@@ -235,13 +246,6 @@ export default function DashboardPage() {
                     value={card.totalVatCollected}
                     icon={currencyIcons[card.currency] || <Banknote className="h-4 w-4 text-muted-foreground" />}
                     description={`VAT from paid invoices in ${card.currency}`}
-                />
-                <StatCard
-                    title={`Outstanding VAT (${card.currency})`}
-                    value={card.outstandingVat}
-                    icon={currencyIcons[card.currency] || <Landmark className="h-4 w-4 text-muted-foreground" />}
-                    description={`VAT from created & sent invoices in ${card.currency}`}
-                    valueClassName={card.outstandingVatTotal > 0 ? 'text-destructive' : ''}
                 />
             </div>
         </div>
