@@ -38,7 +38,7 @@ export function VatChart({ invoices, selectedYear, selectedCurrency }: VatChartP
             
             let vatInSelectedCurrency = 0;
             if (selectedCurrency === 'RON') {
-                const exchangeRate = invoice.currency === 'RON' ? 1 : (invoice.exchangeRate || 1);
+                const exchangeRate = invoice.currency === 'RON' ? 1 : (invoice.exchangeRate ?? 1);
                 vatInSelectedCurrency = vatAmount * exchangeRate;
             } else if (invoice.currency === selectedCurrency) {
                 vatInSelectedCurrency = vatAmount;

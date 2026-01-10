@@ -125,7 +125,7 @@ export default function ReportsPage() {
             const vatAmount = inv.vatAmount || 0;
             // Convert to RON only if group is RON and invoice is in different currency
             if (groupCurrency === 'RON' && inv.currency !== 'RON') {
-                const exchangeRate = inv.exchangeRate || 1;
+                const exchangeRate = inv.exchangeRate ?? 1;
                 return acc + (vatAmount * exchangeRate);
             }
             // For all other cases, use original invoice VAT amount

@@ -94,7 +94,7 @@ export default function DashboardPage() {
 
       // Perform conversion only if the group is RON and the invoice currency is different
       if (groupCurrency === 'RON' && inv.currency !== 'RON') {
-        const conversionRate = inv.exchangeRate || 1;
+        const conversionRate = inv.exchangeRate ?? 1;
         totalInGroupCurrency = inv.total * conversionRate;
         subtotalInGroupCurrency = inv.subtotal * conversionRate;
         vatInGroupCurrency = (inv.vatAmount || 0) * conversionRate;

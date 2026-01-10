@@ -24,7 +24,7 @@ export function UnpaidByClientChart({ invoices, selectedCurrency }: UnpaidByClie
             
             let totalInSelectedCurrency = 0;
             if (selectedCurrency === 'RON') {
-                totalInSelectedCurrency = inv.totalRon || (inv.total * (inv.exchangeRate || 1));
+                totalInSelectedCurrency = inv.totalRon ?? (inv.total * (inv.exchangeRate ?? 1));
             } else if (inv.currency === selectedCurrency) {
                 totalInSelectedCurrency = inv.total;
             }

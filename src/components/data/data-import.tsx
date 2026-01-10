@@ -206,8 +206,12 @@ export function DataImport({
 
           if (selectedImportMode === 'merge') {
             if (collectionName === 'invoices' && existingData?.invoices) {
-                const existingInvoiceNumbers = new Set(existingData.invoices.map((inv: Invoice) => inv.invoiceNumber));
-                docsToProcess = docsToProcess.filter((docData: any) => !existingInvoiceNumbers.has(docData.invoiceNumber));
+                // Use projectId + invoiceNumber as compound key since invoiceNumber is only unique per project
+                const existingInvoiceSignatures = new Set(existingData.invoices.map((inv: Invoice) => `${inv.projectId}-${inv.invoiceNumber}`));
+                docsToProcess = docsToProcess.filter((docData: any) => {
+                    const signature = `${docData.projectId}-${docData.invoiceNumber}`;
+                    return !existingInvoiceSignatures.has(signature);
+                });
             }
              if (collectionName === 'timecards' && existingData?.timecards) {
                 const existingTimecardSignatures = new Set(existingData.timecards.map((tc: Timecard) => `${tc.projectId}-${tc.startDate}-${tc.hours}`));

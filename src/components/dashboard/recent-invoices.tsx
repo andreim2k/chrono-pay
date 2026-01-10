@@ -96,7 +96,7 @@ export function RecentInvoices({ invoices, clients }: { invoices: Invoice[], cli
                         let totalDisplay, vatDisplay;
                         if (displayInRon && invoice.totalRon) {
                             totalDisplay = `${invoice.totalRon.toFixed(2)} RON`;
-                            const vatInRon = (invoice.vatAmount || 0) * (invoice.exchangeRate || 1);
+                            const vatInRon = (invoice.vatAmount ?? 0) * (invoice.exchangeRate ?? 1);
                             vatDisplay = `incl. VAT ${vatInRon.toFixed(2)} RON`;
                         } else {
                             const currencySymbol = currencySymbols[invoice.currency] || invoice.currency;

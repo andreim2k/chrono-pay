@@ -37,7 +37,7 @@ export function RevenueChart({ invoices, selectedCurrency }: RevenueChartProps) 
             let vat = invoice.vatAmount || 0;
 
             if (selectedCurrency === 'RON') {
-                const exchangeRate = invoice.currency === 'RON' ? 1 : (invoice.exchangeRate || 1);
+                const exchangeRate = invoice.currency === 'RON' ? 1 : (invoice.exchangeRate ?? 1);
                 subtotal *= exchangeRate;
                 vat *= exchangeRate;
             } else {

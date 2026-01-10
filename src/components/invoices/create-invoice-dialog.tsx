@@ -138,8 +138,12 @@ export function CreateInvoiceDialog() {
     if (!unbilledTimecards) return [];
     return unbilledTimecards.filter(tc => {
       if (!tc.startDate) return false;
-      const tcStartDate = new Date(tc.startDate.replace(/-/g, '/'));
-      return tcStartDate.getFullYear() === invoicedYear && tcStartDate.getMonth() === invoicedMonth;
+      try {
+        const tcStartDate = parseISO(tc.startDate);
+        return tcStartDate.getFullYear() === invoicedYear && tcStartDate.getMonth() === invoicedMonth;
+      } catch {
+        return false; // Skip timecards with invalid dates
+      }
     });
   }, [unbilledTimecards, invoicedYear, invoicedMonth]);
 
