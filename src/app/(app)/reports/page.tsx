@@ -116,25 +116,26 @@ export default function ReportsPage() {
   const vatStats = useMemo(() => {
     const paidInvoices = filteredInvoices.filter(inv => inv.status === 'Paid');
     const unpaidInvoices = filteredInvoices.filter(inv => inv.status !== 'Paid');
-    
-    const calculateVatInCurrency = (invoices: Invoice[], currency: string) => {
+
+    // Calculate VAT matching dashboard logic:
+    // - For RON group: convert non-RON invoices using exchangeRate
+    // - For other currency groups: use original invoice values
+    const calculateVatInCurrency = (invoices: Invoice[], groupCurrency: string) => {
         return invoices.reduce((acc, inv) => {
             const vatAmount = inv.vatAmount || 0;
-            if (currency === 'RON') {
-                const exchangeRate = inv.currency === 'RON' ? 1 : (inv.exchangeRate || 1);
+            // Convert to RON only if group is RON and invoice is in different currency
+            if (groupCurrency === 'RON' && inv.currency !== 'RON') {
+                const exchangeRate = inv.exchangeRate || 1;
                 return acc + (vatAmount * exchangeRate);
             }
-            // For other currencies, only sum if the invoice is in that currency
-            if (inv.currency === currency) {
-                return acc + vatAmount;
-            }
-            return acc;
+            // For all other cases, use original invoice VAT amount
+            return acc + vatAmount;
         }, 0);
     };
 
     const totalVatCollected = calculateVatInCurrency(paidInvoices, selectedCurrency);
     const outstandingVat = calculateVatInCurrency(unpaidInvoices, selectedCurrency);
-    
+
     return { totalVatCollected, outstandingVat };
 
   }, [filteredInvoices, selectedCurrency]);
