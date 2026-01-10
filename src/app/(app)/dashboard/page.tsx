@@ -60,7 +60,7 @@ export default function DashboardPage() {
 
     const clientsById = new Map(safeClients.map(c => [c.id, c]));
 
-    // Stage 1: Group invoices into correct currency buckets, performing conversions only for the RON group.
+    // Stage 1: Group invoices into clean currency buckets with correct values.
     const groupedInvoices: { [currency: string]: Invoice[] } = {};
     safeInvoices.forEach(inv => {
       const client = clientsById.get(inv.clientId);
@@ -71,17 +71,16 @@ export default function DashboardPage() {
         groupedInvoices[groupCurrency] = [];
       }
 
-      // Create a mutable copy to potentially add converted values
       const invoiceCopy = { ...inv };
 
+      // If the invoice should be in the RON group but isn't a RON invoice, store converted values.
       if (groupCurrency === 'RON' && inv.currency !== 'RON') {
         const conversionRate = inv.exchangeRate || 1;
-        // Attach converted RON values to the invoice copy for the RON group
         (invoiceCopy as any).totalInGroupCurrency = inv.total * conversionRate;
         (invoiceCopy as any).subtotalInGroupCurrency = inv.subtotal * conversionRate;
         (invoiceCopy as any).vatInGroupCurrency = (inv.vatAmount || 0) * conversionRate;
       } else {
-        // For all other groups (EUR, USD, etc.), the amounts are native.
+        // Otherwise, the amounts are native to the group currency.
         (invoiceCopy as any).totalInGroupCurrency = inv.total;
         (invoiceCopy as any).subtotalInGroupCurrency = inv.subtotal;
         (invoiceCopy as any).vatInGroupCurrency = inv.vatAmount || 0;
@@ -90,7 +89,7 @@ export default function DashboardPage() {
       groupedInvoices[groupCurrency].push(invoiceCopy);
     });
 
-    // Stage 2: Calculate stats for each currency group independently from the clean buckets.
+    // Stage 2: Calculate stats for each currency group independently.
     type CurrencyStats = {
       totalRevenue: number;
       netRevenue: number;
@@ -99,7 +98,7 @@ export default function DashboardPage() {
       outstandingVat: number;
     };
     const currencyStats: { [currency: string]: CurrencyStats } = {};
-    
+
     for (const currency in groupedInvoices) {
       currencyStats[currency] = { totalRevenue: 0, netRevenue: 0, unpaidTotal: 0, vatCollected: 0, outstandingVat: 0 };
       
@@ -133,18 +132,18 @@ export default function DashboardPage() {
     
     // Create cards for all other currencies
     const otherCurrencyCards = Object.entries(currencyStats)
-        .filter(([currency]) => currency !== 'RON')
-        .map(([currency, stats]) => ({
-            currency,
-            totalRevenue: formatCurrency(stats.totalRevenue, currency),
-            netRevenue: formatCurrency(stats.netRevenue, currency),
-            unpaidAmount: formatCurrency(stats.unpaidTotal, currency),
-            unpaidTotal: stats.unpaidTotal,
-            totalVatCollected: formatCurrency(stats.vatCollected, currency),
-            vatCollectedTotal: stats.vatCollected,
-            outstandingVat: formatCurrency(stats.outstandingVat, currency),
-            outstandingVatTotal: stats.outstandingVat,
-        }));
+      .filter(([currency]) => currency !== 'RON')
+      .map(([currency, stats]) => ({
+          currency,
+          totalRevenue: formatCurrency(stats.totalRevenue, currency),
+          netRevenue: formatCurrency(stats.netRevenue, currency),
+          unpaidAmount: formatCurrency(stats.unpaidTotal, currency),
+          unpaidTotal: stats.unpaidTotal,
+          totalVatCollected: formatCurrency(stats.vatCollected, currency),
+          vatCollectedTotal: stats.vatCollected,
+          outstandingVat: formatCurrency(stats.outstandingVat, currency),
+          outstandingVatTotal: stats.outstandingVat,
+      }));
 
     return {
       totalRevenue: formatCurrency(ronStats.totalRevenue, 'RON'),
@@ -235,7 +234,7 @@ export default function DashboardPage() {
         {dashboardStats.dynamicCurrencyCards.map((card) => (
             <div key={card.currency}>
                 <h3 className="text-xl font-semibold tracking-tight">{card.currency} Overview</h3>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-4">
+                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-4">
                     <StatCard
                         title={`Total Revenue (${card.currency})`}
                         value={card.totalRevenue}
@@ -270,6 +269,5 @@ export default function DashboardPage() {
 
     </div>
   );
-}
 
     
