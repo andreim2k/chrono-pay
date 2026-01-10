@@ -66,12 +66,16 @@ export default function ReportsPage() {
   
   const availableCurrencies = useMemo(() => {
       const currencySet = new Set<string>();
-       if (myCompany?.companyIbans && myCompany.companyIbans.RON) {
-          currencySet.add('RON');
-      }
-      allInvoices.forEach(inv => currencySet.add(inv.currency));
-      return Array.from(currencySet);
-  }, [allInvoices, myCompany]);
+      // Always include RON
+      currencySet.add('RON');
+      // Add all currencies from clients' preferredCompanyIbanCurrency
+      clients?.forEach(client => {
+        if (client.preferredCompanyIbanCurrency) {
+          currencySet.add(client.preferredCompanyIbanCurrency);
+        }
+      });
+      return Array.from(currencySet).sort();
+  }, [clients]);
 
    useEffect(() => {
     if (availableYears.length > 0 && selectedYear === 'all') {
@@ -92,12 +96,14 @@ export default function ReportsPage() {
     if (!clients || !projects) return [];
 
     return filteredInvoicesByDate.filter(inv => {
-        const project = projectsById.get(inv.projectId);
-        const client = clientsById.get(project?.clientId || '');
-        const groupCurrency = client?.preferredCompanyIbanCurrency || inv.currency;
+        // Use clientId from invoice (matches dashboard logic)
+        const client = clientsById.get(inv.clientId);
+        if (!client || !client.preferredCompanyIbanCurrency) return false;
+
+        const groupCurrency = client.preferredCompanyIbanCurrency;
         return groupCurrency === selectedCurrency;
     });
-  }, [filteredInvoicesByDate, selectedCurrency, projectsById, clientsById, clients, projects]);
+  }, [filteredInvoicesByDate, selectedCurrency, clientsById, clients, projects]);
 
 
   const filteredTimecards = useMemo(() => {
