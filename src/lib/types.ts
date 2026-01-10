@@ -87,6 +87,7 @@ export type Invoice = {
   companySwift?: string;
   companyPhone?: string;
   companyEmail?: string;
+  clientId: string;
   clientName: string;
   clientAddress: string;
   clientVat: string;

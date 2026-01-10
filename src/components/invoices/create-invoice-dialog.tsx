@@ -312,6 +312,7 @@ export function CreateInvoiceDialog() {
       companySwift: myCompany.companySwift,
       companyPhone: myCompany.companyPhone,
       companyEmail: myCompany.companyEmail,
+      clientId: selectedClient.id,
       clientName: selectedClient.name,
       clientAddress: selectedClient.address,
       clientVat: selectedClient.vat,
