@@ -71,7 +71,7 @@ const migrateClientData = (clientData: any, projectDataForClient: any[], company
     if (migrated.vatRate === undefined) {
         migrated.vatRate = 0;
     }
-    
+
     // Migrate hasVat from the first associated project if it exists
     if (migrated.hasVat === undefined && projectDataForClient.length > 0) {
         const firstProject = projectDataForClient.find(p => p.clientId === clientData.id || p.clientName === clientData.name);
@@ -82,12 +82,34 @@ const migrateClientData = (clientData: any, projectDataForClient: any[], company
      if (migrated.hasVat === undefined) {
         migrated.hasVat = false;
     }
-    
+
     // Ensure payment terms exist, default to 7
     if (migrated.paymentTerms === undefined) {
         migrated.paymentTerms = 7;
     }
-    
+
+    return migrated;
+}
+
+const migrateInvoiceData = (invoiceData: any, existingClients: any[], existingProjects: any[]): Omit<Invoice, 'id'> => {
+    const migrated = { ...invoiceData };
+
+    // If clientId is missing, try to find it by matching clientName from existing database clients
+    if (!migrated.clientId && migrated.clientName && existingClients.length > 0) {
+        const matchingClient = existingClients.find(c => c.name === migrated.clientName);
+        if (matchingClient) {
+            migrated.clientId = matchingClient.id;
+        }
+    }
+
+    // If still no clientId but we have projectId, try to find client through existing project
+    if (!migrated.clientId && migrated.projectId && existingProjects.length > 0) {
+        const matchingProject = existingProjects.find(p => p.id === migrated.projectId);
+        if (matchingProject && matchingProject.clientId) {
+            migrated.clientId = matchingProject.clientId;
+        }
+    }
+
     return migrated;
 }
 
@@ -214,6 +236,9 @@ export function DataImport({
             }
             if (collectionName === 'clients') {
               finalDocData = migrateClientData(docData, dataToImport.projects || [], dataToImport.myCompany);
+            }
+            if (collectionName === 'invoices') {
+              finalDocData = migrateInvoiceData(docData, existingData?.clients || [], existingData?.projects || []);
             }
             const newDocRef = doc(collection(firestore, `users/${user.uid}/${collectionName}`));
             batch.set(newDocRef, finalDocData);
