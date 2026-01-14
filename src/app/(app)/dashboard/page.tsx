@@ -52,7 +52,7 @@ export default function DashboardPage() {
   );
   const { data: timecards } = useCollection<Timecard>(timecardsQuery, `users/${user?.uid}/timecards`);
 
-  const dashboardStats = useMemo(() => {
+ const dashboardStats = useMemo(() => {
     const safeInvoices = invoices || [];
     const safeClients = clients || [];
     const safeProjects = projects || [];
@@ -133,9 +133,10 @@ export default function DashboardPage() {
     
     // Prepare final output
     const ronStats = currencyStats['RON'] || { totalRevenue: 0, netRevenue: 0, unpaidTotal: 0, vatCollected: 0, outstandingVat: 0 };
-    delete currencyStats['RON']; // remove RON to avoid duplication
+    const otherCurrencies = { ...currencyStats };
+    delete otherCurrencies['RON'];
     
-    const otherCurrencyCards = Object.entries(currencyStats)
+    const otherCurrencyCards = Object.entries(otherCurrencies)
       .map(([currency, stats]) => ({
           currency,
           totalRevenue: formatCurrency(stats.totalRevenue, currency),
@@ -175,7 +176,7 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-6">
        <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
             <StatCard
                 title="Total Clients"
                 value={`${dashboardStats.clientCount}`}
@@ -197,7 +198,7 @@ export default function DashboardPage() {
             />
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
               <StatCard
                 title="Total Revenue (RON)"
                 value={dashboardStats.totalRevenue}
@@ -233,7 +234,7 @@ export default function DashboardPage() {
         </div>
         
         {dashboardStats.dynamicCurrencyCards.map((card) => (
-            <div key={card.currency} className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div key={card.currency} className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
                 <StatCard
                     title={`Total Revenue (${card.currency})`}
                     value={card.totalRevenue}
@@ -259,6 +260,13 @@ export default function DashboardPage() {
                     icon={currencyIcons[card.currency] || <Banknote className="h-4 w-4 text-muted-foreground" />}
                     description={`VAT from paid invoices in ${card.currency}`}
                 />
+                 <StatCard
+                    title={`Outstanding VAT (${card.currency})`}
+                    value={card.outstandingVat}
+                    icon={currencyIcons[card.currency] || <Landmark className="h-4 w-4 text-muted-foreground" />}
+                    description={`VAT from created & sent invoices in ${card.currency}`}
+                    valueClassName={card.outstandingVatTotal > 0 ? 'text-destructive' : ''}
+                />
             </div>
         ))}
       </div>
@@ -268,4 +276,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
