@@ -175,17 +175,13 @@ export function DataImport({
       let importCount = 0;
 
       if (selectedImportMode === 'overwrite') {
-        if (allowedCollections.includes('invoices') && existingData?.invoices) {
-          existingData.invoices.forEach(inv => batch.delete(doc(firestore, `users/${user.uid}/invoices`, inv.id)));
-        }
-        if (allowedCollections.includes('projects') && existingData?.projects) {
-          existingData.projects.forEach(proj => batch.delete(doc(firestore, `users/${user.uid}/projects`, proj.id)));
-        }
-        if (allowedCollections.includes('clients') && existingData?.clients) {
-          existingData.clients.forEach(client => batch.delete(doc(firestore, `users/${user.uid}/clients`, client.id)));
-        }
-        if (allowedCollections.includes('timecards') && existingData?.timecards) {
-          existingData.timecards.forEach(tc => batch.delete(doc(firestore, `users/${user.uid}/timecards`, tc.id)));
+        const collectionsToClear = allowedCollections.filter(c => c !== 'myCompany');
+        for (const collectionName of collectionsToClear) {
+           if (Array.isArray(existingData[collectionName])) {
+                (existingData[collectionName] as any[]).forEach(docData => {
+                    batch.delete(doc(firestore, `users/${user.uid}/${collectionName}`, docData.id));
+                });
+           }
         }
       }
       
@@ -383,3 +379,5 @@ export function DataImport({
     </>
   );
 }
+
+    

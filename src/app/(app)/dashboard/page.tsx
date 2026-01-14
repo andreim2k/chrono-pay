@@ -4,7 +4,7 @@
 import { StatCard } from '@/components/dashboard/stat-card';
 import { RecentInvoices } from '@/components/dashboard/recent-invoices';
 import { useCollection, useUser, useDoc } from '@/firebase';
-import { DollarSign, Users, Clock, Banknote, Landmark, Briefcase, Hourglass, Euro, FileText, PoundSterling } from 'lucide-react';
+import { DollarSign, Users, Clock, Banknote, Landmark, Briefcase, Hourglass, Euro, FileText, PoundSterling, FileClock } from 'lucide-react';
 import type { Invoice, Project, Timecard, Client, User } from '@/lib/types';
 import { useMemo } from 'react';
 import { useFirestore, useMemoFirebase } from '@/firebase/provider';
@@ -124,7 +124,11 @@ export default function DashboardPage() {
 
     const clientCount = safeClients.length;
     const projectCount = safeProjects.length;
+
     const unbilledHours = safeTimecards.filter(tc => tc.status === 'Billable').reduce((acc, tc) => acc + tc.hours, 0);
+    const billedHours = safeTimecards.filter(tc => tc.status === 'Billed' || tc.status === 'Pending').reduce((acc, tc) => acc + tc.hours, 0);
+    const totalHours = safeTimecards.reduce((acc, tc) => acc + tc.hours, 0);
+
 
     const formatCurrency = (amount: number, currency: string) => {
         const locale = currency === 'RON' ? 'ro-RO' : 'en-US';
@@ -161,6 +165,8 @@ export default function DashboardPage() {
       clientCount,
       projectCount,
       unbilledHours: unbilledHours.toFixed(2),
+      billedHours: billedHours.toFixed(2),
+      totalHours: totalHours.toFixed(2),
       dynamicCurrencyCards: otherCurrencyCards,
     };
   }, [invoices, clients, projects, timecards]);
@@ -176,7 +182,7 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-6">
        <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
             <StatCard
                 title="Total Clients"
                 value={`${dashboardStats.clientCount}`}
@@ -188,6 +194,18 @@ export default function DashboardPage() {
                 value={`${dashboardStats.projectCount}`}
                 icon={<Briefcase className="h-4 w-4 text-muted-foreground" />}
                 description="Total number of active projects"
+            />
+             <StatCard
+                title="Total Hours"
+                value={dashboardStats.totalHours}
+                icon={<Clock className="h-4 w-4 text-muted-foreground" />}
+                description="All hours logged"
+            />
+             <StatCard
+                title="Billed Hours"
+                value={dashboardStats.billedHours}
+                icon={<FileClock className="h-4 w-4 text-muted-foreground" />}
+                description="Hours on 'Pending' or 'Billed' invoices"
             />
             <StatCard
                 title="Unbilled Hours"
@@ -276,3 +294,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

@@ -139,11 +139,11 @@ export default function TimecardsPage() {
             buttonLabel={Object.keys(selectedRows).length > 0 ? `Export ${Object.keys(selectedRows).length} Selected` : "Export Filtered"}
           />
           <DataImport 
-            allowedCollections={['timecards', 'projects', 'clients']}
+            allowedCollections={['timecards']}
             buttonLabel="Import Timecards"
             defaultImportMode="merge"
             allowModeSelection={true}
-            existingData={{ timecards: timecards || [], projects: projects || [], clients: clients || [] }}
+            existingData={{ timecards: timecards || [] }}
           />
         </div>
       </div>
@@ -200,3 +200,5 @@ export default function TimecardsPage() {
     </div>
   );
 }
+
+    

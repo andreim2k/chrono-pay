@@ -541,7 +541,7 @@ export function CreateInvoiceDialog() {
           <DialogHeader className="px-1">
             <DialogTitle>Create New Invoice</DialogTitle>
             <DialogDescription>
-              Select a client and project to generate an invoice from unbilled timecards.
+              Select a client and project to generate an invoice from billable timecards.
             </DialogDescription>
           </DialogHeader>
 
@@ -822,3 +822,5 @@ export function CreateInvoiceDialog() {
     </>
   );
 }
+
+    
