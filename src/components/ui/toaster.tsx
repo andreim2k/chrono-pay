@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { createPortal } from "react-dom"
 import { useToast } from "@/hooks/use-toast"
 import {
   Toast,
@@ -12,8 +14,13 @@ import {
 
 export function Toaster() {
   const { toasts } = useToast()
+  const [mounted, setMounted] = useState(false)
 
-  return (
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const toasterContent = (
     <ToastProvider>
       {toasts.map(function ({ id, title, description, action, ...props }) {
         return (
@@ -32,4 +39,11 @@ export function Toaster() {
       <ToastViewport />
     </ToastProvider>
   )
+
+  // Use portal to render at document.body level, outside any stacking contexts
+  if (!mounted) {
+    return null
+  }
+
+  return createPortal(toasterContent, document.body)
 }
