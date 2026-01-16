@@ -20,21 +20,22 @@ export type GetExchangeRateInput = z.infer<typeof GetExchangeRateInputSchema>;
 const GetExchangeRateOutputSchema = z.object({
     rate: z.number().optional().describe('The exchange rate against RON.'),
     date: z.string().optional().describe('The date the exchange rate was published.'),
+    error: z.string().optional().describe('An error message if fetching failed.'),
 });
 export type GetExchangeRateOutput = z.infer<typeof GetExchangeRateOutputSchema>;
 
-async function fetchAndParseBNRXml() {
+async function fetchAndParseBNRXml(): Promise<{data: any, error: string | null}> {
     try {
         const response = await fetch('https://www.bnr.ro/nbrfxrates.xml');
         if (!response.ok) {
-            throw new Error(`Failed to fetch BNR data: ${response.statusText}`);
+            return { data: null, error: `Failed to fetch from BNR. Status: ${response.status} ${response.statusText}` };
         }
         const xmlText = await response.text();
         const parsedXml = await parseStringPromise(xmlText);
-        return parsedXml;
-    } catch (error) {
+        return { data: parsedXml, error: null };
+    } catch (error: any) {
         console.error('Error fetching or parsing BNR XML:', error);
-        return null;
+        return { data: null, error: `Could not connect to BNR. Please check your internet connection. (${error.message})` };
     }
 }
 
@@ -57,9 +58,13 @@ const getExchangeRateFlow = ai.defineFlow(
         return { rate: 1, date: today };
     }
 
-    const bnrData = await fetchAndParseBNRXml();
+    const { data: bnrData, error: fetchError } = await fetchAndParseBNRXml();
+    if (fetchError) {
+        return { error: fetchError };
+    }
+
     if (!bnrData) {
-        return { rate: undefined, date: undefined };
+        return { error: 'BNR data is empty or malformed.' };
     }
 
     const cube = bnrData?.DataSet?.Body?.[0]?.Cube?.[0];
@@ -67,7 +72,7 @@ const getExchangeRateFlow = ai.defineFlow(
     const rateDate = cube?.$?.date;
 
     if (!rates) {
-        return { rate: undefined, date: undefined };
+        return { error: 'Could not find rates in BNR data.' };
     }
 
     const currencyRate = rates.find((r: any) => r.$.currency === currency.toUpperCase());
@@ -79,6 +84,6 @@ const getExchangeRateFlow = ai.defineFlow(
       return { rate: rateValue / multiplier, date: rateDate };
     }
 
-    return { rate: undefined, date: undefined };
+    return { error: `Currency '${currency.toUpperCase()}' not found in BNR data.` };
   }
 );

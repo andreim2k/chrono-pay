@@ -229,14 +229,20 @@ export function CreateInvoiceDialog() {
                       description: `BNR rate for ${formatDateWithOrdinal(result.date)}: 1 ${newCurrency} = ${result.rate.toFixed(4)} RON.`,
                   });
               } else {
-                  throw new Error('Rate not found');
+                   const errorMessage = result.error || 'The exchange rate could not be found for this currency.';
+                   toast({
+                      variant: 'destructive',
+                      title: 'Error Fetching Rate',
+                      description: errorMessage,
+                  });
+                  setInvoiceConfig(prev => ({ ...prev, isFetchingRate: false }));
               }
-          } catch (error) {
+          } catch (error: any) {
               setInvoiceConfig(prev => ({ ...prev, isFetchingRate: false }));
               toast({
                   variant: 'destructive',
                   title: 'Error Fetching Rate',
-                  description: 'Could not fetch the exchange rate from BNR.',
+                  description: error.message || 'An unknown error occurred while fetching the exchange rate.',
               });
           }
       };
@@ -821,5 +827,3 @@ export function CreateInvoiceDialog() {
     </>
   );
 }
-
-    
