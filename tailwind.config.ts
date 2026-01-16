@@ -9,9 +9,6 @@ export default {
   ],
   theme: {
     extend: {
-      zIndex: {
-        'toast': '9999',
-      },
       fontFamily: {
         body: ['Inter', 'sans-serif'],
         headline: ['Inter', 'sans-serif'],
