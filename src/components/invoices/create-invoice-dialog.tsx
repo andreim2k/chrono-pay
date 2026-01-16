@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
@@ -249,7 +248,7 @@ export function CreateInvoiceDialog() {
     const prefix = project.invoiceNumberPrefix || project.name.trim().split(' ').map(word => word[0]).join('').toUpperCase();
     const projectInvoicesWithPrefix = allInvoices.filter(inv => inv.projectId === project.id && inv.invoiceNumber.startsWith(prefix));
     const nextInvoiceNum = projectInvoicesWithPrefix.length + 1;
-    const paddedNumber = String(nextInvoiceNum).padStart(3, '0');
+    const paddedNumber = String(nextInvoiceNum).padStart(2, '0');
     return `${prefix}${paddedNumber}`;
   };
 
