@@ -14,10 +14,18 @@ import {
 
 export function Toaster() {
   const { toasts } = useToast()
-  const [mounted, setMounted] = useState(false)
+  const [container, setContainer] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
-    setMounted(true)
+    // Find or create the toast container
+    let toastContainer = document.getElementById('toast-container')
+    if (!toastContainer) {
+      toastContainer = document.createElement('div')
+      toastContainer.id = 'toast-container'
+      toastContainer.className = 'fixed inset-0 pointer-events-none z-[99999] isolate'
+      document.body.appendChild(toastContainer)
+    }
+    setContainer(toastContainer)
   }, [])
 
   const toasterContent = (
@@ -40,10 +48,10 @@ export function Toaster() {
     </ToastProvider>
   )
 
-  // Use portal to render at document.body level, outside any stacking contexts
-  if (!mounted) {
+  // Use portal to render into dedicated toast container
+  if (!container) {
     return null
   }
 
-  return createPortal(toasterContent, document.body)
+  return createPortal(toasterContent, container)
 }

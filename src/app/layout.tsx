@@ -57,9 +57,11 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <FirebaseClientProvider>
             {children}
-            <Toaster />
           </FirebaseClientProvider>
         </ThemeProvider>
+        {/* Toast container - must be outside ThemeProvider and at the end of body to appear above all dialogs */}
+        <div id="toast-container" className="fixed inset-0 pointer-events-none z-[99999] isolate" />
+        <Toaster />
       </body>
     </html>
   );
