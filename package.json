@@ -10,6 +10,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "deploy": "./scripts/deploy.sh",
+    "dev:clean": "./scripts/run-local.sh",
     "postinstall": "patch-package"
   },
   "dependencies": {
