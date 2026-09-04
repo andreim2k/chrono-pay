@@ -20,6 +20,7 @@ import { ScrollArea } from '../ui/scroll-area';
 import { Badge } from '../ui/badge';
 import { Checkbox } from '../ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
 
 const currencies = ['EUR', 'USD', 'GBP', 'RON'];
 const invoiceThemes: InvoiceTheme[] = [
@@ -80,6 +81,7 @@ export function CreateInvoiceDialog() {
   const [previewImage, setPreviewImage] = useState<string>('');
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [selectedTimecards, setSelectedTimecards] = useState<Record<string, boolean>>({});
+  const [invoiceNote, setInvoiceNote] = useState('');
   
   const [invoiceConfig, setInvoiceConfig] = useState<InvoiceConfig>({
     currency: 'EUR',
@@ -370,11 +372,15 @@ export function CreateInvoiceDialog() {
         data.totalRon = data.total * invoiceConfig.exchangeRate;
     }
 
+    if (invoiceNote.trim()) {
+        data.note = invoiceNote.trim();
+    }
+
     return data;
   }, [
       selectedClient, currentProject, invoices, invoiceConfig,
       myCompany, 
-      filteredTimecards, selectedTimecards
+      filteredTimecards, selectedTimecards, invoiceNote
     ]);
   
   const generatePreview = useCallback(async () => {
@@ -454,6 +460,7 @@ export function CreateInvoiceDialog() {
         description: `Invoice ${invoiceData.invoiceNumber} has been saved.`,
       });
       setIsOpen(false);
+      setInvoiceNote('');
     } catch (error) {
       console.error("Error saving invoice and updating timecards: ", error);
       toast({
@@ -780,6 +787,19 @@ export function CreateInvoiceDialog() {
                             )}
                         </div>
                     )}
+                    {invoiceData && (
+                      <div className="space-y-2">
+                        <Label htmlFor="invoice-note">Internal Note (Optional)</Label>
+                        <Textarea
+                          id="invoice-note"
+                          value={invoiceNote}
+                          onChange={(e) => setInvoiceNote(e.target.value)}
+                          placeholder="Add an internal note for this invoice..."
+                          rows={2}
+                          className="resize-none text-sm"
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </>
@@ -787,7 +807,7 @@ export function CreateInvoiceDialog() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsOpen(false)}>
+            <Button variant="outline" onClick={() => { setIsOpen(false); setInvoiceNote(''); }}>
               Close
             </Button>
             <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>

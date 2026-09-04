@@ -5,18 +5,20 @@ import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Download, Eye, Loader2, Trash2, RotateCcw, ArrowUpDown } from 'lucide-react';
+import { MoreHorizontal, Download, Eye, Loader2, Trash2, RotateCcw, ArrowUpDown, StickyNote } from 'lucide-react';
 import type { Invoice, Client, Project } from '@/lib/types';
 import { format, parseISO, isPast, isFuture, differenceInDays } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser } from '@/firebase';
-import { doc, writeBatch } from 'firebase/firestore';
+import { doc, writeBatch, updateDoc, deleteField } from 'firebase/firestore';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { InvoiceHtmlPreview } from './invoice-html-preview';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -66,6 +68,12 @@ export function InvoiceList({ invoices, clients, projects, isFiltered, selectedR
   const [previewImage, setPreviewImage] = useState<string>('');
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [invoiceForNote, setInvoiceForNote] = useState<Invoice | null>(null);
+  const [noteText, setNoteText] = useState('');
+  const [isNoteDialogOpen, setIsNoteDialogOpen] = useState(false);
+  const [isSavingNote, setIsSavingNote] = useState(false);
+  const [invoiceForDeleteNote, setInvoiceForDeleteNote] = useState<Invoice | null>(null);
+  const [isDeleteNoteAlertOpen, setIsDeleteNoteAlertOpen] = useState(false);
 
   const previewRef = useRef<HTMLDivElement>(null);
   
@@ -220,6 +228,81 @@ export function InvoiceList({ invoices, clients, projects, isFiltered, selectedR
 
     setInvoiceToDelete(null);
     setIsAlertOpen(false);
+  };
+
+  const openNoteDialog = (invoice: Invoice) => {
+    setInvoiceForNote(invoice);
+    setNoteText(invoice.note || '');
+    setIsNoteDialogOpen(true);
+  };
+
+  const openDeleteNoteAlert = (invoice: Invoice) => {
+    setInvoiceForDeleteNote(invoice);
+    setIsDeleteNoteAlertOpen(true);
+  };
+
+  const handleSaveNote = async () => {
+    if (!firestore || !user || !invoiceForNote) return;
+
+    setIsSavingNote(true);
+    try {
+      const invoiceRef = doc(firestore, `users/${user.uid}/invoices`, invoiceForNote.id);
+      const trimmed = noteText.trim();
+      if (trimmed) {
+        await updateDoc(invoiceRef, { note: trimmed });
+      } else {
+        await updateDoc(invoiceRef, { note: deleteField() });
+      }
+
+      toast({
+        title: trimmed ? 'Note Saved' : 'Note Removed',
+        description: trimmed
+          ? `Note saved for invoice ${invoiceForNote.invoiceNumber}.`
+          : `Note removed for invoice ${invoiceForNote.invoiceNumber}.`,
+      });
+      setIsNoteDialogOpen(false);
+      setInvoiceForNote(null);
+      setNoteText('');
+    } catch (error) {
+      console.error("Error saving note: ", error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Could not save note. Please try again.',
+      });
+    } finally {
+      setIsSavingNote(false);
+    }
+  };
+
+  const confirmDeleteNote = async () => {
+    if (!firestore || !user || !invoiceForDeleteNote) return;
+
+    try {
+      const invoiceRef = doc(firestore, `users/${user.uid}/invoices`, invoiceForDeleteNote.id);
+      await updateDoc(invoiceRef, { note: deleteField() });
+
+      toast({
+        title: 'Note Deleted',
+        description: `Note deleted for invoice ${invoiceForDeleteNote.invoiceNumber}.`,
+      });
+
+      if (invoiceForNote?.id === invoiceForDeleteNote.id) {
+        setIsNoteDialogOpen(false);
+        setInvoiceForNote(null);
+        setNoteText('');
+      }
+    } catch (error) {
+      console.error("Error deleting note: ", error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Could not delete note. Please try again.',
+      });
+    } finally {
+      setInvoiceForDeleteNote(null);
+      setIsDeleteNoteAlertOpen(false);
+    }
   };
   
   const handleSelectAll = (checked: boolean) => {
@@ -389,7 +472,39 @@ export function InvoiceList({ invoices, clients, projects, isFiltered, selectedR
                             aria-label={`Select invoice ${invoice.invoiceNumber}`}
                         />
                     </TableCell>
-                    <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
+                    <TableCell className="font-medium relative p-0">
+                      <div className="relative px-4 py-4 flex items-center min-h-[52px]">
+                        <span>{invoice.invoiceNumber}</span>
+                        {invoice.note && (
+                          <TooltipProvider delayDuration={100}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openNoteDialog(invoice);
+                                  }}
+                                  className="absolute top-0 right-0 w-0 h-0 border-solid border-t-[10px] border-l-[10px] border-l-transparent border-t-red-500 hover:border-t-red-600 dark:border-t-red-400 dark:hover:border-t-red-300 transition-colors cursor-pointer focus:outline-none after:content-[''] after:absolute after:-top-1 after:-right-1 after:w-5 after:h-5"
+                                  aria-label={`Note for invoice ${invoice.invoiceNumber}`}
+                                />
+                              </TooltipTrigger>
+                              <TooltipContent
+                                side="top"
+                                align="start"
+                                className="max-w-xs shadow-lg p-3 bg-popover border text-popover-foreground rounded-lg"
+                              >
+                                <div className="font-semibold text-xs flex items-center gap-1.5 text-muted-foreground mb-1.5">
+                                  <StickyNote className="h-3.5 w-3.5 text-red-500" />
+                                  <span>Invoice Note</span>
+                                </div>
+                                <p className="whitespace-pre-wrap leading-relaxed text-xs break-words">{invoice.note}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>{invoice.clientName}</TableCell>
                     <TableCell>{invoice.projectName}</TableCell>
                     <TableCell>{format(parseISO(invoice.date), 'MMM d, yyyy')}</TableCell>
@@ -437,6 +552,16 @@ export function InvoiceList({ invoices, clients, projects, isFiltered, selectedR
                             <DropdownMenuItem onSelect={() => handleDownloadPdf(invoice)}>
                             <Download className="mr-2 h-4 w-4" /> Download PDF
                             </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onSelect={() => openNoteDialog(invoice)}>
+                              <StickyNote className="mr-2 h-4 w-4" /> {invoice.note ? 'Edit Note' : 'Add Note'}
+                            </DropdownMenuItem>
+                            {invoice.note && (
+                              <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => openDeleteNoteAlert(invoice)}>
+                                <Trash2 className="mr-2 h-4 w-4" /> Delete Note
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
                             {invoice.status === 'Created' && <DropdownMenuItem onSelect={() => handleStatusChange(invoice, 'Sent')}>Mark as Sent</DropdownMenuItem>}
                             {invoice.status === 'Sent' && <DropdownMenuItem onSelect={() => handleStatusChange(invoice, 'Paid')}>Mark as Paid</DropdownMenuItem>}
                             {invoice.status === 'Paid' && <DropdownMenuItem onSelect={() => handleStatusChange(invoice, 'Sent')}><RotateCcw className="mr-2 h-4 w-4" />Revert to Sent</DropdownMenuItem>}
@@ -503,6 +628,90 @@ export function InvoiceList({ invoices, clients, projects, isFiltered, selectedR
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={isNoteDialogOpen} onOpenChange={setIsNoteDialogOpen}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <StickyNote className="h-5 w-5 text-amber-500" />
+              {invoiceForNote?.note ? 'Edit Note' : 'Add Note'}
+            </DialogTitle>
+            <DialogDescription>
+              Internal note for Invoice <span className="font-semibold">{invoiceForNote?.invoiceNumber}</span> ({invoiceForNote?.clientName}).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            <Textarea
+              value={noteText}
+              onChange={(e) => setNoteText(e.target.value)}
+              placeholder="Add an internal note (e.g. payment arrangements, client requests, reminders)..."
+              rows={5}
+              className="resize-none text-sm"
+              autoFocus
+            />
+          </div>
+          <DialogFooter className="flex sm:justify-between items-center w-full gap-2 pt-2">
+            {invoiceForNote?.note ? (
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  if (invoiceForNote) {
+                    openDeleteNoteAlert(invoiceForNote);
+                  }
+                }}
+                disabled={isSavingNote}
+              >
+                <Trash2 className="mr-1.5 h-4 w-4" />
+                Delete Note
+              </Button>
+            ) : (
+              <div />
+            )}
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsNoteDialogOpen(false)}
+                disabled={isSavingNote}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleSaveNote}
+                disabled={isSavingNote}
+              >
+                {isSavingNote && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Note
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={isDeleteNoteAlertOpen} onOpenChange={setIsDeleteNoteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Note?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the note for invoice <span className="font-semibold">{invoiceForDeleteNote?.invoiceNumber}</span>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={confirmDeleteNote}
+            >
+              Delete Note
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -12,7 +12,7 @@ import 'jspdf-autotable';
 
 interface ExportMenuProps {
   uiData: Record<string, any>[];
-  rawData: Record<string, any>[];
+  rawData: Record<string, any>[] | Record<string, any>;
   filename: string;
   buttonLabel?: string;
   disabled?: boolean;
@@ -67,8 +67,8 @@ export function ExportMenu({ uiData, rawData, filename, buttonLabel = 'Export Da
       }
 
       const doc = new jsPDF();
-      const headers = Object.keys(uiData[0]);
-      const body = uiData.map(row => headers.map(header => row[header]));
+      const headers = Array.from(new Set(uiData.flatMap(row => Object.keys(row))));
+      const body = uiData.map(row => headers.map(header => row[header] ?? ''));
 
       (doc as any).autoTable({
         head: [headers],

@@ -93,6 +93,7 @@ const migrateClientData = (clientData: any, projectDataForClient: any[], company
 
 const migrateInvoiceData = (invoiceData: any, existingClients: any[], existingProjects: any[]): Omit<Invoice, 'id'> => {
     const migrated = { ...invoiceData };
+    delete migrated.id;
 
     // If clientId is missing, try to find it by matching clientName from existing database clients
     if (!migrated.clientId && migrated.clientName && existingClients.length > 0) {
@@ -169,6 +170,17 @@ export function DataImport({
         setIsImporting(false);
         setFileToImport(null);
         return;
+      }
+
+      // If dataToImport is a bare array, wrap it into the matching collection object
+      if (Array.isArray(dataToImport)) {
+        if (dataToImport.length > 0 && (dataToImport[0] as any)?.invoiceNumber) {
+          dataToImport = { invoices: dataToImport };
+        } else if (dataToImport.length > 0 && (dataToImport[0] as any)?.hours !== undefined) {
+          dataToImport = { timecards: dataToImport };
+        } else if (allowedCollections.length === 1) {
+          dataToImport = { [allowedCollections[0]]: dataToImport };
+        }
       }
 
       const batch = writeBatch(firestore);

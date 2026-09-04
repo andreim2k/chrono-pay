@@ -137,11 +137,13 @@ export default function InvoicesPage() {
       'Total': `${currencySymbols[inv.currency] || inv.currency}${inv.total.toFixed(2)}`,
       ...(inv.totalRon ? { 'Total (RON)': `${inv.totalRon.toFixed(2)} RON` } : {}),
       'Status': inv.status,
+      'Note': inv.note || '',
     }));
   }, [selectedInvoices, sortedInvoices]);
   
   const exportableRawData = useMemo(() => {
-    return selectedInvoices.length > 0 ? selectedInvoices : sortedInvoices;
+    const invoicesToExport = selectedInvoices.length > 0 ? selectedInvoices : sortedInvoices;
+    return { invoices: invoicesToExport };
   }, [selectedInvoices, sortedInvoices]);
 
   const selectedInvoicesTotals = useMemo(() => {

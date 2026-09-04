@@ -119,6 +119,7 @@ export type Invoice = {
   theme?: InvoiceTheme;
   billedTimecardIds?: string[];
   hasVat?: boolean; // This is now on the client, but kept for invoice generation phase
+  note?: string;
 };
 
 export type InvoiceTheme = 'Classic' | 'Modern' | 'Sunset' | 'Ocean' | 'Monochrome' | 'Minty' | 'Velvet' | 'Corporate Blue' | 'Earthy Tones' | 'Creative' | 'Slate Gray' | 'Dark Charcoal' | 'Navy Blue' | 'Forest Green' | 'Burgundy' | 'Teal' | 'Coral' | 'Lavender' | 'Golden' | 'Steel Blue' | 'Light Blue' | 'Sky Blue' | 'Mint Green' | 'Lime' | 'Peach' | 'Rose' | 'Lilac' | 'Sand' | 'Olive' | 'Maroon' | 'Deep Purple' | 'Turquoise' | 'Charcoal' | 'Crimson' | 'Sapphire';
