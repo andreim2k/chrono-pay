@@ -8,9 +8,8 @@
  * - GetExchangeRateOutput - The return type for the getExchangeRate function.
  */
 
-import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
-import {parseStringPromise} from 'xml2js';
+import { z } from 'zod';
+import { parseStringPromise } from 'xml2js';
 
 const GetExchangeRateInputSchema = z.object({
     currency: z.string().describe('The currency to get the exchange rate for (e.g., EUR, USD).'),
@@ -26,7 +25,7 @@ export type GetExchangeRateOutput = z.infer<typeof GetExchangeRateOutputSchema>;
 
 async function fetchAndParseBNRXml(): Promise<{data: any, error: string | null}> {
     try {
-        const response = await fetch('https://www.bnr.ro/nbrfxrates.xml');
+        const response = await fetch('https://curs.bnr.ro/nbrfxrates.xml', { next: { revalidate: 3600 } });
         if (!response.ok) {
             return { data: null, error: `Failed to fetch from BNR. Status: ${response.status} ${response.statusText}` };
         }
@@ -39,19 +38,8 @@ async function fetchAndParseBNRXml(): Promise<{data: any, error: string | null}>
     }
 }
 
-
 export async function getExchangeRate(input: GetExchangeRateInput): Promise<GetExchangeRateOutput> {
-  return getExchangeRateFlow(input);
-}
-
-
-const getExchangeRateFlow = ai.defineFlow(
-  {
-    name: 'getExchangeRateFlow',
-    inputSchema: GetExchangeRateInputSchema,
-    outputSchema: GetExchangeRateOutputSchema,
-  },
-  async ({ currency }) => {
+    const { currency } = input;
     const today = new Date().toISOString().split('T')[0];
 
     if (currency.toUpperCase() === 'RON') {
@@ -85,5 +73,4 @@ const getExchangeRateFlow = ai.defineFlow(
     }
 
     return { error: `Currency '${currency.toUpperCase()}' not found in BNR data.` };
-  }
-);
+}
